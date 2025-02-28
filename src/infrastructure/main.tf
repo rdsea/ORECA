@@ -66,7 +66,6 @@ resource "google_compute_firewall" "allow-tcp-icmp-k8s-external" {
 
 
 resource "google_compute_instance" "k8s-controller" {
-  count        = 1
   name         = "k8s-controller"
   machine_type = var.controller_instance_type
   zone         = var.zone
@@ -76,6 +75,13 @@ resource "google_compute_instance" "k8s-controller" {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
       size  = 200
     }
+  }
+
+  connection {
+    type        = "ssh"
+    user        = var.ssh_username
+    private_key = file(var.private_key_path)
+    host        = self.network_interface[0].access_config[0].nat_ip
   }
 
   network_interface {
@@ -91,11 +97,8 @@ resource "google_compute_instance" "k8s-controller" {
 
   tags = ["k8s", "controller"]
 
-  metadata_startup_script = file("./install-controller.sh")
+  metadata_startup_script = file("./install-kubeadm.sh")
 
-  provisioner "local-exec" {
-    command = "scp -i ${var.private_key_path} ${var.ssh_username}@${self.network_interface[0].access_config[0].nat_ip}:/var/lib/kubeadm_join.sh ./kubeadm_join.sh"
-  }
 }
 
 resource "google_compute_instance" "k8s-workers" {
@@ -125,30 +128,63 @@ resource "google_compute_instance" "k8s-workers" {
 
   can_ip_forward = true
 
-  provisioner "file" {
-    source      = "install-worker.sh"
-    destination = "/home/${var.ssh_username}/install-worker.sh"
-  }
+  metadata_startup_script = file("./install-kubeadm.sh")
 
-  provisioner "file" {
-    source      = "kubeadm_join.sh"
-    destination = "/home/${var.ssh_username}/kubeadm_join.sh"
-  }
+}
 
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /home/${var.ssh_username}/install-worker.sh",
-      "sudo /home/${var.ssh_username}/install-worker.sh",
-      "chmod +x /home/${var.ssh_username}/kubeadm_join.sh",
-      "sudo /home/${var.ssh_username}/kubeadm_join.sh",
-    ]
-  }
+resource "null_resource" "k8s-controller-script" {
 
   connection {
     type        = "ssh"
     user        = var.ssh_username
     private_key = file(var.private_key_path)
-    host        = "XXX.XXX.XXX.XXX${count.index}"
+    host        = google_compute_instance.k8s-controller.network_interface[0].access_config[0].nat_ip
   }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo kubeadm init --pod-network-cidr=XXX.XXX.XXX.XXX/16 >/tmp/kubeinit.log 2>&1",
+      "sudo kubeadm token create --print-join-command >/home/${var.ssh_username}/kubeadm_join.sh",
+      "chmod +r /home/${var.ssh_username}/kubeadm_join.sh",
+      "mkdir -p /home/${var.ssh_username}/.kube",
+      "sudo cp -i /etc/kubernetes/admin.conf /home/${var.ssh_username}/.kube/config",
+      "sudo chown $(id -u):$(id -g) /home/${var.ssh_username}/.kube/config",
+    ]
+  }
+  provisioner "local-exec" {
+    command = "rm kubeadm_join.sh"
+  }
+
+  provisioner "local-exec" {
+    command = "scp -i ${var.private_key_path} ${var.ssh_username}@${google_compute_instance.k8s-controller.network_interface[0].access_config[0].nat_ip}:/home/${var.ssh_username}/kubeadm_join.sh ./kubeadm_join.sh"
+  }
+
+
   depends_on = [google_compute_instance.k8s-controller]
+}
+
+resource "null_resource" "k8s-worker-script" {
+  count = 3
+
+  connection {
+    type        = "ssh"
+    user        = var.ssh_username
+    private_key = file(var.private_key_path)
+    host        = google_compute_instance.k8s-workers[count.index].network_interface[0].access_config[0].nat_ip
+  }
+
+  provisioner "file" {
+    source      = "kubeadm_join.sh"
+    destination = "/var/lib/kubeadm_join.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /var/lib/kubeadm_join.sh",
+      ". /var/lib/kubeadm_join.sh"
+    ]
+  }
+
+
+  depends_on = [google_compute_instance.k8s-workers, null_resource.k8s-controller-script]
 }

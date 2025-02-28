@@ -37,18 +37,6 @@ EOT
   type        = string
 }
 
-variable "source_ranges" {
-  description = "Source IP ranges allowed in firewall rules"
-  type        = list(string)
-  default     = ["XXX.XXX.XXX.XXX/0"]
-}
-
-variable "disk_size" {
-  description = "Size of the Kafka disks"
-  type        = number
-  default     = 10
-}
-
 variable "controller_instance_type" {
   description = "Machine type for the k8s controller instances"
   type        = string
