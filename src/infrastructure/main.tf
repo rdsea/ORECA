@@ -143,24 +143,27 @@ resource "null_resource" "k8s-controller-script" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo kubeadm init --pod-network-cidr=XXX.XXX.XXX.XXX/16 >/tmp/kubeinit.log 2>&1",
+      "sleep 15",
+      "sudo kubeadm init --pod-network-cidr=XXX.XXX.XXX.XXX/16 --cri-socket unix:///var/run/containerd/containerd.sock >/tmp/kubeinit.log 2>&1",
       "sudo kubeadm token create --print-join-command >/home/${var.ssh_username}/kubeadm_join.sh",
       "chmod +r /home/${var.ssh_username}/kubeadm_join.sh",
       "mkdir -p /home/${var.ssh_username}/.kube",
       "sudo cp -i /etc/kubernetes/admin.conf /home/${var.ssh_username}/.kube/config",
-      "sudo chown $(id -u):$(id -g) /home/${var.ssh_username}/.kube/config",
+      "sudo chown ${var.ssh_username}:${var.ssh_username} /home/${var.ssh_username}/.kube/config",
+      "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.2/manifests/tigera-operator.yaml",
+      "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.2/manifests/custom-resources.yaml"
     ]
   }
-  provisioner "local-exec" {
-    command = "rm kubeadm_join.sh"
-  }
+  # provisioner "local-exec" {
+  #   command = "rm kubeadm_join.sh"
+  # }
 
   provisioner "local-exec" {
-    command = "scp -i ${var.private_key_path} ${var.ssh_username}@${google_compute_instance.k8s-controller.network_interface[0].access_config[0].nat_ip}:/home/${var.ssh_username}/kubeadm_join.sh ./kubeadm_join.sh"
+    command = "scp -o StrictHostKeyChecking=no -i ${var.private_key_path} ${var.ssh_username}@${google_compute_instance.k8s-controller.network_interface[0].access_config[0].nat_ip}:/home/${var.ssh_username}/kubeadm_join.sh ./kubeadm_join.sh"
   }
 
 
-  depends_on = [google_compute_instance.k8s-controller]
+  depends_on = [google_compute_instance.k8s-controller, google_compute_instance.k8s-workers]
 }
 
 resource "null_resource" "k8s-worker-script" {
@@ -175,13 +178,13 @@ resource "null_resource" "k8s-worker-script" {
 
   provisioner "file" {
     source      = "kubeadm_join.sh"
-    destination = "/var/lib/kubeadm_join.sh"
+    destination = "/home/${var.ssh_username}/kubeadm_join.sh"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /var/lib/kubeadm_join.sh",
-      ". /var/lib/kubeadm_join.sh"
+      "chmod +x /home/${var.ssh_username}/kubeadm_join.sh",
+      "sudo bash /home/${var.ssh_username}/kubeadm_join.sh"
     ]
   }
 
