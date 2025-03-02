@@ -1,0 +1,58 @@
+[project]
+name = "rca-edge-cloud"
+version = "0.1.0"
+description = "Add your description here"
+authors = [{ name = "nguu0123", email = "nguu0123@gmail.com" }]
+dependencies = []
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = ["ruff>=0.9.9", "pre-commit>=4.1.0"]
+virtual = true
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+
+[tool.rye.workspace]
+members = ["src/rca_methods"]
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 10
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257" # Accepts: "google", "numpy", or "pep257".
+
+[tool.ruff.lint]
+exclude = ["src/qoa4ml/utils/pynvml_forked.py"]
+select = [
+  "F",   # Pyflakes
+  "E",   # Pycode styles
+  "W",   # Pycode styles
+  "N",   # Pep8 naming
+  "I",   # Isort
+  "UP",  # Pyupgrade
+  "C4",  # Flake8 comprehension
+  "ISC", # Flake8 implicit str concat
+  "B",   # Flake8 bugbear
+  "PGH", # Pygrep hook
+  "RUF", # Ruff specific rules
+]
+ignore = [
+  "E501",   # Line too long
+  "RET504", # Unnecessary assignment
+  "RET505", # Unnecessary else after return
+  "C901",   # Too complex function
+  "B904",   # raise-without-from-inside-except, enable when understand more
+  "PLR",
+  "ISC001",
+]
+
+[tool.rye.lint.pylint]
+max-args = 10

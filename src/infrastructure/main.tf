@@ -54,7 +54,7 @@ resource "google_compute_firewall" "allow-tcp-icmp-k8s-external" {
 
   allow {
     protocol = "tcp"
-    ports    = ["22", "6443"]
+    ports    = ["22", "80", "443", "6443"]
   }
 
   allow {
@@ -150,8 +150,11 @@ resource "null_resource" "k8s-controller-script" {
       "mkdir -p /home/${var.ssh_username}/.kube",
       "sudo cp -i /etc/kubernetes/admin.conf /home/${var.ssh_username}/.kube/config",
       "sudo chown ${var.ssh_username}:${var.ssh_username} /home/${var.ssh_username}/.kube/config",
+      # Calico
       "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.2/manifests/tigera-operator.yaml",
-      "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.2/manifests/custom-resources.yaml"
+      "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.2/manifests/custom-resources.yaml",
+      # Metric-server
+      "kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
     ]
   }
   # provisioner "local-exec" {
