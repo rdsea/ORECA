@@ -2,7 +2,6 @@
 # Licensed under the MIT License.
 
 import pathlib
-import sys
 
 # from datetime import datetime, timedelta
 # import pytz
@@ -10,7 +9,6 @@ from kubernetes import client, config
 from yaml import full_load
 
 root_path = pathlib.Path(__file__).parent
-sys.path.append(root_path)
 # read the configuration file
 monitor_config = full_load(open(root_path / "monitor_config.yaml"))
 

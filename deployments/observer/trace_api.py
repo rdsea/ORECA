@@ -11,7 +11,8 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
-from aiopslab.observer import root_path
+
+from . import root_path
 
 
 class TraceAPI:
