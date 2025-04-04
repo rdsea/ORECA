@@ -5,11 +5,7 @@ description = "Add your description here"
 authors = [{ name = "nguu0123", email = "nguu0123@gmail.com" }]
 dependencies = []
 readme = "README.md"
-requires-python = ">= 3.8"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires-python = ">= 3.10"
 
 [tool.rye]
 managed = true
@@ -21,7 +17,8 @@ allow-direct-references = true
 
 
 [tool.rye.workspace]
-members = ["src/rca_methods"]
+members = ["src/rca_methods", "deployments/observer"]
+
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = 10
@@ -30,7 +27,6 @@ docstring-code-line-length = 10
 convention = "pep257" # Accepts: "google", "numpy", or "pep257".
 
 [tool.ruff.lint]
-exclude = ["src/qoa4ml/utils/pynvml_forked.py"]
 select = [
   "F",   # Pyflakes
   "E",   # Pycode styles

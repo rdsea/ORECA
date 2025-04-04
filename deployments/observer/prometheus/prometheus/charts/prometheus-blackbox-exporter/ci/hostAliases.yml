@@ -1,0 +1,9 @@
+hostAliases:
+  - ip: XXX.XXX.XXX.XXX
+    hostNames:
+      - test.example.com
+      - another.example.net
+  - ip: XXX.XXX.XXX.XXX
+    hostNames:
+      - test2.example.com
+      - another2.example.net

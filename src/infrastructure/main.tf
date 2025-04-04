@@ -144,7 +144,7 @@ resource "null_resource" "k8s-controller-script" {
   provisioner "remote-exec" {
     inline = [
       "sleep 15",
-      "sudo kubeadm init --pod-network-cidr=XXX.XXX.XXX.XXX/16 --cri-socket unix:///var/run/containerd/containerd.sock >/tmp/kubeinit.log 2>&1",
+      "sudo kubeadm init --pod-network-cidr=XXX.XXX.XXX.XXX/16 --cri-socket unix:///var/run/containerd/containerd.sock --kubernetes-version=v1.30.10 >/tmp/kubeinit.log 2>&1",
       "sudo kubeadm token create --print-join-command >/home/${var.ssh_username}/kubeadm_join.sh",
       "chmod +r /home/${var.ssh_username}/kubeadm_join.sh",
       "mkdir -p /home/${var.ssh_username}/.kube",
