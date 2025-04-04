@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from itertools import chain
-from typing import Callable, Dict, List, Set, Union
+from typing import Union
 
 import networkx as nx
 import numpy as np
@@ -9,10 +10,10 @@ from rca_methods.utility import dump_json, load_json
 
 
 def topological_sort(
-    nodes: Set,
+    nodes: set,
     predecessors: Callable,
     successors: Callable,
-) -> List[Set]:
+) -> list[set]:
     """
     Sort nodes with predecessors first
     """
@@ -55,7 +56,7 @@ class Node:
         """
         return self._metric
 
-    def asdict(self) -> Dict[str, str]:
+    def asdict(self) -> dict[str, str]:
         """
         Serialized as a dict
         """
@@ -85,8 +86,8 @@ class Graph:
     """
 
     def __init__(self):
-        self._nodes: Set[Node] = set()
-        self._sorted_nodes: List[Set[Node]] = None
+        self._nodes: set[Node] = set()
+        self._sorted_nodes: list[set[Node]] = None
 
     def dump(self, filename: str) -> bool:
         """
@@ -109,18 +110,18 @@ class Graph:
         return None
 
     @property
-    def nodes(self) -> Set[Node]:
+    def nodes(self) -> set[Node]:
         """
         Get the set of nodes in the graph
         """
         return self._nodes
 
     @property
-    def edges(self) -> Set[tuple]:
+    def edges(self) -> set[tuple]:
         return list(self._graph.edges)
 
     @property
-    def str_edges(self) -> Set[tuple]:
+    def str_edges(self) -> set[tuple]:
         try:
             return [
                 (f"{i.entity}_{i.metric}", f"{j.entity}_{j.metric}")
@@ -130,7 +131,7 @@ class Graph:
             return self._graph.edges
 
     @property
-    def topological_sort(self) -> List[Set[Node]]:
+    def topological_sort(self) -> list[set[Node]]:
         """
         Sort nodes with parents first
 
@@ -142,13 +143,13 @@ class Graph:
             )
         return self._sorted_nodes
 
-    def children(self, node: Node, **kwargs) -> Set[Node]:
+    def children(self, node: Node, **kwargs) -> set[Node]:
         """
         Get the children of the given node in the graph
         """
         raise NotImplementedError
 
-    def parents(self, node: Node, **kwargs) -> Set[Node]:
+    def parents(self, node: Node, **kwargs) -> set[Node]:
         """
         Get the parents of the given node in the graph
         """
@@ -169,7 +170,7 @@ class MemoryGraph(Graph):
         self._nodes.update(self._graph.nodes)
 
     def dump(self, filename: str) -> bool:
-        nodes: List[Node] = list(self._graph.nodes)
+        nodes: list[Node] = list(self._graph.nodes)
         node_indexes = {node: index for index, node in enumerate(nodes)}
         edges = [
             (node_indexes[cause], node_indexes[effect])
@@ -187,7 +188,7 @@ class MemoryGraph(Graph):
         if "nodes" not in data or "edges" not in data:
             raise LoadingInvalidGraphError(filename)
         try:
-            nodes: List[Node] = [Node(**node) for node in data["nodes"]]
+            nodes: list[Node] = [Node(**node) for node in data["nodes"]]
         except Exception:
             nodes = list(data["nodes"])
 
@@ -199,7 +200,7 @@ class MemoryGraph(Graph):
         return MemoryGraph(graph)
 
     @classmethod
-    def from_adj(cls, adj: np.ndarray, nodes: List[Node]) -> Union["MemoryGraph", None]:
+    def from_adj(cls, adj: np.ndarray, nodes: list[Node]) -> Union["MemoryGraph", None]:
         graph = nx.DiGraph()
         graph.add_nodes_from(nodes)
 
@@ -215,12 +216,12 @@ class MemoryGraph(Graph):
 
         return MemoryGraph(graph)
 
-    def children(self, node: Node, **kwargs) -> Set[Node]:
+    def children(self, node: Node, **kwargs) -> set[Node]:
         if not self._graph.has_node(node):
             return set()
         return set(self._graph.successors(node))
 
-    def parents(self, node: Node, **kwargs) -> Set[Node]:
+    def parents(self, node: Node, **kwargs) -> set[Node]:
         if not self._graph.has_node(node):
             return set()
         return set(self._graph.predecessors(node))

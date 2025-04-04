@@ -8,7 +8,6 @@ import subprocess
 import threading
 import time
 from datetime import datetime, timedelta
-from typing import Optional
 
 import pandas as pd
 import requests
@@ -164,7 +163,7 @@ class TraceAPI:
         service_name: str,
         start_time: datetime,
         end_time: datetime,
-        limit: Optional[int] = None,
+        limit: int | None = None,
     ) -> list:
         """
         Fetch traces for a specific service between start_time and end_time.
@@ -186,7 +185,7 @@ class TraceAPI:
             return []
 
     def extract_traces(
-        self, start_time: datetime, end_time: datetime, limit: Optional[int] = None
+        self, start_time: datetime, end_time: datetime, limit: int | None = None
     ) -> list:
         """
         Extract traces for all services between start_time and end_time.

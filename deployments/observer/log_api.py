@@ -6,8 +6,8 @@ import os
 import time
 from datetime import datetime, timedelta, timezone
 from enum import Enum
+from pathlib import Path
 from ssl import create_default_context
-from typing import Union
 
 import pandas as pd
 from elasticsearch import Elasticsearch
@@ -98,7 +98,7 @@ class LogAPI:
         service_list = get_services_list(v1, namespace=namespace)
         return pod_list, service_list
 
-    def log_extract(self, start_time=None, end_time=None, path=None):
+    def log_extract(self, start_time: int, end_time: int, path: Path):
         time_interval = 5 * 60
         csv_list = []
         os.makedirs(path, exist_ok=True)
@@ -247,9 +247,7 @@ class LogAPI:
             print("Connection Timeout:", e)
         return data
 
-    def query(
-        self, start_time: Union[int, datetime, str], end_time: Union[int, datetime, str]
-    ):
+    def query(self, start_time: int | datetime | str, end_time: int | datetime | str):
         if isinstance(start_time, str):
             start_time = int(start_time)
         if isinstance(end_time, str):

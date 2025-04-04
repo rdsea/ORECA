@@ -8,7 +8,6 @@ import subprocess
 import threading
 import time
 from datetime import datetime, timedelta
-from typing import Union
 
 import pandas as pd
 import pytz
@@ -238,8 +237,8 @@ class PrometheusAPI:
         self,
         metric_name: str,
         pod: str,
-        start_time: Union[int, datetime, str],
-        end_time: Union[int, datetime, str],
+        start_time: int | datetime | str,
+        end_time: int | datetime | str,
         namespace: str = "default",
         step: int = 60,
     ):

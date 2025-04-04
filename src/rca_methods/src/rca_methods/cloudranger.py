@@ -85,7 +85,7 @@ def secondorder_randomwalk(
             score[next_node] += 1
             previous = current
             current = next_node
-    score_list = list(zip(label, score))
+    score_list = list(zip(label, score, strict=False))
     score_list.sort(key=lambda x: x[1], reverse=True)
     return score_list
 

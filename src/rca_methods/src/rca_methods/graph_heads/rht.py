@@ -3,8 +3,8 @@ Causal Inference-based Root Cause Analysis (CIRCA)
 """
 
 import logging
+from collections.abc import Callable, Sequence
 from datetime import timedelta
-from typing import Callable, Dict, Optional, Sequence, Tuple
 
 import networkx as nx
 import numpy as np
@@ -43,7 +43,7 @@ class DecomposableScorer(Scorer):
     def score_node(
         self,
         graph: Graph,
-        series: Dict[Node, Sequence[float]],
+        series: dict[Node, Sequence[float]],
         node: Node,
         data: CaseData,
     ) -> Score:
@@ -55,11 +55,11 @@ class DecomposableScorer(Scorer):
     def _score(
         self,
         candidates: Sequence[Node],
-        series: Dict[Node, Sequence[float]],
+        series: dict[Node, Sequence[float]],
         graph: Graph,
         data: CaseData,
     ):
-        results: Dict[Node, Score] = {}
+        results: dict[Node, Score] = {}
         for node in candidates:
             score = self.score_node(graph, series, node, data)
             if score is not None:
@@ -71,8 +71,8 @@ class DecomposableScorer(Scorer):
         graph: Graph,
         data: CaseData,
         current: float,
-        scores: Optional[Dict[Node, Score]] = None,
-    ) -> Dict[Node, Score]:
+        scores: dict[Node, Score] | None = None,
+    ) -> dict[Node, Score]:
         series = data.load_data(graph, current)
         candidates = list(series.keys()) if scores is None else list(scores.keys())
 
@@ -183,11 +183,11 @@ class RHTScorer(DecomposableScorer):
 
     def split_data(
         self,
-        data: Dict[Node, Sequence[float]],
+        data: dict[Node, Sequence[float]],
         node: Node,
         parents: Sequence[Node],
         case_data: CaseData,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Split data for training and testing
 
@@ -210,7 +210,7 @@ class RHTScorer(DecomposableScorer):
     def score_node(
         self,
         graph: Graph,
-        series: Dict[Node, Sequence[float]],
+        series: dict[Node, Sequence[float]],
         node: Node,
         data: CaseData,
     ) -> Score:
@@ -253,8 +253,8 @@ class DAScorer(Scorer):
         graph: Graph,
         data: CaseData,
         current: float,
-        scores: Optional[Dict[Node, Score]] = None,
-    ) -> Dict[Node, Score]:
+        scores: dict[Node, Score] | None = None,
+    ) -> dict[Node, Score]:
         sorted_nodes = [
             {node for node in nodes if node in scores}
             for nodes in graph.topological_sort
@@ -266,10 +266,10 @@ class DAScorer(Scorer):
                 score["index"] = index
 
         # 1. Gather child scores
-        child_scores: Dict[Node, Dict[Node, float]] = {}
+        child_scores: dict[Node, dict[Node, float]] = {}
         for nodes in reversed(sorted_nodes):
             for node in nodes:
-                child_score: Dict[Node, float] = {}
+                child_score: dict[Node, float] = {}
                 for child in graph.children(node):
                     if child in scores:
                         child_score[child] = scores[child].score
@@ -352,7 +352,7 @@ def rht(
     # == end prepare the graph
 
     scorer = RHTScorer()
-    scores: Dict[Node, Score] = None
+    scores: dict[Node, Score] = None
 
     timestamps = data["time"]
     sli = np.random.choice(nodes)
@@ -362,7 +362,7 @@ def rht(
     for s in services:
         for m in metrics:
             try:
-                out_data[s][m] = list(zip(timestamps, data[f"{s}_{m}"]))
+                out_data[s][m] = list(zip(timestamps, data[f"{s}_{m}"], strict=False))
             except Exception:
                 pass
     mem_data_loader = MemoryDataLoader(out_data)

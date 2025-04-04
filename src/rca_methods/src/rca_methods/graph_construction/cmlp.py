@@ -34,7 +34,7 @@ class MLP(nn.Module):
         layer = nn.Conv1d(num_series, hidden[0], lag)
         modules = [layer]
 
-        for d_in, d_out in zip(hidden, hidden[1:] + [1]):
+        for d_in, d_out in zip(hidden, hidden[1:] + [1], strict=False):
             layer = nn.Conv1d(d_in, d_out, 1)
             modules.append(layer)
 
@@ -224,7 +224,9 @@ def ridge_regularize(network, lam):
 
 def restore_parameters(model, best_model):
     """Move parameter values from best_model to model."""
-    for params, best_params in zip(model.parameters(), best_model.parameters()):
+    for params, best_params in zip(
+        model.parameters(), best_model.parameters(), strict=False
+    ):
         params.data = best_params
 
 
@@ -334,7 +336,9 @@ def train_model_gista(
 
             while not step:
                 # Perform tentative ISTA step.
-                for param, temp_param in zip(net.parameters(), net_copy.parameters()):
+                for param, temp_param in zip(
+                    net.parameters(), net_copy.parameters(), strict=False
+                ):
                     temp_param.data = param - lr_it * param.grad
 
                 # Proximal update.
@@ -351,7 +355,7 @@ def train_model_gista(
                         [
                             torch.sum((param - temp_param) ** 2)
                             for param, temp_param in zip(
-                                net.parameters(), net_copy.parameters()
+                                net.parameters(), net_copy.parameters(), strict=False
                             )
                         ]
                     )

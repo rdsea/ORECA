@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Callable, Dict, List, Optional, Sequence, Union
+from collections.abc import Callable, Sequence
 
 import networkx as nx
 import numpy as np
@@ -19,7 +19,7 @@ class Score:
     """
 
     def __init__(
-        self, score: float, info: Optional[dict] = None, key: Optional[tuple] = None
+        self, score: float, info: dict | None = None, key: tuple | None = None
     ):
         self._score = score
         self._key = key
@@ -86,7 +86,7 @@ class Score:
         self.key = score.key
         return self
 
-    def asdict(self) -> Dict[str, Union[float, dict, tuple]]:
+    def asdict(self) -> dict[str, float | dict | tuple]:
         """
         Serialized as a dict
         """
@@ -121,8 +121,8 @@ class Scorer:
         graph: Graph,
         data: CaseData,
         current: float,
-        scores: Optional[Dict[Node, Score]] = None,
-    ) -> Dict[Node, Score]:
+        scores: dict[Node, Score] | None = None,
+    ) -> dict[Node, Score]:
         """
         Estimate suspicious nodes
         """
@@ -138,7 +138,7 @@ class RandomWalkScorer(Scorer):
         self,
         rho: float = 0.5,
         remove_sli: bool = False,
-        num_loop: Optional[Union[int, Callable[[int], int]]] = None,
+        num_loop: int | Callable[[int], int] | None = None,
         **kwargs,
     ):
         # pylint: disable=too-many-arguments
@@ -149,7 +149,7 @@ class RandomWalkScorer(Scorer):
         self._rng = np.random.default_rng(self._seed)
 
     def generate_transition_matrix(
-        self, graph: Graph, data: CaseData, scores: Dict[Node, Score]
+        self, graph: Graph, data: CaseData, scores: dict[Node, Score]
     ) -> pd.DataFrame:
         """
         Generate the transition matrix
@@ -180,7 +180,7 @@ class RandomWalkScorer(Scorer):
 
     def _walk(
         self, start: Node, num_loop: int, matrix: pd.DataFrame
-    ) -> Dict[Node, int]:
+    ) -> dict[Node, int]:
         node: Node = start
         counter = defaultdict(int)
         for _ in range(num_loop):
@@ -193,8 +193,8 @@ class RandomWalkScorer(Scorer):
         graph: Graph,
         data: CaseData,
         current: float,
-        scores: Optional[Dict[Node, Score]] = None,
-    ) -> Dict[Node, Score]:
+        scores: dict[Node, Score] | None = None,
+    ) -> dict[Node, Score]:
         if not scores:
             return scores
 
@@ -227,7 +227,7 @@ class SecondOrderRandomWalkScorer(RandomWalkScorer):
 
     def _walk(
         self, start: Node, num_loop: int, matrix: pd.DataFrame
-    ) -> Dict[Node, int]:
+    ) -> dict[Node, int]:
         node: Node = start
         node_pre: Node = start
         counter = defaultdict(int)
@@ -235,8 +235,8 @@ class SecondOrderRandomWalkScorer(RandomWalkScorer):
             prob_pre = matrix[node_pre][node]
             node_pre = node
 
-            candidates: List[Node] = []
-            weights: List[float] = []
+            candidates: list[Node] = []
+            weights: list[float] = []
             # for key, value in matrix[node].iteritems():
             for key, value in matrix[node].items():
                 if value > 0:
@@ -255,7 +255,7 @@ class SecondOrderRandomWalkScorer(RandomWalkScorer):
 
 def random_walk(
     adj: np.ndarray,
-    node_names: Optional[List[str]] = None,
+    node_names: list[str] | None = None,
     sli: Node = None,
     num_loop=None,
     previous_scores=None,
@@ -330,7 +330,7 @@ def random_walk(
 
 def second_order_random_walk(
     adj: np.ndarray,
-    node_names: Optional[List[str]] = None,
+    node_names: list[str] | None = None,
     sli: Node = None,
     num_loop=None,
     previous_scores=None,

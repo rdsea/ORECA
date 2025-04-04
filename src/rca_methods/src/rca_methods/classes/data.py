@@ -1,6 +1,6 @@
 import datetime
+from collections.abc import Sequence
 from datetime import timedelta
-from typing import Dict, Optional, Sequence, Set, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,7 @@ class DataLoader:
         raise NotImplementedError
 
     @property
-    def metrics(self) -> Dict[str, Sequence[str]]:
+    def metrics(self) -> dict[str, Sequence[str]]:
         """
         Fetch available metrics as a mapping from entity names to metric names
         """
@@ -46,7 +46,7 @@ class DataLoader:
         end: float,
         interval: timedelta,
         **kwargs,
-    ) -> Union[None, Sequence[float]]:
+    ) -> None | Sequence[float]:
         # pylint: disable=too-many-arguments
         """
         Load the time series for the given metric of the given entity
@@ -61,7 +61,7 @@ class DataLoader:
 
     @staticmethod
     def preprocess(
-        time_series: Sequence[Tuple[float, float]],
+        time_series: Sequence[tuple[float, float]],
         start: float,
         end: float,
         interval: timedelta,
@@ -116,7 +116,7 @@ class MemoryDataLoader(DataLoader):
     Implement DataLoader with data in memory
     """
 
-    def __init__(self, data: Dict[str, Dict[str, Sequence[Tuple[float, float]]]]):
+    def __init__(self, data: dict[str, dict[str, Sequence[tuple[float, float]]]]):
         """
         data: data[entity][metric] is the 2-tuples (timestamp, value)
             for the given metric of the given entity
@@ -128,7 +128,7 @@ class MemoryDataLoader(DataLoader):
         return tuple(self._data.keys())
 
     @property
-    def metrics(self) -> Dict[str, Sequence[str]]:
+    def metrics(self) -> dict[str, Sequence[str]]:
         return {entity: tuple(metrics.keys()) for entity, metrics in self._data.items()}
 
     def load(
@@ -139,7 +139,7 @@ class MemoryDataLoader(DataLoader):
         end: float,
         interval: timedelta,
         **kwargs,
-    ) -> Union[None, Sequence[float]]:
+    ) -> None | Sequence[float]:
         # pylint: disable=too-many-arguments
         if entity not in self._data or metric not in self._data[entity]:
             return None
@@ -216,8 +216,8 @@ class CaseData:
         return self._test_window
 
     def load_data(
-        self, graph: Graph = None, current: Optional[float] = None
-    ) -> Dict[Node, Sequence[float]]:
+        self, graph: Graph = None, current: float | None = None
+    ) -> dict[Node, Sequence[float]]:
         """
         Parepare data
         """
@@ -229,7 +229,7 @@ class CaseData:
 
         start = self._detect_time - self._lookup_window
         length = int((current - start) / self._interval.total_seconds()) + 1
-        series: Dict[Node, Sequence[float]] = {}
+        series: dict[Node, Sequence[float]] = {}
         for node in nodes:
             node_data = self._data_loader.load(
                 entity=node.entity,
@@ -253,7 +253,7 @@ class Case:
     Case data for evaluation
     """
 
-    def __init__(self, data: CaseData, answer: Set[Node]):
+    def __init__(self, data: CaseData, answer: set[Node]):
         self._data = data
         self._answer = answer
 
@@ -265,7 +265,7 @@ class Case:
         return self._data
 
     @property
-    def answer(self) -> Set[Node]:
+    def answer(self) -> set[Node]:
         """
         Ground truth for this case
         """

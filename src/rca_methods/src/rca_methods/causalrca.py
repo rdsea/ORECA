@@ -672,7 +672,7 @@ def causalrca(data, inject_time=None, dataset=None, with_bg=False, **kwargs):
         return {"adj": adj, "node_names": node_names, "ranks": node_names}
 
     # merge scores and node names, sort by scores
-    ranks = list(zip(node_names, scores))
+    ranks = list(zip(node_names, scores, strict=False))
     ranks.sort(key=lambda x: x[1], reverse=True)
     # for n, s in ranks:
     #     print(n, s)

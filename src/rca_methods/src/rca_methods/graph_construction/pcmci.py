@@ -96,7 +96,8 @@ def pcmci(data, tau_max=3, alpha=0.2):
     graph.add_nodes_from(nodes)
     # graph.add_node(data.sli)
     graph.add_edges_from(
-        (nodes[cause], nodes[effect]) for cause, effect in zip(*np.where(matrix))
+        (nodes[cause], nodes[effect])
+        for cause, effect in zip(*np.where(matrix), strict=False)
     )
 
     adj = nx.adjacency_matrix(graph).todense()

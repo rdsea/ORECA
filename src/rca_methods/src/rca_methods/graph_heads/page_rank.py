@@ -89,6 +89,6 @@ def page_rank(
     scores = pr.fit_transform(pr_input)
 
     # merge scores and node names, sort by scores
-    output = list(zip(node_names, scores))
+    output = list(zip(node_names, scores, strict=False))
     output.sort(key=lambda x: x[1], reverse=True)
     return output
