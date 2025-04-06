@@ -1,6 +1,6 @@
 [submodule "writing"]
 	path = writing
 	url = https://git@git.overleaf.com/6729ff8b88ca7fd6f6db5ccc
-[submodule "src/applications/online-boutique"]
-	path = applications/online-boutique
+[submodule "applications/online-boutique"]
+  path = applications/online-boutique
 	url = git@github.com:nguu0123/online-boutique.git
