@@ -35,3 +35,24 @@ After finishing cluster creation, proceed to the next "Update config.yml" step.
   Use `kubectl logs <pod-name>` to view pod logs and diagnose application issues. Make sure that your `kind-config.yaml` file references the correct image.
 
 ---
+
+## Kubeedge
+
+### Install keink
+
+Pull my forked keink as the official repo doesn't allow to create multiple edge node:
+
+```bash
+git clone git@github.com:nguu0123/keink.git
+```
+
+Build the binary according to the instruction
+
+### Create cluster with 2 edge node
+
+```bash
+keink create kubeedge --image rdsea/kubeedge-node:latest --wait 120s --config kubeedge-config.yaml
+```
+
+> [!NOTE]
+> Creating the cluster can have a lot of error, I don't know why but sometimes it will run successfully!
