@@ -7,11 +7,10 @@ import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from log_api import LogAPI
-from metric_api import PrometheusAPI
-from trace_api import TraceAPI
-
-from . import monitor_config, root_path
+from deployments.observer import monitor_config, root_path
+from deployments.observer.log_api import LogAPI
+from deployments.observer.metric_api import PrometheusAPI
+from deployments.observer.trace_api import TraceAPI
 
 
 def collect_traces(start_time, end_time):

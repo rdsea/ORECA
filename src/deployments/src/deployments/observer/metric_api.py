@@ -14,7 +14,12 @@ import pytz
 from kubernetes import client
 from prometheus_api_client import PrometheusConnect
 
-from . import get_pod_list, get_services_list, monitor_config, root_path
+from deployments.observer import (
+    get_pod_list,
+    get_services_list,
+    monitor_config,
+    root_path,
+)
 
 normal_metrics = [
     # cpu

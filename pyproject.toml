@@ -17,7 +17,7 @@ allow-direct-references = true
 
 
 [tool.rye.workspace]
-members = ["src/rca_methods", "deployments/observer"]
+members = ["src/deployments", "src/rca_methods"]
 
 [tool.ruff.format]
 docstring-code-format = true

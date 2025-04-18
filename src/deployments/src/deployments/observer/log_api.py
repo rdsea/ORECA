@@ -1,6 +1,3 @@
-# Copyright (c) Microsoft Corporation.
-# Licensed under the MIT License.
-
 import json
 import os
 import time
@@ -14,8 +11,13 @@ from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionTimeout
 from kubernetes import client
 
-from . import get_pod_list, get_services_list, monitor_config, root_path
-from .utils.extract import merge_csv
+from deployments.observer import (
+    get_pod_list,
+    get_services_list,
+    monitor_config,
+    root_path,
+)
+from deployments.observer.utils.extract import merge_csv
 
 
 class LogAPI:

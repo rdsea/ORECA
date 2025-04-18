@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import requests
 
-from . import root_path
+from deployments.observer import root_path
 
 
 class TraceAPI:

@@ -11,4 +11,13 @@ nodes:
     extraMounts:
       - hostPath: /run/udev
         containerPath: /run/udev
-
+  - role: worker
+    image: rdsea/aiopslab-kind-x86:latest
+    extraMounts:
+      - hostPath: /run/udev
+        containerPath: /run/udev
+  - role: worker
+    image: rdsea/aiopslab-kind-x86:latest
+    extraMounts:
+      - hostPath: /run/udev
+        containerPath: /run/udev

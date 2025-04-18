@@ -9,9 +9,12 @@
 #   generate-hashes: false
 #   universal: false
 
+-e file:src/deployments
 -e file:src/rca_methods
 aiosignal==1.3.2
     # via ray
+annotated-types==0.7.0
+    # via pydantic
 attrs==25.1.0
     # via jsonschema
     # via referencing
@@ -45,6 +48,7 @@ durationpy==0.9
 elastic-transport==8.17.1
     # via elasticsearch
 elasticsearch==8.17.2
+    # via deployments
 filelock==3.17.0
     # via ray
     # via torch
@@ -85,10 +89,13 @@ jsonschema-specifications==2024.10.1
 kiwisolver==1.4.8
     # via matplotlib
 kubernetes==32.0.1
+    # via deployments
 lingam==1.5.5
     # via causalai
 markdown==3.7
     # via ccit
+markdown-it-py==3.0.0
+    # via rich
 markupsafe==3.0.2
     # via jinja2
     # via werkzeug
@@ -97,6 +104,8 @@ matplotlib==3.10.1
     # via causalai
     # via ccit
     # via prometheus-api-client
+mdurl==0.1.2
+    # via markdown-it-py
 momentchi2==0.1.8
     # via causal-learn
 mpmath==1.3.0
@@ -166,6 +175,7 @@ packaging==24.2
 pandas==2.2.3
     # via causal-learn
     # via ccit
+    # via deployments
     # via prometheus-api-client
     # via statsmodels
 patsy==1.0.1
@@ -173,6 +183,7 @@ patsy==1.0.1
 pillow==11.1.0
     # via matplotlib
 prometheus-api-client==0.5.7
+    # via deployments
 protobuf==5.29.3
     # via ray
 pyasn1==0.6.1
@@ -180,8 +191,14 @@ pyasn1==0.6.1
     # via rsa
 pyasn1-modules==0.4.2
     # via google-auth
+pydantic==2.11.3
+    # via deployments
+pydantic-core==2.33.1
+    # via pydantic
 pydot==3.0.4
     # via causal-learn
+pygments==2.19.1
+    # via rich
 pyparsing==3.2.1
     # via matplotlib
     # via pydot
@@ -192,6 +209,7 @@ python-dateutil==2.9.0.post0
     # via pandas
 pytz==2025.2
     # via dateparser
+    # via deployments
     # via pandas
 pyyaml==6.0.2
     # via kubernetes
@@ -204,6 +222,7 @@ referencing==0.36.2
 regex==2024.11.6
     # via dateparser
 requests==2.32.3
+    # via deployments
     # via httmock
     # via kubernetes
     # via prometheus-api-client
@@ -211,6 +230,8 @@ requests==2.32.3
     # via requests-oauthlib
 requests-oauthlib==2.0.0
     # via kubernetes
+rich==14.0.0
+    # via deployments
 rpds-py==0.23.1
     # via jsonschema
     # via referencing
@@ -252,8 +273,13 @@ tqdm==4.67.1
 triton==3.2.0
     # via torch
 typing-extensions==4.12.2
+    # via pydantic
+    # via pydantic-core
     # via referencing
     # via torch
+    # via typing-inspection
+typing-inspection==0.4.0
+    # via pydantic
 tzdata==2025.1
     # via pandas
 tzlocal==5.3.1

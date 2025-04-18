@@ -1,0 +1,17 @@
+{
+  "Desc": "Prometheus is an open-source systems monitoring and alerting toolkit that collects and stores metrics as time series data.",
+  "Helm Config": {
+    "chart_path": "observer/prometheus/prometheus/",
+    "namespace": "observe",
+    "release_name": "prometheus"
+  },
+  "Name": "Prometheus",
+  "Namespace": "observe",
+  "PersistentVolumeClaimConfig": "observer/prometheus/prometheus-pvc.yml",
+  "Supported Operations": [
+    "Collect metrics from various endpoints",
+    "Store time series data",
+    "Query metrics with PromQL",
+    "Generate alerts based on metrics"
+  ]
+}
