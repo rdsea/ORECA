@@ -1,5 +1,7 @@
 import subprocess
 
+from loguru import logger
+
 from deployments.applications.kubectl import KubeCtl
 
 
@@ -72,9 +74,10 @@ class Helm:
         output, error = process.communicate()
 
         if error:
-            print(error.decode("utf-8"))
+            logger.error(error.decode("utf-8"))
+            raise Exception("Helm uninstall failed")
         else:
-            print(output.decode("utf-8"))
+            logger.info(output.decode("utf-8"))
 
     @staticmethod
     def exists_release(release_name: str, namespace: str) -> bool:

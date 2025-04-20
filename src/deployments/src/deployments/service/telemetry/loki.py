@@ -5,12 +5,12 @@ import yaml
 
 from deployments.applications.helm import Helm
 from deployments.applications.kubectl import KubeCtl
-from deployments.paths import HELM_CHARTS, LOGSTASH_METADATA
+from deployments.paths import HELM_CHARTS, LOKI_METADATA
 
 
 class Loki:
     def __init__(self):
-        self.config_file = LOGSTASH_METADATA
+        self.config_file = LOKI_METADATA
         self.name = None
         self.namespace = None
         self.helm_configs = {}
@@ -30,7 +30,7 @@ class Loki:
 
         self.name = metadata["Name"]
         self.namespace = metadata["Namespace"]
-        self.locally = metadata.get("locally", False)
+        self.locally = self.helm_configs.get("locally", False)
         if "Helm Config" in metadata:
             self.helm_configs = metadata["Helm Config"]
             if "chart_path" in self.helm_configs:
@@ -67,12 +67,15 @@ class Loki:
 
     def deploy(self):
         """Deploy the metric collector using Helm."""
-        if self._is_logstash_running():
-            print("Prometheus is already running. Skipping redeployment.")
+        if self._is_loki_running():
+            print("Loki is already running. Skipping redeployment.")
             return
 
-        self._delete_pv()
-        Helm.uninstall(**self.helm_configs)
+        # self._delete_pv()
+        Helm.uninstall(
+            release_name=self.helm_configs["release_name"],
+            namespace=self.helm_configs["namespace"],
+        )
 
         Helm.add_repo("grafana", "https://grafana.github.io/helm-charts")
         Helm.update_repo()
@@ -137,11 +140,9 @@ class Loki:
             return False
         return True
 
-    def _is_logstash_running(self) -> bool:
+    def _is_loki_running(self) -> bool:
         """Check if Prometheus is already running in the cluster."""
-        command = (
-            f"kubectl get pods -n {self.namespace} -l app.kubernetes.io/name=logstash"
-        )
+        command = f"kubectl get pods -n {self.namespace} -l app.kubernetes.io/name=loki"
         try:
             result = KubeCtl().exec_command(command)
             if "Running" in result:

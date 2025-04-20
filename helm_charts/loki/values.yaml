@@ -17,9 +17,16 @@ loki:
     volume_enabled: true
   ruler:
     enable_api: true
+  auth_enabled: false
 
 minio:
   enabled: true
+  rootUser: root-user
+  rootPassword: supersecretpassword
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 1024Mi
 
 deploymentMode: SingleBinary
 

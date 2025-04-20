@@ -3,6 +3,7 @@ import os
 from subprocess import CalledProcessError
 
 import yaml
+from loguru import logger
 
 from deployments.applications.helm import Helm
 from deployments.applications.kubectl import KubeCtl
@@ -31,12 +32,13 @@ class Prometheus:
 
         self.name = metadata["Name"]
         self.namespace = metadata["Namespace"]
-        self.locally = metadata.get("locally", False)
+        self.locally = self.helm_configs.get("locally", False)
         if "Helm Config" in metadata:
             self.helm_configs = metadata["Helm Config"]
             if "chart_path" in self.helm_configs:
                 values = self.helm_configs["values"]
                 self.helm_configs["values"] = str(HELM_CHARTS / values)
+                logger.info(self.locally)
                 if self.locally:
                     chart_path = self.helm_configs["chart_path"]
                     self.helm_configs["chart_path"] = str(HELM_CHARTS / chart_path)
@@ -73,7 +75,10 @@ class Prometheus:
             return
 
         self._delete_pv()
-        Helm.uninstall(**self.helm_configs)
+        Helm.uninstall(
+            release_name=self.helm_configs["release_name"],
+            namespace=self.helm_configs["namespace"],
+        )
 
         if self.pvc_config_file:
             pv_name = self._get_pv_name_from_file(self.pvc_config_file)

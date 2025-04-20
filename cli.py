@@ -15,7 +15,16 @@ logger.add(sys.stderr, level="INFO")
 application_manager = ApplicationManager()
 console = Console()
 
-commands = ["init_telemetry", "destroy", "set_log_level", "exit"]
+commands = [
+    "init_telemetry",
+    "destroy",
+    "set_log_level",
+    "exit",
+    "init_metric",
+    "init_log",
+    "destroy_metric",
+    "destroy_log",
+]
 command_completer = WordCompleter(commands, ignore_case=True)
 
 
@@ -31,7 +40,9 @@ def main():
     session = PromptSession()
     console.print(
         Panel(
-            "[bold green]Telemetry CLI[/bold green]\nType a command: [cyan]init_telemetry[/cyan], [cyan]destroy[/cyan], [cyan]set_log_level[/cyan], or [cyan]exit[/cyan].",
+            "[bold green]Telemetry CLI[/bold green]\nType a command: [cyan]init_telemetry[/cyan], [cyan]destroy[/cyan], "
+            "[cyan]init_metric[/cyan], [cyan]init_log[/cyan], [cyan]destroy_metric[/cyan], [cyan]destroy_log[/cyan], "
+            "[cyan]set_log_level[/cyan], or [cyan]exit[/cyan].",
             title="Welcome",
         )
     )
@@ -49,6 +60,22 @@ def main():
             elif user_input == "destroy":
                 application_manager.destroy()
                 console.print("[bold green]✔  Telemetry destroyed[/bold green]")
+
+            elif user_input == "init_metric":
+                application_manager.init_metric()
+                console.print("[bold green]✔  Metric initialized[/bold green]")
+
+            elif user_input == "init_log":
+                application_manager.init_log()
+                console.print("[bold green]✔  Log initialized[/bold green]")
+
+            elif user_input == "destroy_metric":
+                application_manager.destroy_metric()
+                console.print("[bold green]✔  Metric destroyed[/bold green]")
+
+            elif user_input == "destroy_log":
+                application_manager.destroy_log()
+                console.print("[bold green]✔  Log destroyed[/bold green]")
 
             elif user_input == "set_log_level":
                 set_log_level()
