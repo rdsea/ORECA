@@ -1,10 +1,11 @@
 from enum import Enum
 
-from aiopslab.config import Config
-from aiopslab.paths import BASE_DIR
 from colorama import Fore, Style
 
-config = Config(BASE_DIR / "config.yml")
+from deployments.config import Config
+from deployments.paths import BASE_DIR
+
+config = Config(BASE_DIR / "config.yaml")
 
 
 class SubmissionStatus(Enum):

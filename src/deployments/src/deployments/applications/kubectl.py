@@ -4,6 +4,7 @@ import time
 
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
+from loguru import logger
 from rich.console import Console
 
 
@@ -265,6 +266,7 @@ class KubeCtl:
 
     def exec_command(self, command: str, input_data=None):
         """Execute an arbitrary kubectl command."""
+        logger.debug(command)
         if input_data is not None:
             input_data = input_data.encode("utf-8")
         try:

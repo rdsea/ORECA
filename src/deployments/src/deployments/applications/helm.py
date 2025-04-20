@@ -5,7 +5,14 @@ from deployments.applications.kubectl import KubeCtl
 
 class Helm:
     @staticmethod
-    def install(**args):
+    def install(
+        release_name: str,
+        chart_path: str,
+        namespace: str,
+        version: str | None = None,
+        values: str | None = None,
+        locally: bool = False,
+    ):
         """Install a helm chart
 
         Args:
@@ -13,33 +20,29 @@ class Helm:
             chart_path (str): Path to the helm chart
             namespace (str): Namespace to install the chart
             version (str): Version of the chart
-            extra_args (List[str)]: Extra arguments for the helm install command
+            values (str, optional): Path to configuration file
+            locally (bool): Chart is locally available or from a repo
+            extra_args (List[str], optional): Extra arguments for the helm install command
         """
         print("== Helm Install ==")
-        release_name = args.get("release_name")
-        chart_path = args.get("chart_path")
-        namespace = args.get("namespace")
-        version = args.get("version")
-        extra_args = args.get("extra_args")
 
         # Install dependencies for chart before installation
-        dependency_command = f"helm dependency update {chart_path}"
-        dependency_process = subprocess.Popen(
-            dependency_command,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        dependency_output, dependency_error = dependency_process.communicate()
+        if locally:
+            dependency_command = f"helm dependency update {chart_path}"
+            dependency_process = subprocess.Popen(
+                dependency_command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            dependency_output, dependency_error = dependency_process.communicate()
 
-        command = f"helm install {release_name} {chart_path} -n {namespace} --create-namespace"
+        command = f"helm install {release_name} {chart_path} -n {namespace} --create-namespace {f'-f {values}' if values else ''}"
 
         if version:
             command += f" --version {version}"
 
-        if extra_args:
-            command += " " + " ".join(extra_args)
-
+        print(command)
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         output, error = process.communicate()
 
@@ -49,7 +52,7 @@ class Helm:
             print(output.decode("utf-8"))
 
     @staticmethod
-    def uninstall(**args):
+    def uninstall(release_name: str, namespace: str):
         """Uninstall a helm chart
 
         Args:
@@ -57,15 +60,15 @@ class Helm:
             namespace (str): Namespace to uninstall the chart
         """
         print("== Helm Uninstall ==")
-        release_name = args.get("release_name")
-        namespace = args.get("namespace")
 
         if not Helm.exists_release(release_name, namespace):
             print(f"Release {release_name} does not exist. Skipping uninstall.")
             return
 
         command = f"helm uninstall {release_name} -n {namespace}"
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+        process = subprocess.Popen(
+            command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         output, error = process.communicate()
 
         if error:
@@ -180,6 +183,20 @@ class Helm:
             print(f"Error adding helm repo {name}: {error.decode('utf-8')}")
         else:
             print(f"Helm repo {name} added successfully: {output.decode('utf-8')}")
+
+    @staticmethod
+    def update_repo():
+        print("== Helm Repo Update ==")
+        command = "helm repo update"
+        process = subprocess.Popen(
+            command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        _, error = process.communicate()
+
+        if error:
+            print("Error updating helm repo")
+        else:
+            print("Helm repo updated")
 
 
 # Example usage

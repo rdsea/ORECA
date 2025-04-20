@@ -39,6 +39,8 @@ charset-normalizer==3.4.1
 click==8.1.8
     # via flask
     # via ray
+colorama==0.4.6
+    # via deployments
 contourpy==1.3.1
     # via matplotlib
 cycler==0.12.1
@@ -99,6 +101,7 @@ kubernetes==32.0.1
     # via deployments
 lingam==1.5.5
     # via causalai
+loguru==0.7.3
 markdown==3.7
     # via ccit
 markdown-it-py==3.0.0
@@ -196,6 +199,7 @@ platformdirs==4.3.6
 pre-commit==4.1.0
 prometheus-api-client==0.5.7
     # via deployments
+prompt-toolkit==3.0.51
 protobuf==5.29.3
     # via ray
 pyasn1==0.6.1
@@ -304,6 +308,8 @@ urllib3==2.3.0
     # via requests
 virtualenv==20.29.2
     # via pre-commit
+wcwidth==0.2.13
+    # via prompt-toolkit
 websocket-client==1.8.0
     # via kubernetes
 werkzeug==3.1.3

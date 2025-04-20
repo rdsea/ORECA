@@ -34,7 +34,8 @@ configmapReload:
 
   ## env sets environment variables to pass to the container. Can be set as name/value pairs,
   ## read from secrets or configmaps.
-  env: []
+  env:
+    []
     # - name: SOMEVAR
     #   value: somevalue
     # - name: PASSWORD
@@ -78,7 +79,8 @@ configmapReload:
 
     ## Additional configmap-reload mounts
     ##
-    extraConfigmapMounts: []
+    extraConfigmapMounts:
+      []
       # - name: prometheus-alerts
       #   mountPath: /etc/alerts.d
       #   subPath: ""
@@ -247,19 +249,22 @@ server:
 
   ## https://prometheus.io/docs/prometheus/latest/configuration/configuration/#tsdb
   ##
-  tsdb: {}
+  tsdb:
+    {}
     # out_of_order_time_window: 0s
 
   ## https://prometheus.io/docs/prometheus/latest/configuration/configuration/#exemplars
   ## Must be enabled via --enable-feature=exemplar-storage
   ##
-  exemplars: {}
+  exemplars:
+    {}
     # max_exemplars: 100000
 
   ## Custom HTTP headers for Liveness/Readiness/Startup Probe
   ##
   ## Useful for providing HTTP Basic Auth to healthchecks
-  probeHeaders: []
+  probeHeaders:
+    []
     # - name: "Authorization"
     #   value: "Bearer ABCDEabcde12345"
 
@@ -281,14 +286,16 @@ server:
 
   ## Additional Prometheus server hostPath mounts
   ##
-  extraHostPathMounts: []
+  extraHostPathMounts:
+    []
     # - name: certs-dir
     #   mountPath: /etc/kubernetes/certs
     #   subPath: ""
     #   hostPath: /etc/kubernetes/certs
     #   readOnly: true
 
-  extraConfigmapMounts: []
+  extraConfigmapMounts:
+    []
     # - name: certs-configmap
     #   mountPath: /prometheus
     #   subPath: ""
@@ -297,7 +304,8 @@ server:
 
   ## Additional Prometheus server Secret mounts
   # Defines additional mounts with secrets. Secrets must be manually created in the namespace.
-  extraSecretMounts: []
+  extraSecretMounts:
+    []
     # - name: secret-files
     #   mountPath: /etc/secrets
     #   subPath: ""
@@ -375,7 +383,8 @@ server:
   ## Node tolerations for server scheduling to nodes with taints
   ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
   ##
-  tolerations: []
+  tolerations:
+    []
     # - key: "key"
     #   operator: "Equal|Exists"
     #   value: "value"
@@ -439,7 +448,7 @@ server:
     ## Prometheus server data Persistent Volume existing claim name
     ## Requires server.persistentVolume.enabled: true
     ## If defined, PVC must be created manually before volume will be bound
-    existingClaim: ""
+    existingClaim: "prometheus-pvc"
 
     ## Prometheus server data Persistent Volume mount root path
     ##
@@ -492,7 +501,8 @@ server:
 
   ## Annotations to be added to Prometheus server pods
   ##
-  podAnnotations: {}
+  podAnnotations:
+    {}
     # iam.amazonaws.com/role: prometheus
 
   ## Labels to be added to Prometheus server pods
@@ -507,7 +517,8 @@ server:
   ## Ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/
   ##
   podSecurityPolicy:
-    annotations: {}
+    annotations:
+      {}
       ## Specify pod annotations
       ## Ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/#apparmor
       ## Ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/#seccomp
@@ -585,7 +596,8 @@ server:
   ## Prometheus server resource requests and limits
   ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
   ##
-  resources: {}
+  resources:
+    {}
     # limits:
     #   cpu: 500m
     #   memory: 512Mi
@@ -617,7 +629,8 @@ server:
     # - containerName: 'prometheus-server'
 
   # Custom DNS configuration to be added to prometheus server pods
-  dnsConfig: {}
+  dnsConfig:
+    {}
     # nameservers:
     #   - XXX.XXX.XXX.XXX
     # searches:
@@ -662,7 +675,6 @@ server:
     # yinfang
     type: NodePort
     nodePort: 32000
-
 
     ## Enable gRPC port on service to allow auto discovery with thanos-querier
     gRPC:
@@ -734,7 +746,7 @@ serverFiles:
     rule_files:
       - /etc/config/recording_rules.yml
       - /etc/config/alerting_rules.yml
-    ## Below two files are DEPRECATED will be removed from this default values file
+      ## Below two files are DEPRECATED will be removed from this default values file
       - /etc/config/rules
       - /etc/config/alerts
 
@@ -742,9 +754,9 @@ serverFiles:
       - job_name: prometheus
         static_configs:
           - targets:
-            - localhost:9090
+              - localhost:9090
 
-      - job_name: 'kubernetes-cadvisor'
+      - job_name: "kubernetes-cadvisor"
 
         # Default to scraping over https. If required, just disable this or change to
         # `http`.
@@ -785,18 +797,19 @@ serverFiles:
           - action: labelmap
             regex: __meta_kubernetes_node_label_(.+)
 
-      - job_name: 'kubernetes-nodes'
+      - job_name: "kubernetes-nodes"
         kubernetes_sd_configs:
           - role: endpoints
         relabel_configs:
-        - source_labels: [__meta_kubernetes_endpoints_name]
-          regex: 'prometheus-prometheus-node-exporter'
-          action: keep
+          - source_labels: [__meta_kubernetes_endpoints_name]
+            regex: "prometheus-prometheus-node-exporter"
+            action: keep
 
 # adds additional scrape configs to prometheus.yml
 # must be a string so you have to add a | after extraScrapeConfigs:
 # example adds prometheus-blackbox-exporter scrape config
-extraScrapeConfigs: ""
+extraScrapeConfigs:
+  ""
   # - job_name: 'prometheus-blackbox-exporter'
   #   metrics_path: /probe
   #   params:
@@ -814,7 +827,8 @@ extraScrapeConfigs: ""
 
 # Adds option to add alert_relabel_configs to avoid duplicate alerts in alertmanager
 # useful in H/A prometheus with different external labels but the same alerts
-alertRelabelConfigs: {}
+alertRelabelConfigs:
+  {}
   # alert_relabel_configs:
   # - source_labels: [dc]
   #   regex: (.+)\d+
@@ -829,7 +843,8 @@ networkPolicy:
 forceNamespace: ""
 
 # Extra manifests to deploy as an array
-extraManifests: []
+extraManifests:
+  []
   # - |
   #   apiVersion: v1
   #   kind: ConfigMap

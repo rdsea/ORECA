@@ -3,6 +3,7 @@ import time
 from deployments.applications.kubectl import KubeCtl
 from deployments.applications.registry import ProblemRegistry
 from deployments.applications.utils.status import SessionPrint, SubmissionStatus
+from deployments.service.telemetry.loki import Loki
 from deployments.service.telemetry.prometheus import Prometheus
 from deployments.session import Session
 
@@ -16,6 +17,54 @@ class ApplicationManager:
         self.execution_start_time = None
         self.execution_end_time = None
         self.kubectl = KubeCtl()
+
+    def init_telemetry(self):
+        print("Setting up OpenEBS...")
+
+        command = "kubectl get pods -n openebs"
+        result = self.kubectl.exec_command(command)
+        if "Running" in result:
+            print("OpenEBS is already running. Skipping installation.")
+        else:
+            self.kubectl.exec_command(
+                "kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml"
+            )
+            self.kubectl.exec_command(
+                'kubectl patch storageclass openebs-hostpath -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
+            )
+            self.kubectl.wait_for_ready("openebs")
+            print("OpenEBS setup completed.")
+
+        self.init_metric()
+        self.init_log()
+
+    def init_metric(self):
+        """
+        Setup and deploy Prometheus
+        """
+        self.prometheus = Prometheus()
+        self.prometheus.deploy()
+
+    def init_log(self):
+        """
+        Setup and deploy Loki
+        """
+        self.loki = Loki()
+        self.loki.deploy()
+
+    def destroy(self):
+        self.destroy_metric()
+        self.destroy_log()
+
+    def destroy_metric(self):
+        if not hasattr(self, "prometheus"):
+            self.prometheus = Prometheus()
+        self.prometheus.teardown()
+
+    def destroy_log(self):
+        if not hasattr(self, "loki"):
+            self.loki = Loki()
+        self.loki.teardown()
 
     def init_problem(self, problem_id: str):
         """Initialize a problem instance for the agent to solve.
@@ -34,26 +83,6 @@ class ApplicationManager:
         prob = self.probs.get_problem_instance(problem_id)
         self.session.set_problem(prob, pid=problem_id)
         self.session.set_agent(self.agent_name)
-
-        print("Setting up OpenEBS...")
-
-        command = "kubectl get pods -n openebs"
-        result = self.kubectl.exec_command(command)
-        if "Running" in result:
-            print("OpenEBS is already running. Skipping installation.")
-        else:
-            self.kubectl.exec_command(
-                "kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml"
-            )
-            self.kubectl.exec_command(
-                'kubectl patch storageclass openebs-hostpath -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
-            )
-            self.kubectl.wait_for_ready("openebs")
-            print("OpenEBS setup completed.")
-
-        # Setup and deploy Prometheus
-        self.prometheus = Prometheus()
-        self.prometheus.deploy()
 
         # deploy service
         prob.app.delete()

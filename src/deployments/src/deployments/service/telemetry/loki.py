@@ -1,17 +1,16 @@
 import json
-import os
 from subprocess import CalledProcessError
 
 import yaml
 
 from deployments.applications.helm import Helm
 from deployments.applications.kubectl import KubeCtl
-from deployments.paths import HELM_CHARTS, PROMETHEUS_METADATA
+from deployments.paths import HELM_CHARTS, LOGSTASH_METADATA
 
 
-class Prometheus:
+class Loki:
     def __init__(self):
-        self.config_file = PROMETHEUS_METADATA
+        self.config_file = LOGSTASH_METADATA
         self.name = None
         self.namespace = None
         self.helm_configs = {}
@@ -41,9 +40,9 @@ class Prometheus:
                     chart_path = self.helm_configs["chart_path"]
                     self.helm_configs["chart_path"] = str(HELM_CHARTS / chart_path)
 
-        self.pvc_config_file = os.path.join(
-            HELM_CHARTS, metadata.get("PersistentVolumeClaimConfig")
-        )
+        # self.pvc_config_file = os.path.join(
+        #     HELM_CHARTS, metadata.get("PersistentVolumeClaimConfig")
+        # )
 
     def get_service_json(self) -> dict:
         """Get metric service metadata in JSON format."""
@@ -68,17 +67,19 @@ class Prometheus:
 
     def deploy(self):
         """Deploy the metric collector using Helm."""
-        if self._is_prometheus_running():
+        if self._is_logstash_running():
             print("Prometheus is already running. Skipping redeployment.")
             return
 
         self._delete_pv()
         Helm.uninstall(**self.helm_configs)
 
-        if self.pvc_config_file:
-            pv_name = self._get_pv_name_from_file(self.pvc_config_file)
-            if not self._pv_exists(pv_name):
-                self._apply_pv()
+        Helm.add_repo("grafana", "https://grafana.github.io/helm-charts")
+        Helm.update_repo()
+        # if self.pvc_config_file:
+        #     pv_name = self._get_pv_name_from_file(self.pvc_config_file)
+        #     if not self._pv_exists(pv_name):
+        #         self._apply_pv()
 
         Helm.install(
             release_name=self.helm_configs["release_name"],
@@ -136,10 +137,10 @@ class Prometheus:
             return False
         return True
 
-    def _is_prometheus_running(self) -> bool:
+    def _is_logstash_running(self) -> bool:
         """Check if Prometheus is already running in the cluster."""
         command = (
-            f"kubectl get pods -n {self.namespace} -l app.kubernetes.io/name=prometheus"
+            f"kubectl get pods -n {self.namespace} -l app.kubernetes.io/name=logstash"
         )
         try:
             result = KubeCtl().exec_command(command)

@@ -1,0 +1,13 @@
+{
+  "Desc": "Loki is a horizontally-scalable, highly-available, multi-tenant log aggregation system",
+  "Helm Config": {
+    "chart_path": "grafana/loki",
+    "locally": false,
+    "namespace": "observe",
+    "release_name": "loki",
+    "values": "loki/values.yaml"
+  },
+  "Name": "Loki",
+  "Namespace": "observe",
+  "Supported Operations": []
+}
