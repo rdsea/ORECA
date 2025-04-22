@@ -1,0 +1,42 @@
+---
+persistence:
+  type: pvc
+  enabled: true
+
+# DO NOT DO THIS IN PRODUCTION USECASES
+adminUser: admin
+adminPassword: adminadminadmin
+# CONSIDER USING AN EXISTING SECRET
+# Use an existing secret for the admin user.
+# admin:
+## Name of the secret. Can be templated.
+#  existingSecret: ""
+#  userKey: admin-user
+#  passwordKey: admin-password
+
+service:
+  enabled: true
+  type: ClusterIP
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        orgId: ""
+        url: http://loki-gateway.observe.svc.cluster.local:80
+        basicAuth: false
+        isDefault: false
+        version: 1
+        editable: false
+
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-server.observe.svc.cluster.local
+        basicAuth: false
+        isDefault: false
+        version: 1
+        editable: false

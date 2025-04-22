@@ -32,6 +32,17 @@ deploymentMode: SingleBinary
 
 singleBinary:
   replicas: 1
+  resources:
+    limits:
+      cpu: 4
+      memory: 4Gi
+    requests:
+      cpu: 1
+      memory: 1Gi
+  extraEnv:
+    # Keep a little bit lower than memory limits
+    - name: GOMEMLIMIT
+      value: 3750MiB
 
 # Zero out replica counts of other deployment modes
 backend:

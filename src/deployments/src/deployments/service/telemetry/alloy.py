@@ -1,17 +1,19 @@
 from subprocess import CalledProcessError
 
 from deployments.applications.kubectl import KubeCtl
-from deployments.paths import LOKI_METADATA
+from deployments.paths import ALLOY_METADATA
 from deployments.service.telemetry.telemetry_service import TelemetryService
 
 
-class Loki(TelemetryService):
+class Alloy(TelemetryService):
     def __init__(self):
-        super().__init__(LOKI_METADATA)
+        super().__init__(ALLOY_METADATA)
 
-    def _is_loki_running(self) -> bool:
-        """Check if Loki is already running in the cluster."""
-        command = f"kubectl get pods -n {self.namespace} -l app.kubernetes.io/name=loki"
+    def _is_alloy_running(self) -> bool:
+        """Check if Alloy is already running in the cluster."""
+        command = (
+            f"kubectl get pods -n {self.namespace} -l app.kubernetes.io/name=alloy-logs"
+        )
         try:
             result = KubeCtl().exec_command(command)
             if "Running" in result:

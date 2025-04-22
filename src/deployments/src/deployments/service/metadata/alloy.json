@@ -1,0 +1,13 @@
+{
+  "Desc": "Alloy is an open source OpenTelemetry Collector distribution with built-in Prometheus pipelines and support for metrics, logs, traces, and profiles",
+  "Helm Config": {
+    "chart_path": "grafana/k8s-monitoring",
+    "locally": false,
+    "namespace": "observe",
+    "release_name": "alloy",
+    "values": "k8s-monitoring/values.yaml"
+  },
+  "Name": "Alloy",
+  "Namespace": "observe",
+  "Supported Operations": []
+}
