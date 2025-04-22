@@ -4,6 +4,7 @@ from deployments.applications.kubectl import KubeCtl
 from deployments.applications.registry import ProblemRegistry
 from deployments.applications.utils.status import SessionPrint, SubmissionStatus
 from deployments.service.telemetry.alloy import Alloy
+from deployments.service.telemetry.grafana import Grafana
 from deployments.service.telemetry.loki import Loki
 from deployments.service.telemetry.prometheus import Prometheus
 from deployments.session import Session
@@ -38,6 +39,7 @@ class ApplicationManager:
 
         self.init_metric()
         self.init_log()
+        self.init_visualization()
 
     def init_metric(self):
         """
@@ -57,11 +59,13 @@ class ApplicationManager:
         self.alloy.deploy()
 
     def init_visualization(self):
-        pass
+        self.grafana = Grafana()
+        self.grafana.deploy()
 
     def destroy(self):
         self.destroy_metric()
         self.destroy_log()
+        self.destroy_visualization()
 
     def destroy_metric(self):
         if not hasattr(self, "prometheus"):
@@ -76,6 +80,11 @@ class ApplicationManager:
         if not hasattr(self, "alloy"):
             self.alloy = Alloy()
         self.alloy.teardown()
+
+    def destroy_visualization(self):
+        if not hasattr(self, "grafana"):
+            self.grafana = Grafana()
+        self.grafana.teardown()
 
     def init_problem(self, problem_id: str):
         """Initialize a problem instance for the agent to solve.

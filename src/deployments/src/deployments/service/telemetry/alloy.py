@@ -9,7 +9,7 @@ class Alloy(TelemetryService):
     def __init__(self):
         super().__init__(ALLOY_METADATA)
 
-    def _is_alloy_running(self) -> bool:
+    def _is_service_running(self) -> bool:
         """Check if Alloy is already running in the cluster."""
         command = (
             f"kubectl get pods -n {self.namespace} -l app.kubernetes.io/name=alloy-logs"

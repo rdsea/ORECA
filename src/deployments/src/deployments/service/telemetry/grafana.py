@@ -9,7 +9,7 @@ class Grafana(TelemetryService):
     def __init__(self):
         super().__init__(GRAFANA_METADATA)
 
-    def _is_grafana_running(self) -> bool:
+    def _is_service_running(self) -> bool:
         """Check if Alloy is already running in the cluster."""
         command = (
             f"kubectl get pods -n {self.namespace} -l app.kubernetes.io/name=grafana"

@@ -9,7 +9,7 @@ class Loki(TelemetryService):
     def __init__(self):
         super().__init__(LOKI_METADATA)
 
-    def _is_loki_running(self) -> bool:
+    def _is_service_running(self) -> bool:
         """Check if Loki is already running in the cluster."""
         command = f"kubectl get pods -n {self.namespace} -l app.kubernetes.io/name=loki"
         try:

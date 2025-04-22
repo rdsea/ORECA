@@ -24,6 +24,8 @@ commands = [
     "init_log",
     "destroy_metric",
     "destroy_log",
+    "init_visualization",
+    "destroy_visualization",
 ]
 command_completer = WordCompleter(commands, ignore_case=True)
 
@@ -36,16 +38,17 @@ def set_log_level():
     console.print(f"[bold blue]✔ Log level set to {level}[/bold blue]")
 
 
+def show_welcome_panel():
+    command_list = ", ".join(f"[cyan]{cmd}[/cyan]" for cmd in commands)
+    panel_text = (
+        "[bold green]Telemetry CLI[/bold green]\nType a command: " + command_list + "."
+    )
+    console.print(Panel(panel_text, title="Welcome"))
+
+
 def main():
     session = PromptSession()
-    console.print(
-        Panel(
-            "[bold green]Telemetry CLI[/bold green]\nType a command: [cyan]init_telemetry[/cyan], [cyan]destroy[/cyan], "
-            "[cyan]init_metric[/cyan], [cyan]init_log[/cyan], [cyan]destroy_metric[/cyan], [cyan]destroy_log[/cyan], "
-            "[cyan]set_log_level[/cyan], or [cyan]exit[/cyan].",
-            title="Welcome",
-        )
-    )
+    show_welcome_panel()
 
     while True:
         try:
@@ -53,41 +56,52 @@ def main():
                 session.prompt("> ", completer=command_completer).strip().lower()
             )
 
-            if user_input == "init_telemetry":
-                application_manager.init_telemetry()
-                console.print("[bold green]✔  Telemetry initialized[/bold green]")
+            match user_input:
+                case "init_telemetry":
+                    application_manager.init_telemetry()
+                    console.print("[bold green]✔  Telemetry initialized[/bold green]")
 
-            elif user_input == "destroy":
-                application_manager.destroy()
-                console.print("[bold green]✔  Telemetry destroyed[/bold green]")
+                case "destroy":
+                    application_manager.destroy()
+                    console.print("[bold green]✔  Telemetry destroyed[/bold green]")
 
-            elif user_input == "init_metric":
-                application_manager.init_metric()
-                console.print("[bold green]✔  Metric initialized[/bold green]")
+                case "init_metric":
+                    application_manager.init_metric()
+                    console.print("[bold green]✔  Metric initialized[/bold green]")
 
-            elif user_input == "init_log":
-                application_manager.init_log()
-                console.print("[bold green]✔  Log initialized[/bold green]")
+                case "init_log":
+                    application_manager.init_log()
+                    console.print("[bold green]✔  Log initialized[/bold green]")
 
-            elif user_input == "destroy_metric":
-                application_manager.destroy_metric()
-                console.print("[bold green]✔  Metric destroyed[/bold green]")
+                case "destroy_metric":
+                    application_manager.destroy_metric()
+                    console.print("[bold green]✔  Metric destroyed[/bold green]")
 
-            elif user_input == "destroy_log":
-                application_manager.destroy_log()
-                console.print("[bold green]✔  Log destroyed[/bold green]")
+                case "destroy_log":
+                    application_manager.destroy_log()
+                    console.print("[bold green]✔  Log destroyed[/bold green]")
 
-            elif user_input == "set_log_level":
-                set_log_level()
+                case "init_visualization":
+                    application_manager.init_visualization()
+                    console.print(
+                        "[bold green]✔  Visualization initialized[/bold green]"
+                    )
 
-            elif user_input == "exit":
-                console.print("[yellow]👋 Exiting the CLI. Goodbye![/yellow]")
-                break
+                case "destroy_visualization":
+                    application_manager.destroy_visualization()
+                    console.print("[bold green]✔  Visualization destroyed[/bold green]")
 
-            else:
-                console.print(
-                    f"[bold red]Unknown command:[/bold red] [italic]{user_input}[/italic]"
-                )
+                case "set_log_level":
+                    set_log_level()
+
+                case "exit":
+                    console.print("[yellow]👋 Exiting the CLI. Goodbye![/yellow]")
+                    break
+
+                case _:
+                    console.print(
+                        f"[bold red]Unknown command:[/bold red] [italic]{user_input}[/italic]"
+                    )
 
         except (KeyboardInterrupt, EOFError):
             console.print("\n[dim]Ctrl+C or EOF detected. Exiting...[/dim]")
