@@ -5,7 +5,7 @@
     "locally": false,
     "namespace": "observe",
     "release_name": "alloy",
-    "values": "k8s-monitoring/values.yaml"
+    "values": "alloy/values.yaml"
   },
   "Name": "Alloy",
   "Namespace": "observe",

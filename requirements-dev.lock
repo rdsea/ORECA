@@ -18,8 +18,12 @@ annotated-types==0.7.0
 attrs==25.1.0
     # via jsonschema
     # via referencing
+bidict==0.23.1
+    # via python-socketio
 blinker==1.9.0
     # via flask
+brotli==1.1.0
+    # via geventhttpclient
 cachetools==5.5.2
     # via google-auth
 causal-learn==XXX.XXX.XXX.XXX
@@ -30,6 +34,7 @@ ccit==0.4
     # via causalai
 certifi==2025.1.31
     # via elastic-transport
+    # via geventhttpclient
     # via kubernetes
     # via requests
 cfgv==3.4.0
@@ -41,6 +46,8 @@ click==8.1.8
     # via ray
 colorama==0.4.6
     # via deployments
+configargparse==1.7
+    # via locust
 contourpy==1.3.1
     # via matplotlib
 cycler==0.12.1
@@ -55,6 +62,7 @@ elastic-transport==8.17.1
     # via elasticsearch
 elasticsearch==8.17.2
     # via deployments
+faker==37.1.0
 filelock==3.17.0
     # via ray
     # via torch
@@ -62,8 +70,13 @@ filelock==3.17.0
 flask==3.1.0
     # via causalai
     # via flask-cors
+    # via flask-login
+    # via locust
 flask-cors==5.0.1
     # via causalai
+    # via locust
+flask-login==0.6.3
+    # via locust
 fonttools==4.56.0
     # via matplotlib
 frozenlist==1.5.0
@@ -73,11 +86,20 @@ fsspec==2025.2.0
     # via torch
 ges==1.1.0
     # via causalai
+gevent==24.11.1
+    # via geventhttpclient
+    # via locust
+geventhttpclient==2.3.3
+    # via locust
 google-auth==2.38.0
     # via kubernetes
 graphviz==0.20.3
     # via causal-learn
     # via lingam
+greenlet==3.2.1
+    # via gevent
+h11==0.16.0
+    # via wsproto
 httmock==1.4.0
     # via prometheus-api-client
 identify==2.6.8
@@ -101,6 +123,10 @@ kubernetes==32.0.1
     # via deployments
 lingam==1.5.5
     # via causalai
+locust==2.36.1
+    # via locust-cloud
+locust-cloud==1.20.3
+    # via locust
 loguru==0.7.3
 markdown==3.7
     # via ccit
@@ -121,6 +147,7 @@ momentchi2==0.1.8
 mpmath==1.3.0
     # via sympy
 msgpack==1.1.0
+    # via locust
     # via ray
 networkx==3.4.2
     # via causal-learn
@@ -195,6 +222,7 @@ patsy==1.0.1
 pillow==11.1.0
     # via matplotlib
 platformdirs==4.3.6
+    # via locust-cloud
     # via virtualenv
 pre-commit==4.1.0
 prometheus-api-client==0.5.7
@@ -202,6 +230,8 @@ prometheus-api-client==0.5.7
 prompt-toolkit==3.0.51
 protobuf==5.29.3
     # via ray
+psutil==7.0.0
+    # via locust
 pyasn1==0.6.1
     # via pyasn1-modules
     # via rsa
@@ -215,6 +245,8 @@ pydot==3.0.4
     # via causal-learn
 pygments==2.19.1
     # via rich
+pyjwt==2.10.1
+    # via locust-cloud
 pyparsing==3.2.1
     # via matplotlib
     # via pydot
@@ -223,6 +255,10 @@ python-dateutil==2.9.0.post0
     # via kubernetes
     # via matplotlib
     # via pandas
+python-engineio==4.12.0
+    # via python-socketio
+python-socketio==5.13.0
+    # via locust-cloud
 pytz==2025.2
     # via dateparser
     # via deployments
@@ -231,6 +267,8 @@ pyyaml==6.0.2
     # via kubernetes
     # via pre-commit
     # via ray
+pyzmq==26.4.0
+    # via locust
 ray==2.43.0
     # via causalai
 referencing==0.36.2
@@ -242,7 +280,9 @@ requests==2.32.3
     # via deployments
     # via httmock
     # via kubernetes
+    # via locust
     # via prometheus-api-client
+    # via python-socketio
     # via ray
     # via requests-oauthlib
 requests-oauthlib==2.0.0
@@ -273,7 +313,12 @@ scipy==1.15.2
     # via statsmodels
     # via xgboost
 setuptools==75.8.2
+    # via locust
     # via torch
+    # via zope-event
+    # via zope-interface
+simple-websocket==1.1.0
+    # via python-engineio
 six==1.17.0
     # via kubernetes
     # via python-dateutil
@@ -299,11 +344,13 @@ typing-extensions==4.12.2
 typing-inspection==0.4.0
     # via pydantic
 tzdata==2025.1
+    # via faker
     # via pandas
 tzlocal==5.3.1
     # via dateparser
 urllib3==2.3.0
     # via elastic-transport
+    # via geventhttpclient
     # via kubernetes
     # via requests
 virtualenv==20.29.2
@@ -312,8 +359,17 @@ wcwidth==0.2.13
     # via prompt-toolkit
 websocket-client==1.8.0
     # via kubernetes
+    # via python-socketio
 werkzeug==3.1.3
     # via flask
     # via flask-cors
+    # via flask-login
+    # via locust
+wsproto==1.2.0
+    # via simple-websocket
 xgboost==2.1.4
     # via ccit
+zope-event==5.0
+    # via gevent
+zope-interface==7.2
+    # via gevent

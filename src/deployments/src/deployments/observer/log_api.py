@@ -1,426 +1,208 @@
 import json
 import os
+import select
+import socket
+import subprocess
+import threading
 import time
-from datetime import datetime, timedelta, timezone
-from enum import Enum
+from datetime import datetime, timedelta
 from pathlib import Path
-from ssl import create_default_context
 
-import pandas as pd
-from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import ConnectionTimeout
+import requests
 from kubernetes import client
+from loguru import logger
 
 from deployments.observer import (
     get_pod_list,
     get_services_list,
-    monitor_config,
-    root_path,
+    # monitor_config,
+    # root_path,
 )
-from deployments.observer.utils.extract import merge_csv
 
 
-class LogAPI:
-    def __init__(self, url: str, username: str, password: str):
-        if monitor_config["es_use_cert"] == "True":
-            context = create_default_context(cafile=monitor_config["es_cert_path"])
-            self.elastic = Elasticsearch(
-                [url],
-                basic_auth=(username, password),
-                # timeout=60,
-                max_retries=5,
-                retry_on_timeout=True,
-                ssl_context=context,
-            )
-        else:
-            self.elastic = Elasticsearch(
-                [url],
-                basic_auth=(username, password),
-                verify_certs=False,
-                # timeout=60,
-                max_retries=5,
-                retry_on_timeout=True,
-            )
-        self.log_pod_list, self.service_list = self.initialize_pod_and_service_lists()
+class LokiAPI:
+    def __init__(self, namespace: str, application_namespace: str):
+        self.loki_namespace = namespace
+        self.application_namespace = application_namespace
+        self.port = 32000
+        self.port_forward_process = None
+        self.stop_event = threading.Event()
+        self.start_port_forward()
+        # self.client = PrometheusConnect(url, disable_ssl=True)
+        self.loki_namespace = namespace
+        self.pod_list, self.service_list = self.initialize_pod_and_service_lists()
 
-    def log_processing_online_boutique(self, logs):
-        log_id_list = []
-        ts_list = []
-        date_list = []
-        pod_list = []
-        ms_list = []
-        for log in logs:
-            try:
-                cmdb_id = log["_source"]["kubernetes"]["pod"]["name"]
-                if cmdb_id not in self.log_pod_list:
-                    continue
-                timestamp = log["_source"]["@timestamp"]
-                timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%fZ")
-                timestamp = timestamp.timestamp()
-                format_ts = log["_source"]["@timestamp"]
-                message = message_extract(log["_source"]["message"])
-            except Exception:
-                continue
-            log_id_list.append(log["_id"])
-            pod_list.append(cmdb_id)
-            date_list.append(format_ts)
-            ts_list.append(timestamp)
-            ms_list.append(message)
-        dt = pd.DataFrame(
-            {
-                "log_id": log_id_list,
-                "timestamp": ts_list,
-                "date": date_list,
-                "cmdb_id": pod_list,
-                "message": ms_list,
-            }
-        )
-        return dt
+        self.base_url = f"http://localhost:{self.port}"
 
-    def log_for_query_filter(self, logs):
-        filtered_log = []
-        for log in logs:
-            try:
-                cmdb_id = log["_source"]["kubernetes"]["pod"]["name"]
-                if cmdb_id not in self.log_pod_list:
-                    continue
-            except Exception:
-                continue
-            filtered_log.append(log)
-        return filtered_log
-
-    def initialize_pod_and_service_lists(self, custom_namespace=None):
-        namespace = custom_namespace or monitor_config["namespace"]
-        v1 = client.CoreV1Api()
+    def initialize_pod_and_service_lists(self):
+        k8s_client = client.CoreV1Api()
         pod_list = [
             pod
-            for pod in get_pod_list(v1, namespace=namespace)
+            for pod in get_pod_list(k8s_client, namespace=self.application_namespace)
             if not pod.startswith("loadgenerator-") and not pod.startswith("redis-cart")
         ]
-        service_list = get_services_list(v1, namespace=namespace)
+        service_list = get_services_list(k8s_client, namespace=self.loki_namespace)
         return pod_list, service_list
 
-    def log_extract(self, start_time: int, end_time: int, path: Path):
-        time_interval = 5 * 60
-        csv_list = []
-        os.makedirs(path, exist_ok=True)
-        while start_time < end_time:
-            current_end_time = start_time + time_interval
-            if current_end_time > end_time:
-                current_end_time = end_time
-            data = self.log_extract_(start_time=start_time, end_time=current_end_time)
-            if len(data) != 0:
-                # Export
-                data.to_csv(
-                    f"{path}/log-{start_time}_{current_end_time}.csv", index=False
-                )
-                csv_list.append(f"{path}/log-{start_time}_{current_end_time}.csv")
-            start_time = current_end_time
-            time.sleep(1)
+    def is_port_in_use(self, port):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex(("XXX.XXX.XXX.XXX", port)) == 0
 
-        if not csv_list:
-            print("No logs found for the given time range.")
-        else:
-            merge_csv(path, csv_list, f"log_{int(time.time())}")
-
-    # log data export
-    def log_extract_(self, start_time=None, end_time=None):
-        quert_size = 7500
-
-        indices = self.elastic.indices.get(index="logstash-*")
-        indices = choose_index_template(indices, start_time, end_time)
-        print("indices", indices)
-
-        if isinstance(start_time, int):
-            # start_time = datetime.fromtimestamp(start_time)
-            start_time = datetime.fromtimestamp(start_time, tz=timezone.utc).strftime(
-                "%Y-%m-%dT%H:%M:%SZ"
-            )
-        if isinstance(end_time, int):
-            # end_time = datetime.fromtimestamp(end_time)
-            end_time = datetime.fromtimestamp(end_time, tz=timezone.utc).strftime(
-                "%Y-%m-%dT%H:%M:%SZ"
-            )
-        # print(start_time, end_time)
-        query = {
-            "size": quert_size,
-            "query": {
-                "range": {"@timestamp": {"gte": start_time, "lte": end_time}}
-                # "bool": {
-                #     "must": [
-                #         {"range": {"@timestamp": {"gte": start_time, "lte": end_time}}}
-                #     ]
-                # }
-            },
-            # "sort": ["_doc"],
-            "sort": [{"@timestamp": {"order": "asc"}}],
-        }
-        data = []
-
-        st_time = time.time()
-        for index in indices:
-            try:
-                page = self.elastic.search(index=index, body=query, scroll="15s")
-                # page = self.elastic.search(index="logstash-*", body=query, scroll="15s")
-                # print("Query being sent to Elasticsearch:")
-                # print(json.dumps(query, indent=2))
-                # print("Elasticsearch response:", page)
-                # print(query)
-                data.extend(page["hits"]["hits"])
-                # scroll_id = page["_scroll_id"]
-
-                # while True:
-                #     page = self.elastic.scroll(scroll_id=scroll_id, scroll="15s")
-                #     hits_len = len(page["hits"]["hits"])
-                #     data.extend(page["hits"]["hits"])
-                #     if hits_len < quert_size:
-                #         break
-                #     scroll_id = page["_scroll_id"]
-            except ConnectionTimeout as e:
-                print("Connection Timeout:", e)
-
-        print("search time: ", time.time() - st_time)
-        st_time = time.time()
-
-        # TODO: extract data
-        # data = log_processing_online_boutique(data)
-        data = log_processing_hotel_reservation(data)
-        print("process time:", time.time() - st_time)
-        return data
-
-    def get_log_number_by_day(self, time_select):
-        data = []
-        try:
-            indices = self.elastic.indices.get(index="logstash-*")
-
-            logs_per_day = {}  # store log per day
-
-            # ONE_DAY aggregate according to hour
-            if time_select == TimeSelect.ONE_DAY:
-                for index in indices:
-                    response = self.elastic.count(index=index)
-                    index_date_str = index.split("-")[-1]  # get the date
-                    index_date = datetime.strptime(index_date_str, "%Y.%m.%d.%H")
-                    # if within the last one day
-                    if index_date >= datetime.now() - timedelta(days=1):
-                        # day_key = index_date.strftime("%Y-%m-%d")
-
-                        if index_date not in logs_per_day:
-                            logs_per_day[index_date] = 0
-                        logs_per_day[index_date] += response["count"]
-            elif time_select == TimeSelect.ONE_WEEK:
-                for index in indices:
-                    response = self.elastic.count(index=index)
-                    index_date_str = index.split("-")[-1]
-                    index_date = datetime.strptime(index_date_str, "%Y.%m.%d.%H")
-
-                    # if within the last seven days
-                    if index_date >= datetime.now() - timedelta(days=7):
-                        day_key = index_date.strftime(
-                            "%Y-%m-%d"
-                        )  # transform the datetime to %Y-%m-%d format string as key
-
-                        if index_date not in logs_per_day:
-                            logs_per_day[day_key] = 0
-                        logs_per_day[day_key] += response["count"]
-            elif time_select == TimeSelect.TWO_WEEK:
-                for index in indices:
-                    response = self.elastic.count(index=index)
-                    index_date_str = index.split("-")[-1]  # get the date
-                    index_date = datetime.strptime(
-                        index_date_str, "%Y.%m.%d.%H"
-                    )  # transform to datetime
-
-                    # if within two weeks
-                    if index_date >= datetime.now() - timedelta(days=14):
-                        day_key = index_date.strftime(
-                            "%Y-%m-%d"
-                        )  # transform the datetime to %Y-%m-%d format string as key
-
-                        if index_date not in logs_per_day:
-                            logs_per_day[day_key] = 0
-                        logs_per_day[day_key] += response["count"]
-            else:
-                print(f"Wrong input params: {time_select}")
-                return data
-            for date_str, log_count in logs_per_day.items():
-                data.append({"date": date_str, "log_count": log_count})
-        except ConnectionTimeout as e:
-            print("Connection Timeout:", e)
-        return data
-
-    def query(self, start_time: int | datetime | str, end_time: int | datetime | str):
-        if isinstance(start_time, str):
-            start_time = int(start_time)
-        if isinstance(end_time, str):
-            end_time = int(end_time)
-
-        # get the indices from the time span
-        indices = self.elastic.indices.get(index="logstash-*")
-        indices = choose_index_template(indices, start_time, end_time)
-
-        start_time = datetime.fromtimestamp(start_time)
-        end_time = datetime.fromtimestamp(end_time)
-
-        query_size = 2500
-        # Elasticsearch query
-        query = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {"range": {"@timestamp": {"gte": start_time, "lte": end_time}}}
-                    ]
-                }
-            },
-            "sort": {"@timestamp": {"order": "asc"}},
-            "size": query_size,
-        }
-        # return Elasticsearch query result
-        data = []
-
-        for index in indices:
-            try:
-                page = self.elastic.search(index=index, body=query, scroll="15s")
-                data.extend(page["hits"]["hits"])
-                scroll_id = page["_scroll_id"]
-
-                while True:
-                    page = self.elastic.scroll(scroll_id=scroll_id, scroll="15s")
-                    hits_len = len(page["hits"]["hits"])
-                    data.extend(page["hits"]["hits"])
-                    if hits_len < query_size:
+    def print_output(self, stream):
+        """Thread function to print output from a subprocess stream non-blockingly."""
+        while not self.stop_event.is_set():
+            ready, _, _ = select.select([stream], [], [], 0.1)
+            if ready:
+                try:
+                    line = stream.readline()
+                    if line:
+                        print(line, end="")
+                    else:
                         break
-                    scroll_id = page["_scroll_id"]
-            except ConnectionTimeout as e:
-                print("Connection Timeout:", e)
-        data = self.log_for_query_filter(data)
-        print("len data", len(data))
-        return data
+                except ValueError:
+                    break
 
+    def start_port_forward(self):
+        """Starts port-forwarding to access Prometheus."""
+        if self.port_forward_process and self.port_forward_process.poll() is None:
+            logger.info("Port-forwarding already active.")
+            return
 
-def message_extract(json_str):
-    message = json_str
-    try:
-        if "severity" in json_str:
-            data = json.loads(json_str)
-            message = "".join(
-                ["severity:", data["severity"], ",", "message:", data["message"]]
+        for attempt in range(3):
+            if self.is_port_in_use(self.port):
+                logger.info(
+                    f"Port {self.port} is already in use. Attempt {attempt + 1} of 3. Retrying in 3 seconds..."
+                )
+                time.sleep(3)
+                continue
+
+            command = f"kubectl port-forward svc/loki-gateway {self.port}:80 -n {self.loki_namespace}"
+            self.port_forward_process = subprocess.Popen(
+                command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
             )
-        elif "level" in json_str:
-            data = json.loads(json_str)
-            message = "".join(
-                ["level:", data["level"], ",", "message:", data["message"]]
+
+            thread_out = threading.Thread(
+                target=self.print_output, args=(self.port_forward_process.stdout,)
             )
-    except Exception:
-        pass
-    return message
+            thread_err = threading.Thread(
+                target=self.print_output, args=(self.port_forward_process.stderr,)
+            )
+            thread_out.start()
+            thread_err.start()
 
+            time.sleep(3)  # Wait a bit for the port-forward to establish
 
-def log_processing_hotel_reservation(logs):
-    log_id_list = []
-    ts_list = []
-    date_list = []
-    pod_list = []
-    ms_list = []
-    container_name_list = []
-    namespace_list = []
-    node_name_list = []
+            if self.port_forward_process.poll() is None:
+                logger.info("Port forwarding established successfully.")
+                break
+            else:
+                logger.info("Port forwarding failed. Retrying...")
+        else:
+            logger.error("Failed to establish port forwarding after multiple attempts.")
 
-    for log in logs:
-        try:
-            # Extract information from the log
-            log_id = log["_id"]
-            timestamp = log["_source"]["@timestamp"]
-            pod_name = log["_source"]["kubernetes"]["pod"]["name"]
-            container_name = log["_source"]["kubernetes"]["container"]["name"]
-            namespace = log["_source"]["kubernetes"]["namespace"]
-            node_name = log["_source"]["kubernetes"]["node"]["name"]
-            message = log["_source"]["message"]
+    def query_loki(self, query, start_time, end_time) -> dict | None:
+        endpoint = f"{self.base_url}/loki/api/v1/query_range"
 
-            # Convert timestamp to a readable format
-            timestamp_obj = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%fZ")
-            timestamp_unix = timestamp_obj.timestamp()
+        payload = {"query": query, "start": start_time, "end": end_time}
 
-        except KeyError as e:
-            print(f"KeyError encountered: {e}")
-            print(f"Skipping log due to missing fields: {log}")
-            continue
-
-        # Append to the respective lists
-        log_id_list.append(log_id)
-        ts_list.append(timestamp_unix)
-        date_list.append(timestamp)
-        pod_list.append(pod_name)
-        container_name_list.append(container_name)
-        namespace_list.append(namespace)
-        node_name_list.append(node_name)
-        ms_list.append(message)
-
-    # Create DataFrame
-    dt = pd.DataFrame(
-        {
-            "log_id": log_id_list,
-            "timestamp": ts_list,
-            "date": date_list,
-            "pod_name": pod_list,
-            "container_name": container_name_list,
-            "namespace": namespace_list,
-            "node_name": node_name_list,
-            "message": ms_list,
+        headers = {
+            "Accept": "application/json",
+            "X-Scope-OrgID": "1",  # Adjust as per your Loki setup
         }
-    )
 
-    return dt
+        logger.info(f"Sending request to: {endpoint}")
+        logger.info(f"Payload: {payload}")
+        logger.info(f"Headers: {headers}")
 
+        try:
+            response = requests.get(endpoint, params=payload, headers=headers)
+            logger.info(f"Status code: {response.status_code}")
+            logger.info(
+                f"Content-Type: {response.headers.get('Content-Type', 'Not specified')}"
+            )
+            logger.info(f"Response headers: {dict(response.headers)}")
 
-def choose_index_template(indices, start_time, end_time):
-    indices_template = set()
-    for index in indices:
-        date_str = ".".join(index.split("-")[1].split(".")[:-1])
-        indices_template.add("logstash-" + date_str + "*")
+            if response.status_code == 200:
+                try:
+                    json_response = response.json()
+                    logger.info("Successfully parsed JSON response")
+                    return json_response
+                except json.JSONDecodeError:
+                    logger.error(
+                        "Received a 200 status, but response is not valid JSON"
+                    )
+                    logger.error(
+                        f"First 500 characters of response: {response.text[:500]}"
+                    )
+            else:
+                logger.error(
+                    f"Received non-200 status code. Response text: {response.text[:500]}"
+                )
 
-    start_datetime_utc = datetime.fromtimestamp(start_time)
-    end_datetime_utc = datetime.fromtimestamp(end_time)
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request Exception: {e}")
+            return None
 
-    dates_in_range = set()
-    current_datetime = start_datetime_utc
+    def stop_port_forward(self):
+        """Stops the kubectl port-forward command."""
+        if self.port_forward_process:
+            self.port_forward_process.terminate()
+            self.port_forward_process.wait()
+            self.stop_event.set()
+            print("Port forwarding stopped.")
 
-    while current_datetime <= end_datetime_utc:
-        dates_in_range.add("logstash-" + current_datetime.strftime("%Y.%m.%d") + "*")
-        current_datetime += timedelta(days=1)
+    def cleanup(self):
+        """Cleanup resources like port-forwarding."""
+        self.stop_port_forward()
 
-    dates_in_range.add("logstash-" + end_datetime_utc.strftime("%Y.%m.%d") + "*")
+    def query_loki_now(self):
+        query = '{service_name="frontend-6785bdb768-rb6tk"}'
+        current_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+        start_time = (datetime.now() - timedelta(minutes=300)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        end_time = current_time
 
-    selected_patterns = indices_template.intersection(dates_in_range)
-    print(f"selected_patterns: {selected_patterns}")
-    return selected_patterns
+        result = self.query_loki(query, start_time, end_time)
 
+        if result:
+            logger.debug("Response received and parsed as JSON")
+            logger.info(json.dumps(result["data"]["result"], indent=2))
+            return result
+        else:
+            logger.error("No valid result returned")
 
-class TimeSelect(Enum):
-    ONE_DAY = 1
-    ONE_WEEK = 2
-    TWO_WEEK = 3
+    def export_all_metrics(self, start_time, end_time, save_path):
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
-    @classmethod
-    def get_item_by_value(cls, enum_type, value):
-        for member in enum_type.__members__.values():
-            if member.value == int(value):
-                return member
-        return ValueError(f"no member found with value : {value}")
+        pod_save_path = os.path.join(save_path, "pod")
+
+        os.makedirs(pod_save_path, exist_ok=True)
+
+        for pod in self.pod_list:
+            file_path = os.path.join(pod_save_path, f"{pod}.csv")
+            query = f'{{service_name="{pod}"}}'
+            # print(file_path, query)
+            result = self.query_loki(query, start_time, end_time)
+            with open(file_path, "w") as f:
+                json.dump(result, f, indent=2)
+
+        self.cleanup()
 
 
 if __name__ == "__main__":
-    logger = LogAPI(
-        monitor_config["api"], monitor_config["username"], monitor_config["password"]
+    loki = LokiAPI("observe", "default")
+
+    current_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+    start_time = (datetime.now() - timedelta(minutes=300)).strftime(
+        "%Y-%m-%dT%H:%M:%SZ"
     )
-    # end_time = datetime.now(timezone.utc)
-    end_time = datetime.now()
-    start_time = end_time - timedelta(minutes=5)
-    print(int(start_time.timestamp()), int(end_time.timestamp()))
-    save_path = root_path / "log_output"
-    os.makedirs(save_path, exist_ok=True)
-    logger.log_extract(
-        start_time=int(start_time.timestamp()),
-        end_time=int(end_time.timestamp()),
-        path=save_path,
-    )
+    end_time = current_time
+    base_path = Path(os.path.dirname(os.path.abspath(__file__)))
+    loki.export_all_metrics(start_time, end_time, base_path / "data")

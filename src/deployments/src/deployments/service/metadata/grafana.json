@@ -1,0 +1,13 @@
+{
+  "Desc": "Grafana allows you to query, visualize, alert on and understand your metrics no matter where they are stored",
+  "Helm Config": {
+    "chart_path": "grafana/grafana",
+    "locally": false,
+    "namespace": "observe",
+    "release_name": "grafana",
+    "values": "grafana/values.yaml"
+  },
+  "Name": "Grafana",
+  "Namespace": "observe",
+  "Supported Operations": []
+}
