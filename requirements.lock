@@ -28,7 +28,7 @@ cachetools==5.5.2
     # via google-auth
 causal-learn==XXX.XXX.XXX.XXX
     # via rca-methods
-causalai @ git+https://github.com/salesforce/causalai.git@8fa89a9a287ffdf5a56ce3ae02dedd23cb59f64f
+causalai @ git+https://github.com/salesforce/causalai.git@e03c9d8e0afcdf8f3b9681f6140051327eaa3a71
     # via rca-methods
 ccit==0.4
     # via causalai
