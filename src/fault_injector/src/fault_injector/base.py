@@ -18,7 +18,7 @@ class FaultInjector:
         fault_id: str,
         start_time: float,
         end_time: float,
-        microservices: list[str] = None,
+        microservices: list[str] | None = None,
     ):
         """
         Base class to inject a fault into the specified microservices.
@@ -37,7 +37,10 @@ class FaultInjector:
         self._inject(microservices, fault_type)
 
     def _inject(
-        self, fault_type: str, microservices: list[str] = None, duration: str = None
+        self,
+        fault_type: str,
+        microservices: list[str] | None = None,
+        duration: str | None = None,
     ):
         if duration:
             self._invoke_method("inject", fault_type, microservices, duration)
@@ -50,7 +53,7 @@ class FaultInjector:
     def _recover(
         self,
         fault_type: str,
-        microservices: list[str] = None,
+        microservices: list[str] | None = None,
     ):
         if microservices and fault_type:
             self._invoke_method("recover", fault_type, microservices)

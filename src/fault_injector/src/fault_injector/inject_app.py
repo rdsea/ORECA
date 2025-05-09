@@ -164,7 +164,7 @@ class ApplicationFaultInjector(FaultInjector):
             if deployment:
                 for container in deployment.spec.template.spec.containers:
                     if container.name == f"hotel-reserv-{service}":
-                        container.image = f"yinfangchen/hotelreservation:latest"
+                        container.image = "yinfangchen/hotelreservation:latest"
                 self.kubectl.update_deployment(service, self.namespace, deployment)
 
 

@@ -10,8 +10,10 @@ from rca_methods.utility import download_data, read_data
 @pytest.fixture
 def sample_data():
     base_path = Path(os.path.dirname(os.path.abspath(__file__)))
-    download_data(local_path=(base_path / "data.csv"))
-    return read_data(base_path / "data.csv")
+    data_path = base_path / "data.csv"
+    if not data_path.exists():
+        download_data(local_path=data_path)
+    return read_data(data_path)
 
 
 def test_baro_top_root_causes(sample_data):

@@ -6,7 +6,7 @@
 # spec:
 #   mode: one
 #   # selector:
-#   #   namespaces: 
+#   #   namespaces:
 #   #     - default
 #   failKernRequest:
 #     callchain:

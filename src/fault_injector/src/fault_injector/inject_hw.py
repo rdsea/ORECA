@@ -1,10 +1,5 @@
 """Inject faults at the hardware layer."""
 
-import json
-
-import yaml
-
-from deployments.applications.kubectl import KubeCtl
 from fault_injector.base import FaultInjector
 
 

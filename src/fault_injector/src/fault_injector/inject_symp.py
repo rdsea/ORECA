@@ -1,11 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import os
-import subprocess
-import threading
-import time
-from typing import List
 
 import yaml
 
@@ -59,7 +54,7 @@ class SymptomFaultInjector(FaultInjector):
     def recover_pod_failure(self):
         self.delete_chaos_experiment("pod-failure")
 
-    def inject_pod_failure(self, microservices: List[str], duration: str = "200s"):
+    def inject_pod_failure(self, microservices: list[str], duration: str = "200s"):
         """
         Inject a pod failure fault.
         """
@@ -82,7 +77,7 @@ class SymptomFaultInjector(FaultInjector):
     def recover_network_loss(self):
         self.delete_chaos_experiment("network-loss")
 
-    def inject_network_loss(self, microservices: List[str], duration: str = "200s"):
+    def inject_network_loss(self, microservices: list[str], duration: str = "200s"):
         """
         Inject a network loss fault.
         """
@@ -104,7 +99,7 @@ class SymptomFaultInjector(FaultInjector):
 
         self.create_chaos_experiment(chaos_experiment, "network-loss")
 
-    def inject_container_kill(self, microservice: str, containers: List[str]):
+    def inject_container_kill(self, microservice: str, containers: list[str]):
         """
         Inject a container kill.
         """
@@ -130,7 +125,7 @@ class SymptomFaultInjector(FaultInjector):
 
     def inject_network_delay(
         self,
-        microservices: List[str],
+        microservices: list[str],
         duration: str = "200s",
         latency: str = "10s",
         jitter: str = "0ms",
@@ -164,7 +159,7 @@ class SymptomFaultInjector(FaultInjector):
     def recover_network_delay(self):
         self.delete_chaos_experiment("network-delay")
 
-    def inject_pod_kill(self, microservices: List[str], duration: str = "200s"):
+    def inject_pod_kill(self, microservices: list[str], duration: str = "200s"):
         """
         Inject a pod kill fault targeting specified microservices by label in the configured namespace.
 
@@ -194,7 +189,7 @@ class SymptomFaultInjector(FaultInjector):
     # IMPORTANT NOTE:
     # Kernel fault is not working and is a known bug in chaos-mesh 0> https://github.com/xlab-uiuc/agent-ops/pull/10#issuecomment-2468992285
     # This code is untested as we're waiting for a resolution to the bug to retry.
-    def inject_kernel_fault(self, microservices: List[str]):
+    def inject_kernel_fault(self, microservices: list[str]):
         """
         Injects a kernel fault targeting the specified function in the kernel call chain.
         """

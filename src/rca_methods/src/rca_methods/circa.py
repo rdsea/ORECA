@@ -1,4 +1,4 @@
-from rca_methods.e2e import rca
+from rca_methods import rca
 from rca_methods.graph_construction.pc import pc_default
 from rca_methods.graph_heads.rht import rht
 from rca_methods.io.time_series import (

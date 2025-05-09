@@ -3,19 +3,13 @@
 
 """Inject faults at the OS layer."""
 
-import json
 import subprocess
 
-import yaml
-
-from deployments.applications.kubectl import KubeCtl
 from deployments.paths import BASE_DIR
 from fault_injector.base import FaultInjector
 from fault_injector.helpers import (
     get_pids_by_name,
     hr_mongod_process_names,
-    hr_svc_process_names,
-    sn_svc_process_names,
 )
 
 
