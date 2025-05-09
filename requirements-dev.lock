@@ -10,6 +10,7 @@
 #   universal: false
 
 -e file:src/deployments
+-e file:src/fault_injector
 -e file:src/rca_methods
 aiosignal==1.3.2
     # via ray

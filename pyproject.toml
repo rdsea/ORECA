@@ -4,11 +4,11 @@ version = "0.1.0"
 description = "Add your description here"
 authors = [{ name = "nguu0123", email = "nguu0123@gmail.com" }]
 dependencies = [
-    "prompt-toolkit>=3.0.51",
-    "loguru>=0.7.3",
-    "locust>=2.36.1",
-    "faker>=37.1.0",
-    "pytest>=8.3.5",
+  "prompt-toolkit>=3.0.51",
+  "loguru>=0.7.3",
+  "locust>=2.36.1",
+  "faker>=37.1.0",
+  "pytest>=8.3.5",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -23,7 +23,7 @@ allow-direct-references = true
 
 
 [tool.rye.workspace]
-members = ["src/deployments", "src/rca_methods"]
+members = ["src/deployments", "src/rca_methods", "src/fault_injector"]
 
 [tool.ruff.format]
 docstring-code-format = true
