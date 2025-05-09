@@ -106,6 +106,8 @@ identify==2.6.8
     # via pre-commit
 idna==3.10
     # via requests
+iniconfig==2.1.0
+    # via pytest
 itsdangerous==2.2.0
     # via flask
 jinja2==3.1.5
@@ -209,6 +211,7 @@ oauthlib==3.2.2
     # via requests-oauthlib
 packaging==24.2
     # via matplotlib
+    # via pytest
     # via ray
     # via statsmodels
 pandas==2.2.3
@@ -224,6 +227,8 @@ pillow==11.1.0
 platformdirs==4.3.6
     # via locust-cloud
     # via virtualenv
+pluggy==1.5.0
+    # via pytest
 pre-commit==4.1.0
 prometheus-api-client==0.5.7
     # via deployments
@@ -250,6 +255,7 @@ pyjwt==2.10.1
 pyparsing==3.2.1
     # via matplotlib
     # via pydot
+pytest==8.3.5
 python-dateutil==2.9.0.post0
     # via dateparser
     # via kubernetes
