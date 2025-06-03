@@ -364,7 +364,7 @@ def train_model_gista(
                 if not line_search or (comp - loss) > tol:
                     step = True
                     if verbose > 1:
-                        print("Taking step, network i = %d, lr = %f" % (i, lr_it))
+                        print(f"Taking step, network i = {i}, lr = {lr_it}")
                         print(f"Gap = {comp - loss:f}, tol = {tol:f}")
 
                     # For next iteration.
@@ -388,7 +388,7 @@ def train_model_gista(
                         new_smooth_list.append(smooth_list[i])
                         new_loss_list.append(loss_list[i])
                         if verbose > 0:
-                            print("Network %d converged" % (i + 1))
+                            print(f"Network {i + 1} converged")
                         break
 
             # Clean up.
@@ -406,7 +406,7 @@ def train_model_gista(
         # Check if all networks have converged.
         if sum(done) == p:
             if verbose > 0:
-                print("Done at iteration = %d" % (it + 1))
+                print(f"Done at iteration = {it + 1}")
             break
 
         # Check progress.

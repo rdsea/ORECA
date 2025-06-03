@@ -3,33 +3,38 @@ default_language_version:
   python: python3.10
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.17.0
+    rev: v3.20.0
     hooks:
       - id: pyupgrade
 
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.3.0"
+    rev: "v2.4.1"
     hooks:
       - id: codespell
         additional_dependencies:
           - tomli
         files: ^.*\.(py|c|h|md|rst|yml)$
+        exclude: applications/sesa/object_classification/src/util/classes.py
         args: ["--write-changes", "--interactive", "3"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.5
+    # Ruff version.
+    rev: v0.11.12
     hooks:
-      - id: ruff
-        args: [--fix]
+      # Run the linter.
+      - id: ruff-check
+        args: [--fix, --config=ruff.toml, --verbose]
+        exclude: applications/online-boutique/
+      # Run the formatter.
       - id: ruff-format
 
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.19.1
+    rev: v8.27.0
     hooks:
       - id: gitleaks
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
         files: /.*\.(py|yaml|json)$
