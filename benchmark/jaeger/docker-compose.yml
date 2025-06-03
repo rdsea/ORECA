@@ -1,62 +1,40 @@
 version: "3.8"
 
 services:
-  cassandra:
-    image: cassandra:4.1
-    container_name: cassandra
-    ports:
-      - "9042:9042"
-    environment:
-      - MAX_HEAP_SIZE=512M
-      - HEAP_NEWSIZE=100M
-      - CASSANDRA_CLUSTER_NAME=jaeger-cluster
-    volumes:
-      - cassandra_data:/var/lib/cassandra
-    healthcheck:
-      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  cassandra-schema:
-    image: jaegertracing/jaeger-cassandra-schema:1.57
-    depends_on:
-      cassandra:
-        condition: service_healthy
-    environment:
-      - CASSANDRA_SERVERS=cassandra
-    entrypoint: ["sh", "-c", "sleep 10 && /cassandra-schema/create.sh"]
-
   jaeger-collector:
-    image: jaegertracing/jaeger-collector:1.57
-    ports:
-      - "14250:14250" # gRPC
-      - "14268:14268" # HTTP
+    image: jaegertracing/jaeger-collector
+    command:
+      - "--cassandra.keyspace=jaeger_v1_dc1"
+      - "--cassandra.servers=cassandra"
+      - "--collector.zipkin.host-port=9411"
+      - "--sampling.initial-sampling-probability=.5"
+      - "--sampling.target-samples-per-second=.01"
     environment:
-      - SPAN_STORAGE_TYPE=cassandra
-      - CASSANDRA_SERVERS=cassandra
+      - SAMPLING_CONFIG_TYPE=adaptive
+    ports:
+      - "14269:14269"
+      - "14268:14268"
+      - "14250"
+      - "9411:9411"
+    restart: on-failure
     depends_on:
       - cassandra-schema
 
   jaeger-query:
-    image: jaegertracing/jaeger-query:1.57
-    container_name: jaeger-query
+    image: jaegertracing/jaeger-query
+    command:
+      ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra"]
     ports:
       - "16686:16686"
-    environment:
-      - SPAN_STORAGE_TYPE=cassandra
-      - CASSANDRA_SERVERS=cassandra
+      - "16687"
+    restart: on-failure
     depends_on:
-      - jaeger-collector
+      - cassandra-schema
 
-  jaeger-agent:
-    image: jaegertracing/jaeger-agent:1.57
-    ports:
-      - "6831:6831/udp"
-      - "6832:6832/udp"
-    command: ["--reporter.grpc.host-port=jaeger-collector:14250"]
+  cassandra:
+    image: cassandra:4.0
+
+  cassandra-schema:
+    image: jaegertracing/jaeger-cassandra-schema
     depends_on:
-      - jaeger-collector
-
-volumes:
-  cassandra_data:
+      - cassandra
