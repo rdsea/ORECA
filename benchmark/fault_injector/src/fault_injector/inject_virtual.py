@@ -6,11 +6,11 @@
 import time
 
 import yaml
-
 from deployments.applications.base import Application
 from deployments.applications.helm import Helm
 from deployments.applications.kubectl import KubeCtl
 from deployments.paths import TARGET_MICROSERVICES
+
 from fault_injector.base import FaultInjector
 
 

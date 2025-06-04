@@ -5,7 +5,6 @@ from pathlib import Path
 from subprocess import CalledProcessError
 
 import yaml
-
 from deployments.applications.helm import Helm
 from deployments.applications.kubectl import KubeCtl
 from deployments.paths import HELM_CHARTS
