@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+from enum import Enum
 
 import aiohttp
 import cv2
@@ -13,8 +14,14 @@ FASTAPI_ENDPOINT = (
 )
 
 
+class Mode(Enum):
+    IMAGE_TRANSMITTER = "image_transmitter"
+    LOCAL_INFERENCE = "local_inference"
+    SAVE_TO_LOCAL = "save_to_local"
+
+
 class ImageTransmitter(Node):
-    def __init__(self):
+    def __init__(self, mode: Mode):
         super().__init__("image_transmitter")
 
         self.subscription = self.create_subscription(
@@ -25,12 +32,7 @@ class ImageTransmitter(Node):
         )
 
         self.bridge = CvBridge()
-        self.queue = asyncio.Queue(maxsize=10)  # Prevent memory overload
         self.loop = asyncio.get_event_loop()
-
-        # Start background async task
-        self.loop.create_task(self.image_sender())
-
         self.get_logger().info("ImageTransmitter node started.")
 
     def image_callback(self, msg):
@@ -41,45 +43,66 @@ class ImageTransmitter(Node):
                 self.get_logger().error("Failed to encode image.")
                 return
 
-            image_bytes = img_encoded.tobytes()
             timestamp = datetime.utcnow().isoformat()
             headers = {"Timestamp": timestamp}
+            image_bytes = img_encoded.tobytes()
 
-            # Enqueue the image and headers (non-blocking)
-            if not self.queue.full():
-                self.loop.call_soon_threadsafe(
-                    self.queue.put_nowait, (image_bytes, headers)
-                )
-            else:
-                self.get_logger().warn("Image queue full, dropping frame.")
+            # Run the async HTTP request in the event loop
+            self.loop.run_until_complete(self.send_image(image_bytes, headers))
 
         except Exception as e:
-            self.get_logger().error(f"Exception in image_callback: {e}")
+            self.get_logger().error(f"Exception while processing image: {e}")
 
-    async def image_sender(self):
-        async with aiohttp.ClientSession() as session:
-            while rclpy.ok():
-                try:
-                    image_bytes, headers = await self.queue.get()
+    def local_inference(self, data):
+        """
+        Callback function to do local inference instead of sending to server
+        """
 
-                    data = aiohttp.FormData()
-                    data.add_field(
-                        "file",
-                        image_bytes,
-                        filename="frame.jpg",
-                        content_type="image/jpeg",
-                    )
+        from ultralytics import YOLO  # YOLO library
 
-                    async with session.post(
-                        FASTAPI_ENDPOINT, data=data, headers=headers, timeout=10
-                    ) as resp:
-                        if resp.status == 200:
-                            self.get_logger().info("Image sent successfully.")
-                        else:
-                            text = await resp.text()
-                            self.get_logger().warn(
-                                f"Failed to send image: {resp.status} - {text}"
-                            )
+        model = YOLO("yolov8m.pt")
+        # Display the message on the console
+        self.get_logger().info("Receiving video frame")
 
-                except Exception as e:
-                    self.get_logger().error(f"Exception in image_sender: {e}")
+        # Convert ROS Image message to OpenCV image
+        current_frame = self.br.imgmsg_to_cv2(data, desired_encoding="bgr8")
+        image = current_frame
+        # Object Detection
+        results = model.predict(image, classes=[0, 2])
+        img = results[0].plot()
+        # Show Results
+        cv2.imshow("Detected Frame", img)
+        cv2.waitKey(1)
+
+    async def send_image(self, image_bytes, headers):
+        try:
+            data = aiohttp.FormData()
+            data.add_field(
+                "file", image_bytes, filename="frame.jpg", content_type="image/jpeg"
+            )
+
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    FASTAPI_ENDPOINT, data=data, headers=headers, timeout=10
+                ) as resp:
+                    if resp.status == 200:
+                        self.get_logger().info("Image successfully sent.")
+                    else:
+                        text = await resp.text()
+                        self.get_logger().warn(
+                            f"Failed to send image: {resp.status} - {text}"
+                        )
+        except Exception as e:
+            self.get_logger().error(f"Exception in aiohttp request: {e}")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ImageTransmitter(Mode.IMAGE_TRANSMITTER)
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

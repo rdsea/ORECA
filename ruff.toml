@@ -6,7 +6,7 @@ docstring-code-line-length = 10
 convention = "pep257" # Accepts: "google", "numpy", or "pep257".
 
 [lint]
-exclude = ["experiments/ICWS/*"]
+exclude = []
 select = [
   "F",   # Pyflakes
   "E",   # Pycode styles

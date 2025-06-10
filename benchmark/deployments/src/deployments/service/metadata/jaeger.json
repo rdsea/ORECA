@@ -1,0 +1,15 @@
+{
+  "Desc": "Jaeger - a Distributed Tracing System",
+  "Helm Config": {
+    "chart_path": "jaegertracing/jaeger",
+    "locally": false,
+    "namespace": "observe",
+    "release_name": "jaeger",
+    "repo_name": "jaegertracing",
+    "repo_url": "https://jaegertracing.github.io/helm-charts",
+    "values": "jaeger/values.yaml"
+  },
+  "Name": "Alloy",
+  "Namespace": "observe",
+  "Supported Operations": []
+}

@@ -37,6 +37,9 @@ class TelemetryService(ABC):
                 if self.locally:
                     chart_path = self.helm_configs["chart_path"]
                     self.helm_configs["chart_path"] = str(HELM_CHARTS / chart_path)
+                else:
+                    self.repo_name = self.helm_configs.get("repo_name")
+                    self.repo_url = self.helm_configs.get("repo_url")
 
         pvc = metadata.get("PersistentVolumeClaimConfig")
         if pvc:
@@ -83,6 +86,9 @@ class TelemetryService(ABC):
             locally=self.helm_configs.get("locally", False),
         )
         Helm.assert_if_deployed(self.namespace)
+
+    def add_repo(self, repo_name: str, repo_url: str):
+        Helm.add_repo(repo_name, repo_url)
 
     def teardown(self):
         Helm.uninstall(

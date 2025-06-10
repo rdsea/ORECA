@@ -5,6 +5,8 @@
     "locally": false,
     "namespace": "observe",
     "release_name": "loki",
+    "repo_name": "grafana",
+    "repo_url": "https://grafana.github.io/helm-charts",
     "values": "loki/values.yaml"
   },
   "Name": "Loki",
