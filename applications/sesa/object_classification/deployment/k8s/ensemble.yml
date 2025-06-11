@@ -32,7 +32,7 @@ spec:
             - name: OTEL_ENDPOINT
               value: "http://jaeger-agent.observe.svc.cluster.local:4318/v1/traces"
             - name: SEND_TO_QUEUE
-              value: true
+              value: "false"
 ---
 apiVersion: v1
 kind: Service
