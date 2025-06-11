@@ -27,6 +27,11 @@ spec:
           ports:
             - containerPort: 5012
           args: ["--model", "EfficientNetB0"]
+          env:
+            - name: MANUAL_TRACING
+              value: "true"
+            - name: OTEL_ENDPOINT
+              value: "http://jaeger:4318/v1/traces"
 ---
 apiVersion: v1
 kind: Service

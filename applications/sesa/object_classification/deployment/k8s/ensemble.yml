@@ -26,6 +26,13 @@ spec:
           image: rdsea/ensemble
           ports:
             - containerPort: 5011
+          env:
+            - name: MANUAL_TRACING
+              value: "true"
+            - name: OTEL_ENDPOINT
+              value: "http://jaeger:4318/v1/traces"
+            - name: SEND_TO_QUEUE
+              value: true
 ---
 apiVersion: v1
 kind: Service
