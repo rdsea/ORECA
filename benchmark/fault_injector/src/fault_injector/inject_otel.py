@@ -2,7 +2,6 @@ import json
 import subprocess
 
 from deployments.applications.kubectl import KubeCtl
-
 from fault_injector.base import FaultInjector
 
 

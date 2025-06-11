@@ -1,12 +1,13 @@
 import sys
 
-from deployments.applications.application_manager import ApplicationManager
 from loguru import logger
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
+
+from deployments.applications.application_manager import ApplicationManager
 
 logger.remove()
 logger.add(sys.stderr, level="INFO")

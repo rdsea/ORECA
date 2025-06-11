@@ -9,6 +9,7 @@ dependencies = [
   "locust>=2.36.1",
   "faker>=37.1.0",
   "pytest>=8.3.5",
+  "rich>=14.0.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -23,7 +24,7 @@ allow-direct-references = true
 
 
 [tool.rye.workspace]
-members = ["src/deployments", "src/rca_methods", "src/fault_injector"]
+members = ["deployments", "rca_methods", "fault_injector"]
 
 [tool.ruff.format]
 docstring-code-format = true

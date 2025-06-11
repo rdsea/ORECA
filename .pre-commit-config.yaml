@@ -23,7 +23,7 @@ repos:
     hooks:
       # Run the linter.
       - id: ruff-check
-        args: [--fix, --config=ruff.toml]
+        args: [--fix]
         exclude: applications/online-boutique/
       # Run the formatter.
       - id: ruff-format

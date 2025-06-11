@@ -1,7 +1,6 @@
 """Inject faults at the application layer: Code, MongoDB, Redis, etc."""
 
 from deployments.applications.kubectl import KubeCtl
-
 from fault_injector.base import FaultInjector
 
 

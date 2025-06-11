@@ -6,7 +6,6 @@
 import subprocess
 
 from deployments.paths import BASE_DIR
-
 from fault_injector.base import FaultInjector
 from fault_injector.helpers import (
     get_pids_by_name,
