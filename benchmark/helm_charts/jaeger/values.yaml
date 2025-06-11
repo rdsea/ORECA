@@ -3,3 +3,15 @@ provisionDataStore:
   elasticsearch: true
 storage:
   type: elasticsearch
+collector:
+  enabled: true
+  service:
+    otlp:
+      grpc:
+        name: otlp-grpc
+        port: 4317
+        nodePort:
+      http:
+        name: otlp-http
+        enabled: true
+        port: 4318
