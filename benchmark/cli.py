@@ -22,8 +22,10 @@ commands = [
     "exit",
     "init_metric",
     "init_log",
+    "init_trace",
     "destroy_metric",
     "destroy_log",
+    "destroy_trace",
     "init_visualization",
     "destroy_visualization",
 ]
@@ -73,6 +75,10 @@ def main():
                     application_manager.init_log()
                     console.print("[bold green]✔  Log initialized[/bold green]")
 
+                case "init_trace":
+                    application_manager.init_trace()
+                    console.print("[bold green]✔  Trace initialized[/bold green]")
+
                 case "destroy_metric":
                     application_manager.destroy_metric()
                     console.print("[bold green]✔  Metric destroyed[/bold green]")
@@ -90,6 +96,10 @@ def main():
                 case "destroy_visualization":
                     application_manager.destroy_visualization()
                     console.print("[bold green]✔  Visualization destroyed[/bold green]")
+
+                case "destroy_trace":
+                    application_manager.destroy_trace()
+                    console.print("[bold green]✔  Trace destroyed[/bold green]")
 
                 case "set_log_level":
                     set_log_level()

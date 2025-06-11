@@ -5,6 +5,7 @@ from deployments.applications.registry import ProblemRegistry
 from deployments.applications.utils.status import SessionPrint, SubmissionStatus
 from deployments.service.telemetry.alloy import Alloy
 from deployments.service.telemetry.grafana import Grafana
+from deployments.service.telemetry.jaeger import Jaeger
 from deployments.service.telemetry.loki import Loki
 from deployments.service.telemetry.prometheus import Prometheus
 from deployments.session import Session
@@ -40,6 +41,7 @@ class ApplicationManager:
         self.init_metric()
         self.init_log()
         self.init_visualization()
+        self.init_trace()
 
     def init_metric(self):
         """
@@ -58,6 +60,13 @@ class ApplicationManager:
         self.alloy = Alloy()
         self.alloy.deploy()
 
+    def init_trace(self):
+        """
+        Setup and deploy Jaeger
+        """
+        self.jaeger = Jaeger()
+        self.jaeger.deploy()
+
     def init_visualization(self):
         self.grafana = Grafana()
         self.grafana.deploy()
@@ -65,6 +74,7 @@ class ApplicationManager:
     def destroy(self):
         self.destroy_metric()
         self.destroy_log()
+        self.destroy_trace()
         self.destroy_visualization()
 
     def destroy_metric(self):
@@ -85,6 +95,11 @@ class ApplicationManager:
         if not hasattr(self, "grafana"):
             self.grafana = Grafana()
         self.grafana.teardown()
+
+    def destroy_trace(self):
+        if not hasattr(self, "jaeger"):
+            self.jaeger = Jaeger()
+        self.jaeger.teardown()
 
     def init_problem(self, problem_id: str):
         """Initialize a problem instance for the agent to solve.
