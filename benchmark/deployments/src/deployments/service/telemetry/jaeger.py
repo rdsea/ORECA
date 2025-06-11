@@ -1,13 +1,13 @@
 from subprocess import CalledProcessError
 
 from deployments.applications.kubectl import KubeCtl
-from deployments.paths import ALLOY_METADATA
+from deployments.paths import JAEGER_METADATA
 from deployments.service.telemetry.telemetry_service import TelemetryService
 
 
 class Jaeger(TelemetryService):
     def __init__(self):
-        super().__init__(ALLOY_METADATA)
+        super().__init__(JAEGER_METADATA)
 
     def _is_service_running(self) -> bool:
         """Check if Jaeger is already running in the cluster."""
