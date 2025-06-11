@@ -3,7 +3,7 @@ from pathlib import Path
 
 HOME_DIR = Path(os.path.expanduser("~"))
 BASE_DIR = Path(__file__).resolve().parent
-BASE_PARENT_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent
+BASE_PARENT_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
 # Targe microservice and its utilities directories
 TARGET_MICROSERVICES = BASE_PARENT_DIR / "applications"

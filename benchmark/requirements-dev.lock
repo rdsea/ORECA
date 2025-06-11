@@ -26,6 +26,8 @@ certifi==2025.4.26
     # via geventhttpclient
     # via kubernetes
     # via requests
+cfgv==3.4.0
+    # via pre-commit
 charset-normalizer==3.4.2
     # via requests
 click==8.2.1
@@ -41,6 +43,8 @@ cycler==0.12.1
     # via matplotlib
 dateparser==1.2.1
     # via prometheus-api-client
+distlib==0.3.9
+    # via virtualenv
 durationpy==0.10
     # via kubernetes
 elastic-transport==8.17.1
@@ -48,11 +52,13 @@ elastic-transport==8.17.1
 elasticsearch==9.0.2
     # via deployments
 faker==37.3.0
+filelock==3.18.0
+    # via virtualenv
 flask==3.1.1
     # via flask-cors
     # via flask-login
     # via locust
-flask-cors==6.0.0
+flask-cors==6.0.1
     # via locust
 flask-login==0.6.3
     # via locust
@@ -72,6 +78,8 @@ h11==0.16.0
     # via wsproto
 httmock==1.4.0
     # via prometheus-api-client
+identify==2.6.12
+    # via pre-commit
 idna==3.10
     # via requests
 iniconfig==2.1.0
@@ -100,6 +108,8 @@ mdurl==0.1.2
     # via markdown-it-py
 msgpack==1.1.0
     # via locust
+nodeenv==1.9.1
+    # via pre-commit
 numpy==2.3.0
     # via contourpy
     # via matplotlib
@@ -118,8 +128,10 @@ pillow==11.2.1
     # via matplotlib
 platformdirs==4.3.8
     # via locust-cloud
+    # via virtualenv
 pluggy==1.6.0
     # via pytest
+pre-commit==4.2.0
 prometheus-api-client==0.6.0
     # via deployments
 prompt-toolkit==3.0.51
@@ -157,6 +169,7 @@ pytz==2025.2
     # via pandas
 pyyaml==6.0.2
     # via kubernetes
+    # via pre-commit
 pyzmq==26.4.0
     # via locust
 regex==2024.11.6
@@ -175,6 +188,7 @@ rich==14.0.0
     # via deployments
 rsa==4.9.1
     # via google-auth
+ruff==0.11.13
 setuptools==80.9.0
     # via locust
     # via zope-event
@@ -201,6 +215,8 @@ urllib3==2.4.0
     # via geventhttpclient
     # via kubernetes
     # via requests
+virtualenv==20.31.2
+    # via pre-commit
 wcwidth==0.2.13
     # via prompt-toolkit
 websocket-client==1.8.0
