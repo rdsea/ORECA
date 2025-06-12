@@ -13,7 +13,7 @@ from sensor_msgs.msg import Image  # Image is the message type
 from ultralytics import YOLO  # YOLO library
 
 # Load the YOLOv8 model
-model = YOLO("yolov8m.pt")
+model = YOLO("yolov11m.pt")
 
 
 class ImageSubscriber(Node):
