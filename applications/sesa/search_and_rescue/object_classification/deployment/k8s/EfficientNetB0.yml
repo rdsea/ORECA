@@ -23,7 +23,7 @@ spec:
       containers:
         - name: efficientnetb0
           imagePullPolicy: "IfNotPresent"
-          image: rdsea/inference:gpu
+          image: rdsea/inference:cpu
           ports:
             - containerPort: 5012
           args: ["--model", "EfficientNetB0"]
@@ -31,7 +31,7 @@ spec:
             - name: MANUAL_TRACING
               value: "true"
             - name: OTEL_ENDPOINT
-              value: "http://jaeger-agent.observe.svc.cluster.local:4318/v1/traces"
+              value: "http://jaeger-collector.observe.svc.cluster.local:4318/v1/traces"
 ---
 apiVersion: v1
 kind: Service
