@@ -1,7 +1,6 @@
 from enum import Enum
 
 from colorama import Fore, Style
-
 from deployments.config import Config
 from deployments.paths import BASE_DIR
 

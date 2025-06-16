@@ -1,3 +1,4 @@
+target-version = "py310"
 [format]
 docstring-code-format = true
 docstring-code-line-length = 10
@@ -28,4 +29,12 @@ ignore = [
   "B904",   # raise-without-from-inside-except, enable when understand more
   "PLR",
   "ISC001",
+]
+
+[lint.pep8-naming]
+# Allow Pydantic's `@validator` decorator to trigger class method treatment.
+classmethod-decorators = [
+  "classmethod",
+  "pydantic.field_validator",
+  "pydantic.model_validator",
 ]
