@@ -23,9 +23,11 @@ commands = [
     "init_metric",
     "init_log",
     "init_trace",
+    "init_fault_injection",
     "destroy_metric",
     "destroy_log",
     "destroy_trace",
+    "destroy_fault_injection",
     "init_visualization",
     "destroy_visualization",
 ]
