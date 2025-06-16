@@ -75,6 +75,12 @@ def main():
                     application_manager.init_log()
                     console.print("[bold green]✔  Log initialized[/bold green]")
 
+                case "init_visualization":
+                    application_manager.init_visualization()
+                    console.print(
+                        "[bold green]✔  Visualization initialized[/bold green]"
+                    )
+
                 case "init_trace":
                     application_manager.init_trace()
                     console.print("[bold green]✔  Trace initialized[/bold green]")
@@ -86,12 +92,6 @@ def main():
                 case "destroy_log":
                     application_manager.destroy_log()
                     console.print("[bold green]✔  Log destroyed[/bold green]")
-
-                case "init_visualization":
-                    application_manager.init_visualization()
-                    console.print(
-                        "[bold green]✔  Visualization initialized[/bold green]"
-                    )
 
                 case "destroy_visualization":
                     application_manager.destroy_visualization()

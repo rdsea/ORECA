@@ -1,0 +1,15 @@
+{
+  "Desc": "Chaos Mesh is an open source cloud-native Chaos Engineering platform. It offers various types of fault simulation and has an enormous capability to orchestrate fault scenarios.",
+  "Helm Config": {
+    "chart_path": "chaos-mesh/chaos-mesh",
+    "locally": false,
+    "namespace": "chaos-mesh",
+    "release_name": "chaos-mesh",
+    "repo_name": "chaos-mesh",
+    "repo_url": "https://charts.chaos-mesh.org",
+    "values": "chaos-mesh/values.yaml"
+  },
+  "Name": "Chaos-mesh",
+  "Namespace": "chaos-mesh",
+  "Supported Operations": []
+}

@@ -4,6 +4,7 @@ from deployments.applications.kubectl import KubeCtl
 from deployments.applications.registry import ProblemRegistry
 from deployments.applications.utils.status import SessionPrint, SubmissionStatus
 from deployments.service.telemetry.alloy import Alloy
+from deployments.service.telemetry.chaos_mesh import ChaosMesh
 from deployments.service.telemetry.grafana import Grafana
 from deployments.service.telemetry.jaeger import Jaeger
 from deployments.service.telemetry.loki import Loki
@@ -71,6 +72,10 @@ class ApplicationManager:
         self.grafana = Grafana()
         self.grafana.deploy()
 
+    def init_fault_injection(self):
+        self.chaos_mesh = ChaosMesh()
+        self.chaos_mesh.deploy()
+
     def destroy(self):
         self.destroy_metric()
         self.destroy_log()
@@ -100,6 +105,11 @@ class ApplicationManager:
         if not hasattr(self, "jaeger"):
             self.jaeger = Jaeger()
         self.jaeger.teardown()
+
+    def destroy_fault_injection(self):
+        if not hasattr(self, "chaos_mesh"):
+            self.chaos_mesh = ChaosMesh()
+        self.chaos_mesh.teardown()
 
     def init_problem(self, problem_id: str):
         """Initialize a problem instance for the agent to solve.
