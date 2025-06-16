@@ -85,6 +85,12 @@ def main():
                     application_manager.init_trace()
                     console.print("[bold green]✔  Trace initialized[/bold green]")
 
+                case "init_fault_injection":
+                    application_manager.init_fault_injection()
+                    console.print(
+                        "[bold green]✔  Fault injection initialized[/bold green]"
+                    )
+
                 case "destroy_metric":
                     application_manager.destroy_metric()
                     console.print("[bold green]✔  Metric destroyed[/bold green]")
@@ -100,6 +106,12 @@ def main():
                 case "destroy_trace":
                     application_manager.destroy_trace()
                     console.print("[bold green]✔  Trace destroyed[/bold green]")
+
+                case "destroy_fault_injection":
+                    application_manager.destroy_fault_injection()
+                    console.print(
+                        "[bold green]✔  Fault injection destroyed[/bold green]"
+                    )
 
                 case "set_log_level":
                     set_log_level()
