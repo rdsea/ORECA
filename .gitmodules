@@ -7,3 +7,7 @@
 [submodule "applications/sesa/drone/uav_sim"]
 	path = applications/sesa/search_and_rescue/drone/uav_sim
 	url = git@github.com:nguu0123/PX4-ROS2-Gazebo-YOLOv8.git
+[submodule "applications/sesa/search_and_rescue/object_classification"]
+	path = applications/sesa/search_and_rescue/object_classification
+	url = git@github.com:rdsea/object_classification_v2.git
+  branch = main
