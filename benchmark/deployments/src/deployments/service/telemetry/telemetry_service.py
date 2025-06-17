@@ -77,7 +77,8 @@ class TelemetryService(ABC):
             if not self._pv_exists(pv_name):
                 self._apply_pv()
 
-        Helm.add_repo(self.repo_name, self.repo_url)
+        if not self.locally:
+            Helm.add_repo(self.repo_name, self.repo_url)
         Helm.install(
             release_name=self.helm_configs["release_name"],
             chart_path=self.helm_configs["chart_path"],
