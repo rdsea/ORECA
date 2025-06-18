@@ -22,21 +22,19 @@ datasources:
   datasources.yaml:
     apiVersion: 1
     datasources:
-      - name: Loki
-        type: loki
-        access: proxy
-        orgId: ""
-        url: http://loki-gateway.observe.svc.cluster.local:80
-        basicAuth: false
-        isDefault: false
-        version: 1
-        editable: false
-
       - name: Prometheus
         type: prometheus
-        access: proxy
         url: http://prometheus-server.observe.svc.cluster.local
-        basicAuth: false
+        access: proxy
+        isDefault: true
+      - name: Loki
+        type: loki
+        url: http://loki-gateway.observe.svc.cluster.local:80
+        access: proxy
         isDefault: false
-        version: 1
-        editable: false
+        orgId: ""
+
+grafana.ini:
+  server:
+    root_url: "%(protocol)s://%(domain)s/grafana/"
+    serve_from_sub_path: true
