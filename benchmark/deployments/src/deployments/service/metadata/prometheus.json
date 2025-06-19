@@ -1,11 +1,13 @@
 {
   "Desc": "Prometheus is an open-source systems monitoring and alerting toolkit that collects and stores metrics as time series data.",
   "Helm Config": {
-    "chart_path": "prometheus/prometheus/",
-    "locally": true,
+    "chart_path": "prometheus-community/prometheus",
+    "locally": false,
     "namespace": "observe",
     "release_name": "prometheus",
-    "values": "prometheus/prometheus/values.yaml"
+    "repo_name": "prometheus-community",
+    "repo_url": "https://prometheus-community.github.io/helm-charts",
+    "values": "prometheus/values.yaml"
   },
   "Name": "Prometheus",
   "Namespace": "observe",
