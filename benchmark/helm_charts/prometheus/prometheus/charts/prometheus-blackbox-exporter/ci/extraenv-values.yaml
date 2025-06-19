@@ -1,3 +1,0 @@
-extraEnv:
-  HTTP_PROXY: "http://superproxy.com:3128"
-  NO_PROXY: "localhost,XXX.XXX.XXX.XXX"

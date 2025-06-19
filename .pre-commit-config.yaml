@@ -15,7 +15,7 @@ repos:
           - tomli
         files: ^.*\.(py|c|h|md|rst|yml)$
         exclude: applications/sesa/search_and_rescue/object_classification/src/util/classes.py
-        args: ["--write-changes", "--interactive", "3"]
+        args: ["--write-changes", "--interactive", "3", "-L", "AKS"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
