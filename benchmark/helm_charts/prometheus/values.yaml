@@ -1,2 +1,23 @@
 grafana:
-  enabled: false
+  enabled: true
+  namespaceOverride: "dashboard"
+
+  persistence:
+    type: pvc
+    enabled: true
+
+  adminUser: admin
+  adminPassword: adminadminadmin
+
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki-gateway.observe.svc.cluster.local:80
+      access: proxy
+      isDefault: false
+      orgId: ""
+
+  grafana.ini:
+    server:
+      root_url: "%(protocol)s://%(domain)s/grafana/"
+      serve_from_sub_path: true

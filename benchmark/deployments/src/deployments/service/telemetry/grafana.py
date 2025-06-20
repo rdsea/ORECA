@@ -1,3 +1,5 @@
+# DEPRECATED: This module is deprecated because Grafana is now installed as part of the Prometheus chart.
+# Do not use this class for new development.
 from subprocess import CalledProcessError
 
 from deployments.applications.kubectl import KubeCtl
@@ -6,6 +8,11 @@ from deployments.service.telemetry.telemetry_service import TelemetryService
 
 
 class Grafana(TelemetryService):
+    """
+    DEPRECATED: Grafana is now installed as part of the Prometheus chart.
+    This class is no longer needed and will be removed in the future.
+    """
+
     def __init__(self):
         super().__init__(GRAFANA_METADATA)
 

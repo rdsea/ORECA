@@ -27,8 +27,8 @@ commands = [
     "destroy_log",
     "destroy_trace",
     "destroy_fault_injection",
-    "init_visualization",
-    "destroy_visualization",
+    # "init_visualization",
+    # "destroy_visualization",
 ]
 command_completer = WordCompleter(commands, ignore_case=True)
 
