@@ -13,3 +13,6 @@ collector:
       http:
         name: otlp-http
         port: 4318
+
+query:
+  basePath: /jaeger
