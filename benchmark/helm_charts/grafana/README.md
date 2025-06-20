@@ -19,3 +19,4 @@ kubectl get secret --namespace observe grafana -o jsonpath="{.data.admin-passwor
 
 - Node exporter: https://grafana.com/grafana/dashboards/1860-node-exporter-full/
 - Loki log app: https://grafana.com/grafana/dashboards/13639-logs-app/
+- Hubble metrics: https://grafana.com/grafana/dashboards/16613-hubble/
