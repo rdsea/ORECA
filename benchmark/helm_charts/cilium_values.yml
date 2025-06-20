@@ -16,7 +16,7 @@ hubble:
     enabled: true
   ui:
     enabled: true
-    baseUrl: "/hubble"
+    baseUrl: "/hubble/"
   metrics:
     enableOpenMetrics: true
     enabled:
