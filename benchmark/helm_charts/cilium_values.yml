@@ -17,6 +17,9 @@ hubble:
   ui:
     enabled: true
     baseUrl: "/hubble/"
+    frontend:
+      image:
+        override: "quay.io/cilium/hubble-ui-ci:12c937d8cc8cd47ac66b9a7a10d7d6b1b1a86f0e@sha256:873632cda74618532270abf519a4f91c2c3734edf3eafad20af0a7e81c3fe61c"
   metrics:
     enableOpenMetrics: true
     enabled:
