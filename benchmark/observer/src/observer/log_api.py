@@ -12,7 +12,7 @@ import requests
 from kubernetes import client
 from loguru import logger
 
-from deployments.observer import (
+from observer import (
     get_pod_list,
     get_services_list,
     # monitor_config,

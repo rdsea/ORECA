@@ -14,7 +14,7 @@ import pytz
 from kubernetes import client
 from prometheus_api_client import PrometheusConnect
 
-from deployments.observer import (
+from observer import (
     get_pod_list,
     get_services_list,
     monitor_config,
@@ -54,19 +54,7 @@ normal_metrics = [
     "container_network_transmit_packets_dropped_total",
     "container_network_transmit_packets_total",
 ]
-istio_metrics = [
-    # istio
-    "istio_requests_total",
-    "istio_request_duration_milliseconds_sum",
-    "istio_request_bytes_sum",
-    "istio_response_bytes_sum",
-    "istio_request_messages_total",
-    "istio_response_messages_total",
-    "istio_tcp_sent_bytes_total",
-    "istio_tcp_received_bytes_total",
-    "istio_tcp_connections_opened_total",
-    "istio_tcp_connections_closed_total",
-]
+
 network_metrics = [
     # network
     "container_network_receive_errors_total",
@@ -89,23 +77,6 @@ def time_format_transform(time):
         time = datetime.fromtimestamp(time)
     return time
 
-    # # def istio_cmdb_id_format(metric):
-    # pod = metric["pod"]
-    # service = pod.split("-")[0]
-    # source_service = metric["source_canonical_service"]
-    # destination_service = metric["destination_canonical_service"]
-    #
-    # if source_service not in self.service_list and source_service != "unknown":
-    #     return ""
-    # if destination_service not in self.service_list and source_service != "unknown":
-    #     return ""
-    #
-    # if service == source_service:
-    #     cmdb_id = ".".join([pod, "source", source_service, destination_service])
-    # else:
-    #     cmdb_id = ".".join([pod, "destination", source_service, destination_service])
-    # return cmdb_id
-
 
 def network_kpi_name_format(metric):
     kpi_name = metric["__name__"]
@@ -113,27 +84,6 @@ def network_kpi_name_format(metric):
     if "interface" in metric:
         kpi_name = ".".join([kpi_name, metric["interface"]])
 
-    return kpi_name
-
-    # def istio_kpi_name_format(metric):
-    kpi_name = metric["__name__"]
-    if "request_protocol" in metric:
-        protocol = metric["request_protocol"]
-        response_code = ""
-        if "response_code" in metric:
-            response_code = metric["response_code"]
-
-        grpc_response_status = ""
-        if "grpc_response_status" in metric:
-            grpc_response_status = metric["grpc_response_status"]
-
-        if protocol == "tcp":
-            response_flag = metric["response_flags"]
-            kpi_name = ".".join([kpi_name, response_flag])
-        else:
-            kpi_name = ".".join(
-                [kpi_name, protocol, response_code, grpc_response_status]
-            )
     return kpi_name
 
 
@@ -183,9 +133,7 @@ class PrometheusAPI:
                 time.sleep(3)
                 continue
 
-            command = (
-                f"kubectl port-forward svc/prometheus-server {self.port}:80 -n observe"
-            )
+            command = f"kubectl port-forward svc/prometheus-kube-prometheus-prometheus  {self.port}:9090 -n observe"
             self.port_forward_process = subprocess.Popen(
                 command,
                 shell=True,
@@ -293,8 +241,8 @@ class PrometheusAPI:
         container_save_path = os.path.join(save_path, "container")
         os.makedirs(container_save_path, exist_ok=True)
         # istio metrics
-        istio_save_path = os.path.join(save_path, "istio")
-        os.makedirs(istio_save_path, exist_ok=True)
+        # istio_save_path = os.path.join(save_path, "istio")
+        # os.makedirs(istio_save_path, exist_ok=True)
 
         # interval_time = 2 * 60 * 60
         interval_time = timedelta(seconds=2 * 60 * 60)

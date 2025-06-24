@@ -24,7 +24,7 @@ allow-direct-references = true
 
 
 [tool.rye.workspace]
-members = ["deployments", "rca_methods", "fault_injector"]
+members = ["deployments", "rca_methods", "fault_injector", "observer"]
 
 [tool.ruff.format]
 docstring-code-format = true

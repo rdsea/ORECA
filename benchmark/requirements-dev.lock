@@ -11,6 +11,7 @@
 
 -e file:deployments
 -e file:fault_injector
+-e file:observer
 annotated-types==0.7.0
     # via pydantic
 bidict==0.23.1
@@ -92,10 +93,12 @@ kiwisolver==1.4.8
     # via matplotlib
 kubernetes==33.1.0
     # via deployments
+    # via observer
 locust==2.37.10
 locust-cloud==1.23.1
     # via locust
 loguru==0.7.3
+    # via observer
 markdown-it-py==3.0.0
     # via rich
 markupsafe==3.0.2
@@ -123,6 +126,7 @@ packaging==25.0
     # via pytest
 pandas==2.3.0
     # via deployments
+    # via observer
     # via prometheus-api-client
 pillow==11.2.1
     # via matplotlib
@@ -134,6 +138,8 @@ pluggy==1.6.0
 pre-commit==4.2.0
 prometheus-api-client==0.6.0
     # via deployments
+prometheus-client==0.22.1
+    # via observer
 prompt-toolkit==3.0.51
 psutil==7.0.0
     # via locust
@@ -166,6 +172,7 @@ python-socketio==5.13.0
 pytz==2025.2
     # via dateparser
     # via deployments
+    # via observer
     # via pandas
 pyyaml==6.0.2
     # via kubernetes
@@ -179,6 +186,7 @@ requests==2.32.4
     # via httmock
     # via kubernetes
     # via locust
+    # via observer
     # via prometheus-api-client
     # via python-socketio
     # via requests-oauthlib
