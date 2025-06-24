@@ -38,6 +38,111 @@ prometheus:
             regex: (.+)(?::\d+);(\d+)
             replacement: $1:$2
 
+      - job_name: longhorn
+        honor_timestamps: true
+        track_timestamps_staleness: false
+        scrape_protocols:
+        - OpenMetricsText1.0.0
+        - OpenMetricsText0.0.1
+        - PrometheusText1.0.0
+        - PrometheusText0.0.4
+        convert_classic_histograms_to_nhcb: false
+        metrics_path: /metrics
+        scheme: http
+        enable_compression: true
+        metric_name_validation_scheme: utf8
+        metric_name_escaping_scheme: allow-utf-8
+        follow_redirects: true
+        enable_http2: true
+        relabel_configs:
+        - source_labels: [job]
+          separator: ;
+          target_label: __tmp_prometheus_job_name
+          replacement: $1
+          action: replace
+        - source_labels: [__meta_kubernetes_service_label_app, __meta_kubernetes_service_labelpresent_app]
+          separator: ;
+          regex: (longhorn-manager);true
+          replacement: $1
+          action: keep
+        - source_labels: [__meta_kubernetes_endpoint_port_name]
+          separator: ;
+          regex: manager
+          replacement: $1
+          action: keep
+        - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
+          separator: ;
+          regex: Node;(.*)
+          target_label: node
+          replacement: ${1}
+          action: replace
+        - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
+          separator: ;
+          regex: Pod;(.*)
+          target_label: pod
+          replacement: ${1}
+          action: replace
+        - source_labels: [__meta_kubernetes_namespace]
+          separator: ;
+          target_label: namespace
+          replacement: $1
+          action: replace
+        - source_labels: [__meta_kubernetes_service_name]
+          separator: ;
+          target_label: service
+          replacement: $1
+          action: replace
+        - source_labels: [__meta_kubernetes_pod_name]
+          separator: ;
+          target_label: pod
+          replacement: $1
+          action: replace
+        - source_labels: [__meta_kubernetes_pod_container_name]
+          separator: ;
+          target_label: container
+          replacement: $1
+          action: replace
+        - source_labels: [__meta_kubernetes_pod_phase]
+          separator: ;
+          regex: (Failed|Succeeded)
+          replacement: $1
+          action: drop
+        - source_labels: [__meta_kubernetes_service_name]
+          separator: ;
+          target_label: job
+          replacement: ${1}
+          action: replace
+        - separator: ;
+          target_label: endpoint
+          replacement: manager
+          action: replace
+        - source_labels: [__address__, __tmp_hash]
+          separator: ;
+          regex: (.+);
+          target_label: __tmp_hash
+          replacement: $1
+          action: replace
+        - source_labels: [__tmp_hash]
+          separator: ;
+          modulus: 1
+          target_label: __tmp_hash
+          replacement: $1
+          action: hashmod
+        - source_labels: [__tmp_hash, __tmp_disable_sharding]
+          separator: ;
+          regex: 0;|.+;.+
+          replacement: $1
+          action: keep
+        kubernetes_sd_configs:
+        - role: endpoints
+          kubeconfig_file: ""
+          follow_redirects: true
+          enable_http2: true
+          namespaces:
+            own_namespace: false
+            names:
+            - longhorn-system
+
 grafana:
   enabled: true
   namespaceOverride: "dashboard"
