@@ -1,5 +1,6 @@
 prometheus:
   prometheusSpec:
+    routePrefix: /prometheus
     storageSpec:
       ## Using PersistentVolumeClaim
       volumeClaimTemplate:
