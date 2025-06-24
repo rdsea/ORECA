@@ -1,5 +1,16 @@
 prometheus:
   prometheusSpec:
+    storageSpec:
+      ## Using PersistentVolumeClaim
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+          # selector: {}
+
     additionalScrapeConfigs: |
       - job_name: 'cilium-metrics'
         kubernetes_sd_configs:

@@ -16,3 +16,10 @@ collector:
 
 query:
   basePath: /jaeger
+
+elasticsearch:
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    accessModes: ["ReadWriteOnce"]
+    size: 100gb
