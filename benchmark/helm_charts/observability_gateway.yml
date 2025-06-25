@@ -69,7 +69,7 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /hubble
+            value: /hubble/
       backendRefs:
         - kind: Service
           name: hubble-ui
