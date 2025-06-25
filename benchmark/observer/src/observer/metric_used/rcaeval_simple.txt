@@ -1,0 +1,9 @@
+cpu
+diskio
+error
+latency-50
+latency-90
+mem
+socket
+time
+workload
