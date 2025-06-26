@@ -22,4 +22,4 @@ elasticsearch:
     enabled: true
     storageClass: longhorn
     accessModes: ["ReadWriteOnce"]
-    size: 100gb
+    size: 20gb
