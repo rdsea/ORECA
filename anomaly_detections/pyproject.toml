@@ -1,0 +1,22 @@
+[project]
+name = "anomaly-detections"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "nguu0123", email = "nguu0123@gmail.com" }
+]
+dependencies = [
+    "numpy>=2.3.1",
+    "pandas>=2.3.0",
+    "scipy>=1.16.0",
+    "matplotlib>=3.10.3",
+]
+readme = "README.md"
+requires-python = ">= 3.12"
+
+[tool.rye]
+managed = true
+virtual = true
+dev-dependencies = [
+    "ty>=0.0.1a12",
+]
