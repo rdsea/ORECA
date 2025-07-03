@@ -8,6 +8,15 @@ spec:
     external:
       domain: customredpandadomain.local
     statefulset:
+      podTemplate:
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node-role.kubernetes.io/control-plane
+                        operator: DoesNotExist
       initContainers:
         setDataDirOwnership:
           enabled: true
