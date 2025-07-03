@@ -10,3 +10,6 @@ spec:
       initContainers:
         setDataDirOwnership:
           enabled: true
+    storage:
+      persistentVolume:
+        storageClass: longhorn
