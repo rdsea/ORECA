@@ -22,4 +22,4 @@ spec:
           enabled: true
     storage:
       persistentVolume:
-        storageClass: longhorn
+        storageClass: "longhorn"
