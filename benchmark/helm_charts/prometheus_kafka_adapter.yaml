@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-kafka-adapter
+  labels:
+    app: prometheus-kafka-adapter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-kafka-adapter
+  template:
+    metadata:
+      labels:
+        app: prometheus-kafka-adapter
+    spec:
+      containers:
+        - name: adapter
+          image: telefonica/prometheus-kafka-adapter:1.9.1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_BROKERS
+              value: "http://redpanda.redpanda.svc.cluster.local:9093" # Change to your Kafka service in-cluster
+            - name: KAFKA_TOPIC
+              value: "prometheus-metric" # Change to your topic
+            - name: LOG_LEVEL
+              value: "info"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-kafka-adapter
+spec:
+  selector:
+    app: prometheus-kafka-adapter
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
