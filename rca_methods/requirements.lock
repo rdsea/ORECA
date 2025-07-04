@@ -4,7 +4,7 @@
 # last locked with the following flags:
 #   pre: false
 #   features: []
-#   all-features: false
+#   all-features: true
 #   with-sources: false
 #   generate-hashes: false
 #   universal: false
@@ -56,6 +56,8 @@ graphviz==0.20.3
     # via lingam
 idna==3.10
     # via requests
+iniconfig==2.1.0
+    # via pytest
 itsdangerous==2.2.0
     # via flask
 jinja2==3.1.5
@@ -140,6 +142,7 @@ nvidia-nvtx-cu12==12.4.127
     # via torch
 packaging==24.2
     # via matplotlib
+    # via pytest
     # via ray
     # via statsmodels
 pandas==2.2.3
@@ -150,13 +153,19 @@ patsy==1.0.1
     # via statsmodels
 pillow==11.1.0
     # via matplotlib
+pluggy==1.6.0
+    # via pytest
 protobuf==5.29.3
     # via ray
 pydot==3.0.4
     # via causal-learn
+pygments==2.19.2
+    # via pytest
 pyparsing==3.2.1
     # via matplotlib
     # via pydot
+pytest==8.4.1
+    # via rca-methods
 python-dateutil==2.9.0.post0
     # via matplotlib
     # via pandas
