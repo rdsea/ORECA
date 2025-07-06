@@ -7,10 +7,13 @@ spec:
   clusterSpec:
     external:
       domain: customredpandadomain.local
+    tls:
+      enabled: true
     auth:
       sasl:
         enabled: true
         mechanism: SCRAM-SHA-256
+        secretRef: "redpanda-superusers"
         users:
           - name: alice
             password: redpanda
