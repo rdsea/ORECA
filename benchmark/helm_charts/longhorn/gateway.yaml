@@ -22,7 +22,7 @@ spec:
   parentRefs:
     - name: longhorn-gateway
       namespace: default
-      sectionName: web-lh
+      # sectionName: web-lh
   rules:
     - matches:
         - path:

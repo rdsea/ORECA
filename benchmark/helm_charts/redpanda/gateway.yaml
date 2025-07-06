@@ -8,7 +8,7 @@ spec:
   listeners:
     - protocol: HTTP
       port: 80
-      name: web-lh
+      name: web-rp
       allowedRoutes:
         namespaces:
           from: All
@@ -22,9 +22,9 @@ metadata:
   namespace: redpanda
 spec:
   parentRefs:
-    - name: application-gateway
+    - name: redpanda-gateway
       namespace: default
-      sectionName: web-rp
+      # sectionName: web-rp
   rules:
     - matches:
         - path:
