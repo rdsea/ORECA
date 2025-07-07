@@ -12,11 +12,15 @@ spec:
     auth:
       sasl:
         enabled: true
-        mechanism: SCRAM-SHA-256
         secretRef: "redpanda-superusers"
         users:
           - name: alice
             password: redpanda
+    config:
+      cluster:
+        sasl_mechanisms:
+          - "SCRAM"
+          - "PLAIN"
     statefulset:
       podTemplate:
         spec:

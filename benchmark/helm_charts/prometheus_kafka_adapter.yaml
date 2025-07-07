@@ -4,7 +4,7 @@ metadata:
   name: prometheus-kafka-adapter
   labels:
     app: prometheus-kafka-adapter
-  # namespace: redpanda
+  namespace: redpanda
 spec:
   replicas: 1
   selector:
@@ -28,19 +28,29 @@ spec:
             - name: LOG_LEVEL
               value: "info"
             - name: KAFKA_SECURITY_PROTOCOL
-              value: "SASL_PLAINTEXT"
+              value: "SASL_SSL"
             - name: KAFKA_SASL_MECHANISM
-              value: "SCRAM-SHA-256"
+              value: "PLAIN"
             - name: KAFKA_SASL_USERNAME
               value: "alice"
             - name: KAFKA_SASL_PASSWORD
               value: "redpanda"
+            - name: KAFKA_SSL_CA_CERT_FILE
+              value: "/etc/tls/certs/ca.crt"
+          volumeMounts:
+            - name: tls-certs
+              mountPath: /etc/tls/certs
+              readOnly: true
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: redpanda-default-cert
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: prometheus-kafka-adapter
-  # namespace: redpanda
+  namespace: redpanda
 spec:
   selector:
     app: prometheus-kafka-adapter
