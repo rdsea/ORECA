@@ -3,7 +3,7 @@ prometheus:
     routePrefix: /prometheus
     externalUrl: /prometheus
     remoteWrite:
-      - url: "http://prometheus-kafka-adapter.redpanda.svc.cluster.local:8080/receive"
+      - url: "http://prometheus-kafka-adapter.redpanda.svc.cluster.local:80/receive"
         name: prometheus-kafka-adapter
     storageSpec:
       ## Using PersistentVolumeClaim
