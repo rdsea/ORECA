@@ -43,7 +43,7 @@ def log_processing():
         'topic' = '{source_topic}',
         'properties.bootstrap.servers' = '{kafka_servers}',
         'properties.group.id' = '{kafka_consumer_group_id}',
-        'scan.startup.mode' = 'earliest-offset',
+        'scan.startup.mode' = 'latest-offset',
         'format' = 'json',
         'json.fail-on-missing-field' = 'false',
         'json.ignore-parse-errors' = 'true',
@@ -57,25 +57,33 @@ def log_processing():
     );
     """
 
-    # kafka_sink_ddl = f"""
-    #         CREATE TABLE kafka_sink (
-    #         province VARCHAR,
-    #         pay_amount DOUBLE,
-    #         rowtime TIMESTAMP(3)
-    #         ) with (
-    #           'connector' = 'kafka',
-    #           'topic' = '{sink_topic}',
-    #           'properties.bootstrap.servers' = '{kafka_servers}',
-    #           'properties.group.id' = '{kafka_consumer_group_id}',
-    #           'scan.startup.mode' = 'latest-offset',
-    #           'format' = 'json'
-    #         )
-    # """
+    rate_per_pod_sql = """
+    CREATE VIEW pod_cpu_usage_rate AS
+    SELECT
+        labels.pod AS pod,
+        labels.namespace AS namespace,
+        WINDOW_START,
+        WINDOW_END,
+        (LAST_VALUE(value_num) OVER w - FIRST_VALUE(value_num) OVER w) / 60 AS usage_per_second
+    FROM (
+        SELECT *,
+            CAST(value AS DOUBLE) AS value_num,
+            TUMBLE_START(`timestamp`, INTERVAL '1' MINUTE) AS WINDOW_START,
+            TUMBLE_END(`timestamp`, INTERVAL '1' MINUTE) AS WINDOW_END
+        FROM prometheus_metric
+        WHERE name = 'container_cpu_usage_seconds_total'
+    ) WINDOW w AS (
+        PARTITION BY labels.pod, labels.namespace, TUMBLE(`timestamp`, INTERVAL '1' MINUTE')
+        ORDER BY `timestamp`
+        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    )
+    """
 
     t_env.execute_sql(source_ddl)
 
-    table = t_env.from_path("prometheus_metric")
-    table.execute().print()
+    t_env.execute_sql(rate_per_pod_sql)
+    result_table = t_env.sql_query("SELECT * FROM pod_cpu_usage_rate")
+    result_table.execute().print()
 
 
 if __name__ == "__main__":
