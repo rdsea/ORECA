@@ -16,6 +16,8 @@ cycler==0.12.1
     # via matplotlib
 fonttools==4.58.4
     # via matplotlib
+iniconfig==2.1.0
+    # via pytest
 kiwisolver==1.4.8
     # via matplotlib
 matplotlib==3.10.3
@@ -28,12 +30,18 @@ numpy==2.3.1
     # via scipy
 packaging==25.0
     # via matplotlib
+    # via pytest
 pandas==2.3.0
     # via anomaly-detections
 pillow==11.2.1
     # via matplotlib
+pluggy==1.6.0
+    # via pytest
+pygments==2.19.2
+    # via pytest
 pyparsing==3.2.3
     # via matplotlib
+pytest==8.4.1
 python-dateutil==2.9.0.post0
     # via matplotlib
     # via pandas

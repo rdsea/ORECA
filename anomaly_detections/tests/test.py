@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from anomaly_detections.spot import BiDSPOT, SPOTBase
+from anomaly_detections.spot.bi_d_spot import BiDSPOT
+from anomaly_detections.spot.spot_base import SPOTBase
 
 # physics.dat is a file in the original repository
 with open("physics.dat", encoding="UTF-8") as obj:
