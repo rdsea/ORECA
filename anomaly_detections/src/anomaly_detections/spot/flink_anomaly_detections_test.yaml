@@ -1,0 +1,71 @@
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: pyflink-hello-world
+  namespace: redpanda
+spec:
+  image: rdsea/pyflink-test:v7
+  flinkVersion: v1_20
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "1"
+  serviceAccount: flink
+
+  podTemplate:
+    spec:
+      initContainers:
+        - name: truststore-generator
+          image: openjdk:17-jdk
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Generating JKS truststore from PEM CA cert..."
+              keytool -import -trustcacerts -alias redpanda-ca \
+                -file /ca-input/ca.crt \
+                -keystore /tls-output/truststore.jks \
+                -storepass changeit \
+                -noprompt
+              echo "Done generating truststore.jks"
+          volumeMounts:
+            - name: tls-certs
+              mountPath: /ca-input
+              readOnly: true
+            - name: generated-truststore
+              mountPath: /tls-output
+
+      containers:
+        - name: flink-main-container
+          volumeMounts:
+            - name: generated-truststore
+              mountPath: /etc/tls/truststore
+              readOnly: true
+
+      volumes:
+        # Mount the original secret with PEM CA cert
+        - name: tls-certs
+          secret:
+            secretName: redpanda-default-cert
+        # Shared scratch space
+        - name: generated-truststore
+          emptyDir: {}
+
+  jobManager:
+    resource:
+      memory: "2048m"
+      cpu: 1
+  taskManager:
+    resource:
+      memory: "2048m"
+      cpu: 1
+  job:
+    jarURI: local:///opt/flink/opt/flink-python-1.20.2.jar
+    entryClass: "org.apache.flink.client.python.PythonDriver"
+    args:
+      [
+        "-pyclientexec",
+        "/usr/bin/python3",
+        "-py",
+        "/opt/flink/usrlib/pyflink_main.py",
+      ]
+    parallelism: 1
+    upgradeMode: stateless
