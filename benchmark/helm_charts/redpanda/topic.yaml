@@ -13,5 +13,13 @@ spec:
       caCertSecretRef:
         name: "redpanda-default-cert"
         key: "ca.crt"
+    sasl:
+      mechanism: "SCRAM-SHA-256"
+      # userSecretRef:
+      #   name: "redpanda-sasl-user"
+      #   key: "username"
+      # passwordSecretRef:
+      #   name: "redpanda-sasl-user"
+      #   key: "password"
   partitions: 3
   replicationFactor: 1

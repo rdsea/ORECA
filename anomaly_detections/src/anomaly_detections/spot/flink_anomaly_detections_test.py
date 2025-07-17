@@ -7,9 +7,9 @@ def log_processing():
     source_topic = "prometheus-metric"
     kafka_consumer_group_id = "test"
 
-    env = StreamExecutionEnvironment.get_execution_environment()
-    env.set_stream_time_characteristic(TimeCharacteristic.EventTime)
-    t_env = StreamTableEnvironment.create(stream_execution_environment=env)
+    s_env = StreamExecutionEnvironment.get_execution_environment()
+    s_env.set_stream_time_characteristic(TimeCharacteristic.EventTime)
+    t_env = StreamTableEnvironment.create(stream_execution_environment=s_env)
 
     t_env.get_config().get_configuration().set_boolean(
         "python.fn-execution.memory.managed", True
@@ -19,7 +19,7 @@ def log_processing():
     CREATE TABLE prometheus_metric (
         `name` STRING,
         `timestamp` TIMESTAMP(3),
-        `value` STRING,
+        `metric_value` STRING,
         `labels` ROW<
             __name__ STRING,
             container STRING,
@@ -60,23 +60,13 @@ def log_processing():
     rate_per_pod_sql = """
     CREATE VIEW pod_cpu_usage_rate AS
     SELECT
+        COUNT(*) as number_of_metric,
         labels.pod AS pod,
-        labels.namespace AS namespace,
-        WINDOW_START,
-        WINDOW_END,
-        (LAST_VALUE(value_num) OVER w - FIRST_VALUE(value_num) OVER w) / 60 AS usage_per_second
-    FROM (
-        SELECT *,
-            CAST(value AS DOUBLE) AS value_num,
-            TUMBLE_START(`timestamp`, INTERVAL '1' MINUTE) AS WINDOW_START,
-            TUMBLE_END(`timestamp`, INTERVAL '1' MINUTE) AS WINDOW_END
-        FROM prometheus_metric
-        WHERE name = 'container_cpu_usage_seconds_total'
-    ) WINDOW w AS (
-        PARTITION BY labels.pod, labels.namespace, TUMBLE(`timestamp`, INTERVAL '1' MINUTE')
-        ORDER BY `timestamp`
-        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-    )
+        labels.namespace AS namespace
+    FROM prometheus_metric
+    GROUP BY
+        labels.pod,
+        labels.namespace
     """
 
     t_env.execute_sql(source_ddl)

@@ -4,7 +4,7 @@ metadata:
   name: pyflink-hello-world
   namespace: redpanda
 spec:
-  image: rdsea/pyflink-kafka:v2
+  image: rdsea/pyflink-kafka:v8
   flinkVersion: v1_20
   flinkConfiguration:
     taskmanager.numberOfTaskSlots: "1"

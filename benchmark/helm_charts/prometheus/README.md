@@ -25,11 +25,10 @@ helm uninstall prometheus -n observe
 
 ### Node
 
-- CPU usage over time:
+- CPU usage over time per core:
 
 ```promql
-100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))
-       * 100)
+( (1 - sum without (mode) (rate(node_cpu_seconds_total{job="node-exporter", mode=~"idle|iowait|steal", }[1m]))) / ignoring(cpu) group_left count without (cpu, mode) (node_cpu_seconds_total{job="node-exporter", mode="idle",}))
 ```
 
 - Load average:
@@ -43,11 +42,9 @@ node_load15
 - Memory usage:
 
 ```promql
-100 -
-(
-  avg(node_memory_MemAvailable_bytes{job="node-exporter", instance="XXX.XXX.XXX.XXX:9100"}) /
-  avg(node_memory_MemTotal_bytes{job="node-exporter", instance="XXX.XXX.XXX.XXX:9100"})
-* 100
+100 - (
+  node_memory_MemAvailable_bytes{job="node-exporter"} /
+  node_memory_MemTotal_bytes{job="node-exporter"} * 100
 )
 ```
 
@@ -66,5 +63,19 @@ rate(node_disk_io_time_seconds_total{job="node-exporter", instance="XXX.XXX.XXX.
 ```promql
 rate(node_network_receive_bytes_total{job="node-exporter", instance="XXX.XXX.XXX.XXX:9100", device!="lo"}[1m]) * 8
 rate(node_network_transmit_bytes_total{job="node-exporter", instance="XXX.XXX.XXX.XXX:9100", device!="lo"}[1m]) * 8
+```
+
+### Pod
+
+- CPU usage:
+
+```promql
+sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate5m{namespace="default", pod!="", container!=""}) by (container)
+```
+
+- Memory usage:
+
+```promql
+sum(container_memory_working_set_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="default", container!="", image!=""}) by (container)
 ```
 
