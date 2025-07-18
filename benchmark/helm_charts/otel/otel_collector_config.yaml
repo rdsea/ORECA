@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+data:
+  otel-collector-config.yml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+            endpoint: "XXX.XXX.XXX.XXX:4318"
+
+    exporters:
+      prometheus:
+        endpoint: "XXX.XXX.XXX.XXX:8889"
+      otlp:
+        endpoint: http://jaeger-collector.observe.svc.cluster.local:4317
+        tls:
+          insecure: true
+
+    connectors:
+      spanmetrics:
+
+    processors:
+      batch:
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [spanmetrics, otlp]
+
+        # The metrics pipeline receives generated span metrics from 'spanmetrics' connector
+        # and pushes to Prometheus exporter, which makes them available for scraping on :8889.
+        metrics/spanmetrics:
+          receivers: [spanmetrics]
+          exporters: [prometheus]

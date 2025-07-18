@@ -79,3 +79,44 @@ sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate5m{na
 sum(container_memory_working_set_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="default", container!="", image!=""}) by (container)
 ```
 
+### Workload/Service
+
+- CPU usage:
+
+```promql
+sum(
+    node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate5m{namespace="default"}
+  * on(namespace,pod)
+    group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{namespace="default"}
+) by (workload)
+```
+
+- Memory usage:
+
+```promql
+sum(
+    container_memory_working_set_bytes{namespace="default", container!="", image!=""}
+  * on(namespace,pod)
+    group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{ namespace="default"}
+) by (workload)
+```
+
+- Network:
+
+```promql
+(sum(rate(container_network_receive_bytes_total{job="kubelet", metrics_path="/metrics/cadvisor",namespace="default"}[1m])
+* on (namespace,pod)
+group_left(workload,workload_type) namespace_workload_pod:kube_pod_owner:relabel{ namespace="default"}) by (workload))
+
+(sum(rate(container_network_transmit_bytes_total{job="kubelet", metrics_path="/metrics/cadvisor",namespace="default"}[1m])
+* on (namespace,pod)
+group_left(workload,workload_type) namespace_workload_pod:kube_pod_owner:relabel{ namespace="default"}) by (workload))
+```
+
+- IO:
+
+```promql
+(sum(rate(container_blkio_device_usage_total{job="kubelet", metrics_path="/metrics/cadvisor",namespace="default"}[1m])
+* on (namespace,pod)
+group_left(workload,workload_type) namespace_workload_pod:kube_pod_owner:relabel{ namespace="default"}) by (workload)) > 0
+```

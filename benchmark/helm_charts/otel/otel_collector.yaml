@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:0.112.0
+          args:
+            - "--config=/etc/otelcol/otel-collector-config.yml"
+          volumeMounts:
+            - name: otel-config
+              mountPath: /etc/otelcol/otel-collector-config.yml
+              subPath: otel-collector-config.yml
+          ports:
+            - containerPort: 8889
+      volumes:
+        - name: otel-config
+          configMap:
+            name: otel-collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spm-metrics-source # Mimics the alias `spm_metrics_source`
+spec:
+  selector:
+    app: otel-collector
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 8889
+      targetPort: 8889
+
+    - name: otlp-http
+      protocol: TCP
+      port: 4318
+      targetPort: 4318

@@ -17,6 +17,9 @@ prometheus:
     selector: {}
 
     additionalScrapeConfigs: |
+      - job_name: aggregated-trace-metrics
+        static_configs:
+        - targets: ['spm-metrics-source.default:8889']
       - job_name: 'cilium-metrics'
         kubernetes_sd_configs:
         - role: pod
