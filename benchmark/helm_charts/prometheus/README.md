@@ -120,3 +120,21 @@ group_left(workload,workload_type) namespace_workload_pod:kube_pod_owner:relabel
 * on (namespace,pod)
 group_left(workload,workload_type) namespace_workload_pod:kube_pod_owner:relabel{ namespace="default"}) by (workload)) > 0
 ```
+
+- Latency percentile:
+
+```promql
+histogram_quantile(0.95, sum(rate(duration_milliseconds_bucket{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name,le))
+```
+
+- Request rate per second:
+
+```promql
+sum(rate(calls_total{span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name)
+```
+
+- Error rate:
+
+```promql
+sum(rate(calls_total{status_code = "STATUS_CODE_ERROR", span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name) / sum(rate(calls_total{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name)
+```
