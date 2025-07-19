@@ -125,6 +125,8 @@ group_left(workload,workload_type) namespace_workload_pod:kube_pod_owner:relabel
 
 ```promql
 histogram_quantile(0.95, sum(rate(duration_milliseconds_bucket{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name,le))
+histogram_quantile(0.75, sum(rate(duration_milliseconds_bucket{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name,le))
+histogram_quantile(0.50, sum(rate(duration_milliseconds_bucket{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name,le))
 ```
 
 - Request rate per second:
