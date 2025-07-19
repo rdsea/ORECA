@@ -154,6 +154,16 @@ prometheus:
 additionalPrometheusRulesMap:
   anomaly-detection:
     groups:
+      - name: spanmetrics_alias
+        interval: 2s
+        rules:
+          - record: latency_bucket
+            expr: latency_milliseconds_bucket
+          - record: calls_total
+            expr: traces_span_metrics_calls_total
+          - record: duration_milliseconds_bucket
+            expr: traces_span_metrics_duration_milliseconds_bucket
+
       - name: AnomalyNodeExporter
         rules:
           - record: node:usage_per_cpu_core

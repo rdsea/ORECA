@@ -28,6 +28,8 @@ query:
       value: "true"
     - name: PROMETHEUS_QUERY_NORMALIZE_DURATION
       value: "true"
+    - name: PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR
+      value: "true"
 
 elasticsearch:
   master:
