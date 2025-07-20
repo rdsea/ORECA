@@ -201,6 +201,67 @@ additionalPrometheusRulesMap:
             expr: |-
               rate(node_network_transmit_bytes_total{job="node-exporter", device!="lo"}[1m]) * 8
 
+          - record: pod:cpu_usage
+            expr: |-
+              sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate5m{namespace="default", pod!="", container!=""}) by (container)
+
+          - record: pod:memory_usage
+            expr: |-
+              sum(container_memory_working_set_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="default", container!="", image!=""}) by (container)
+
+          - record: service:cpu_usage
+            expr: |-
+              sum(
+                  node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate5m{namespace="default"}
+                * on(namespace,pod)
+                  group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{namespace="default"}
+              ) by (workload)
+
+          - record: service:memory_usage
+            expr: |-
+              sum(
+                  container_memory_working_set_bytes{namespace="default", container!="", image!=""}
+                * on(namespace,pod)
+                  group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{ namespace="default"}
+              ) by (workload)
+
+          - record: service:network_receive
+            expr: |-
+              (sum(rate(container_network_receive_bytes_total{job="kubelet", metrics_path="/metrics/cadvisor",namespace="default"}[1m])
+              * on (namespace,pod)
+              group_left(workload,workload_type) namespace_workload_pod:kube_pod_owner:relabel{ namespace="default"}) by (workload))
+
+          - record: service:network_transmit
+            expr: |-
+              (sum(rate(container_network_transmit_bytes_total{job="kubelet", metrics_path="/metrics/cadvisor",namespace="default"}[1m])
+              * on (namespace,pod)
+              group_left(workload,workload_type) namespace_workload_pod:kube_pod_owner:relabel{ namespace="default"}) by (workload))
+
+          - record: service:io
+            expr: |-
+              (sum(rate(container_blkio_device_usage_total{job="kubelet", metrics_path="/metrics/cadvisor",namespace="default"}[1m])
+              * on (namespace,pod)
+              group_left(workload,workload_type) namespace_workload_pod:kube_pod_owner:relabel{ namespace="default"}) by (workload)) > 0
+
+          - record: service:p95_latency
+            expr: |-
+              histogram_quantile(0.95, sum(rate(duration_milliseconds_bucket{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name,le))
+
+          - record: service:p75_latency
+            expr: |-
+              histogram_quantile(0.75, sum(rate(duration_milliseconds_bucket{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name,le))
+
+          - record: service:p50_latency
+            expr: |-
+              histogram_quantile(0.50, sum(rate(duration_milliseconds_bucket{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name,le))
+
+          - record: service:request_rate_per_second
+            expr: |-
+              sum(rate(calls_total{span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name)
+
+          - record: service:error_rate
+            expr: |-
+              sum(rate(calls_total{status_code = "STATUS_CODE_ERROR", span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name) / sum(rate(calls_total{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name)
 grafana:
   enabled: true
   namespaceOverride: "dashboard"
