@@ -26,7 +26,29 @@ spec:
             - name: KAFKA_TOPIC
               value: "prometheus-metric" # Change to your topic
             - name: MATCH
-              value: '[''container_cpu_usage_seconds_total{namespace="default"}'']'
+              value: |-
+                '[
+                  "node:usage_per_cpu_core",
+                  "node:memory_usage_percentage",
+                  "node:disk_read",
+                  "node:disk_written",
+                  "node:disk_io_time",
+                  "node:network_receive",
+                  "node:network_transmit",
+                  "pod:cpu_usage",
+                  "pod:memory_usage",
+                  "service:cpu_usage",
+                  "service:memory_usage",
+                  "service:network_receive",
+                  "service:network_transmit",
+                  "service:io",
+                  "service:p95_latency",
+                  "service:p75_latency",
+                  "service:p50_latency",
+                  "service:request_rate_per_second",
+                  "service:error_rate"
+                ]'
+
             - name: LOG_LEVEL
               value: "info"
             - name: KAFKA_SECURITY_PROTOCOL

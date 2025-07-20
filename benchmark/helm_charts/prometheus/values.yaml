@@ -19,7 +19,7 @@ prometheus:
     additionalScrapeConfigs: |
       - job_name: aggregated-trace-metrics
         static_configs:
-        - targets: ['spm-metrics-source.default:8889']
+        - targets: ['my-opentelemetry-collector.default:8889']
       - job_name: 'cilium-metrics'
         kubernetes_sd_configs:
         - role: pod
@@ -268,7 +268,9 @@ grafana:
 
   persistence:
     type: pvc
+    storageClassName: "longhorn"
     enabled: true
+    size: 20Gi
 
   adminUser: admin
   adminPassword: adminadminadmin

@@ -41,5 +41,12 @@ elasticsearch:
     accessModes: ["ReadWriteOnce"]
     size: 20gb
 
+  data:
+    replicaCount: 1
+  coordinating:
+    replicaCount: 1
+  ingest:
+    replicaCount: 1
+
 agent:
   enabled: false
