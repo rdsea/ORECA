@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anomaly-detections
+  labels:
+    app: anomaly-detections
+  namespace: redpanda
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: anomaly-detections
+  template:
+    metadata:
+      labels:
+        app: anomaly-detections
+    spec:
+      containers:
+        - name: spot
+          image: rdsea/anomaly_detection_kafka:v2
+          # ports:
+          #   - containerPort: 8080
+          volumeMounts:
+            - name: tls-certs
+              mountPath: /etc/tls/certs
+              readOnly: true
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: redpanda-default-cert
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: prometheus-kafka-adapter
+#   namespace: redpanda
+# spec:
+#   selector:
+#     app: prometheus-kafka-adapter
+#   ports:
+#     - protocol: TCP
+#       port: 80
+#       targetPort: 8080

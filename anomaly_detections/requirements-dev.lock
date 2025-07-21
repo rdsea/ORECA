@@ -12,6 +12,8 @@
 -e file:.
 apache-flink==1.9.3
     # via anomaly-detections
+confluent-kafka==2.11.0
+    # via anomaly-detections
 contourpy==1.3.2
     # via matplotlib
 cycler==0.12.1
@@ -56,5 +58,7 @@ scipy==1.16.0
     # via anomaly-detections
 six==1.17.0
     # via python-dateutil
+tabulate==0.9.0
+    # via anomaly-detections
 tzdata==2025.2
     # via pandas
