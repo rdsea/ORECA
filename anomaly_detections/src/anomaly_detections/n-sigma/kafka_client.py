@@ -5,7 +5,7 @@ from confluent_kafka import Consumer
 
 MULTIPLY = 3
 METRICS = [
-    # "node:usage_per_cpu_core",
+    "node:cpu_usage",
     # "node:memory_usage_percentage",
     # "node:disk_read",
     # "node:disk_written",
@@ -19,9 +19,9 @@ METRICS = [
     # "service:network_receive",
     # "service:network_transmit",
     # "service:io",
-    "service:p95_latency",
-    "service:p75_latency",
-    "service:p50_latency",
+    # "service:p95_latency",
+    # "service:p75_latency",
+    # "service:p50_latency",
     # "service:request_rate_per_second",
     # "service:error_rate",
 ]
@@ -40,7 +40,7 @@ conf = {
 }
 
 consumer = Consumer(conf)
-consumer.subscribe(["prometheus-metric"])
+consumer.subscribe(["node_metric"])
 
 # Initialize dict of empty DataFrames keyed by metric name
 dfs = {metric: pd.DataFrame() for metric in METRICS}
@@ -70,16 +70,16 @@ try:
             "value": float(data["value"]),
         }
 
-        service_name = flat_data["service_name"]
+        instance = flat_data["instance"]
 
         df = dfs[metric_name]
 
         # Filter df to get previous values only for this service_name
 
         if not df.empty:
-            df_service = df[df["service_name"] == service_name]
-            mean = df_service["value"].mean()
-            std = df_service["value"].std()
+            df_instance = df[df["instance"] == instance]
+            mean = df_instance["value"].mean()
+            std = df_instance["value"].std()
 
             lower_bound = mean - MULTIPLY * std
             upper_bound = mean + MULTIPLY * std
@@ -97,7 +97,7 @@ try:
         dfs[metric_name] = dfs[metric_name].sort_values("timestamp")
 
         print(
-            f"[{metric_name}] Service: {service_name} | New value: {flat_data['value']:.3f} - {'ANOMALY 🚨' if is_anomaly else 'Normal ✅'}"
+            f"[{metric_name}] Instance: {instance} | New value: {flat_data['value']:.3f} - {'ANOMALY 🚨' if is_anomaly else 'Normal ✅'}"
         )
 
         # time.sleep(0.1)

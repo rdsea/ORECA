@@ -3,8 +3,12 @@ prometheus:
     routePrefix: /prometheus
     externalUrl: /prometheus
     remoteWrite:
-      - url: "http://prometheus-kafka-adapter.redpanda.svc.cluster.local:80/receive"
-        name: prometheus-kafka-adapter
+      - url: "http://prom-kafka-adapter-node.redpanda.svc.cluster.local:80/receive"
+        name: prom-kafka-adapter-node
+      - url: "http://prom-kafka-adapter-service.redpanda.svc.cluster.local:80/receive"
+        name: prom-kafka-adapter-service
+      - url: "http://prom-kafka-adapter-pod.redpanda.svc.cluster.local:80/receive"
+        name: prom-kafka-adapter-pod
     storageSpec:
       ## Using PersistentVolumeClaim
       volumeClaimTemplate:
@@ -166,12 +170,12 @@ additionalPrometheusRulesMap:
 
       - name: AnomalyNodeExporter
         rules:
-          - record: node:usage_per_cpu_core
+          - record: node:cpu_usage
             expr: |-
-              (
-                (1 - sum without (mode) (rate(node_cpu_seconds_total{job="node-exporter", mode=~"idle|iowait|steal", }[1m])))
-              / ignoring(cpu) group_left
-                count without (cpu, mode) (node_cpu_seconds_total{job="node-exporter", mode="idle",})
+              sum by (instance) (
+                1 - sum without (mode) (
+                  rate(node_cpu_seconds_total{job="node-exporter", mode=~"idle|iowait|steal"}[1m])
+                )
               )
 
           - record: node:memory_usage_percentage
@@ -270,7 +274,7 @@ grafana:
     type: pvc
     storageClassName: "longhorn"
     enabled: true
-    size: 20Gi
+    size: 5Gi
 
   adminUser: admin
   adminPassword: adminadminadmin

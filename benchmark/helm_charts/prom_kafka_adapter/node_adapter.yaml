@@ -24,18 +24,9 @@ spec:
             - name: KAFKA_BROKER_LIST
               value: "redpanda-0.redpanda.redpanda.svc.cluster.local:9093, redpanda-1.redpanda.redpanda.svc.cluster.local:9093, redpanda-2.redpanda.redpanda.svc.cluster.local:9093"
             - name: KAFKA_TOPIC
-              value: "node_metric" # Change to your topic
+              value: "node_metric"
             - name: MATCH
-              value: |-
-                '[
-                  "node:usage_per_cpu_core",
-                  "node:memory_usage_percentage",
-                  "node:disk_read",
-                  "node:disk_written",
-                  "node:disk_io_time",
-                  "node:network_receive",
-                  "node:network_transmit",
-                ]'
+              value: '[ "node:cpu_usage", "node:memory_usage_percentage", "node:disk_read", "node:disk_written", "node:disk_io_time", "node:network_receive", "node:network_transmit", ]'
             - name: LOG_LEVEL
               value: "info"
             - name: KAFKA_SECURITY_PROTOCOL

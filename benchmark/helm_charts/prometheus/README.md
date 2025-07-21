@@ -28,7 +28,11 @@ helm uninstall prometheus -n observe
 - CPU usage over time per core:
 
 ```promql
-( (1 - sum without (mode) (rate(node_cpu_seconds_total{job="node-exporter", mode=~"idle|iowait|steal", }[1m]))) / ignoring(cpu) group_left count without (cpu, mode) (node_cpu_seconds_total{job="node-exporter", mode="idle",}))
+  (
+    (1 - sum without (mode) (rate(node_cpu_seconds_total{job="node-exporter", mode=~"idle|iowait|steal", }[1m])))
+  / ignoring(cpu) group_left
+    count without (cpu, mode) (node_cpu_seconds_total{job="node-exporter", mode="idle",})
+  )
 ```
 
 - Load average:
