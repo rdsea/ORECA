@@ -1,8 +1,9 @@
 FROM debian:bullseye-slim
-
 WORKDIR /rca_methods
 
 COPY --from=ghcr.io/astral-sh/uv:0.7.21 /uv /uvx /bin/
+
+RUN apt-get update && apt-get install -y git
 
 COPY ./src /rca_methods/src
 

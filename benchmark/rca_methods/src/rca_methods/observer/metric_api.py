@@ -3,11 +3,12 @@ import os
 from datetime import datetime, timedelta
 
 import pandas as pd
-from observer import (
+from prometheus_api_client import PrometheusConnect
+
+from rca_methods.observer import (
     monitor_config,
     root_path,
 )
-from prometheus_api_client import PrometheusConnect
 
 NODE_METRICS = [
     "node:cpu_usage",
@@ -181,7 +182,6 @@ class PrometheusAPI:
             else:
                 return_pd.to_csv(save_path, index=False)
             logging.info(f"METRIC SAVE TO {save_path}")
-        return_pd.to_csv("./test.csv")
         logging.info("QUERY DONE")
         return return_pd
 
@@ -201,9 +201,10 @@ if __name__ == "__main__":
 
     # Define time range for exporting metrics
     end_time = datetime.now()
-    start_time = end_time - timedelta(minutes=5)
+    start_time = end_time - timedelta(minutes=15)
+    # injection_time = 1753213321
 
     # Define the save path for metrics
     save_path = root_path / "metrics_output"
 
-    prom.query_range(ALL_METRICS, start_time, end_time)
+    prom.query_range(ALL_METRICS, start_time, end_time, step="5s")

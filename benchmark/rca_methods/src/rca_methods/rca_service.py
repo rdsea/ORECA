@@ -1,12 +1,16 @@
 import os
+from datetime import datetime, timedelta
 
 import pandas as pd
 import yaml
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from rca_methods.observer import monitor_config
+from rca_methods.observer.metric_api import PrometheusAPI
 from rca_methods.rca_factory import RCAFactory
 
+prom = PrometheusAPI(monitor_config["prometheus_url"])
 app = FastAPI()
 
 METRICS = [
@@ -33,7 +37,7 @@ METRICS = [
 
 
 class RCARequest(BaseModel):
-    injection_time: float | None = None
+    injection_time: int | None = None
     experiment: str
 
 
@@ -51,7 +55,7 @@ rca_chosen = RCAFactory.create(rca_type)
 
 @app.post("/find_rca", response_model=RCAResponse)
 def find_rca(request: RCARequest):
-    obs_data = query_data()
+    obs_data = query_data(request.injection_time)
     root_causes = rca_chosen.run(
         obs_data,
         top_k,
@@ -63,5 +67,10 @@ def find_rca(request: RCARequest):
     return RCAResponse(root_causes=root_causes)
 
 
-def query_data() -> pd.DataFrame:
-    return pd.DataFrame()
+def query_data(injection_time: int | None) -> pd.DataFrame:
+    end_time = datetime.now()
+    if injection_time:
+        start_time = datetime.fromtimestamp(injection_time) - timedelta(minutes=5)
+    else:
+        start_time = end_time - timedelta(minutes=10)
+    return prom.query_range(METRICS, start_time, end_time, save_to_file=False)

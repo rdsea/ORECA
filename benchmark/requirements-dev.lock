@@ -12,7 +12,6 @@
 -e file:anomaly_detections
 -e file:deployments
 -e file:fault_injector
--e file:observer
 -e file:rca_methods
 annotated-types==0.7.0
     # via pydantic
@@ -132,14 +131,13 @@ kiwisolver==1.4.8
     # via matplotlib
 kubernetes==33.1.0
     # via deployments
-    # via observer
 lingam==1.5.5
     # via causalai
 locust==2.37.10
 locust-cloud==1.23.1
     # via locust
 loguru==0.7.3
-    # via observer
+    # via rca-methods
 markdown==3.8.2
     # via ccit
 markdown-it-py==3.0.0
@@ -235,8 +233,8 @@ pandas==2.3.0
     # via causal-learn
     # via ccit
     # via deployments
-    # via observer
     # via prometheus-api-client
+    # via rca-methods
     # via statsmodels
 patsy==1.0.1
     # via statsmodels
@@ -251,7 +249,7 @@ pre-commit==4.2.0
 prometheus-api-client==0.6.0
     # via deployments
 prometheus-client==0.22.1
-    # via observer
+    # via rca-methods
 prompt-toolkit==3.0.51
 protobuf==6.31.1
     # via ray
@@ -293,7 +291,6 @@ python-socketio==5.13.0
 pytz==2025.2
     # via dateparser
     # via deployments
-    # via observer
     # via pandas
 pyyaml==6.0.2
     # via kubernetes
@@ -313,10 +310,10 @@ requests==2.32.4
     # via httmock
     # via kubernetes
     # via locust
-    # via observer
     # via prometheus-api-client
     # via python-socketio
     # via ray
+    # via rca-methods
     # via requests-oauthlib
 requests-oauthlib==2.0.0
     # via kubernetes
