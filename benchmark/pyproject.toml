@@ -24,7 +24,13 @@ allow-direct-references = true
 
 
 [tool.rye.workspace]
-members = ["deployments", "rca_methods", "fault_injector", "observer"]
+members = [
+  "deployments",
+  "rca_methods",
+  "fault_injector",
+  "observer",
+  "anomaly_detections",
+]
 
 [tool.ruff.format]
 docstring-code-format = true

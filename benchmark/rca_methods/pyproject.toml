@@ -4,10 +4,11 @@ version = "0.1.0"
 description = "Add your description here"
 authors = [{ name = "nguu0123", email = "nguu0123@gmail.com" }]
 dependencies = [
-  "causal-learn>=XXX.XXX.XXX.XXX",
-  "scikit-network>=0.33.1",
-  "causalai @ git+https://github.com/salesforce/causalai.git",
-  "torch>=2.6.0",
+    "causal-learn>=XXX.XXX.XXX.XXX",
+    "scikit-network>=0.33.1",
+    "causalai @ git+https://github.com/salesforce/causalai.git",
+    "torch>=2.6.0",
+    "fastapi>=0.116.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"

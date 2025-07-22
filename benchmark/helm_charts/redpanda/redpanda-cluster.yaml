@@ -22,21 +22,22 @@ spec:
           - "SCRAM"
           - "PLAIN"
     statefulset:
-      podTemplate:
-        spec:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node-role.kubernetes.io/control-plane
-                        operator: DoesNotExist
+      # podTemplate:
+      #   spec:
+      #     affinity:
+      #       nodeAffinity:
+      #         requiredDuringSchedulingIgnoredDuringExecution:
+      #           nodeSelectorTerms:
+      #             - matchExpressions:
+      #                 - key: node-role.kubernetes.io/control-plane
+      #                   operator: DoesNotExist
       initContainers:
         setDataDirOwnership:
           enabled: true
     storage:
       persistentVolume:
         storageClass: "longhorn"
+        size: 10Gi
 ---
 apiVersion: v1
 kind: Secret

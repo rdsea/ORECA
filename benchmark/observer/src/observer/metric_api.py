@@ -1,370 +1,210 @@
-# Copyright (c) Microsoft Corporation.
-# Licensed under the MIT License.
-
+import logging
 import os
-import select
-import socket
-import subprocess
-import threading
-import time
 from datetime import datetime, timedelta
 
 import pandas as pd
-import pytz
-from kubernetes import client
 from prometheus_api_client import PrometheusConnect
 
 from observer import (
-    get_pod_list,
-    get_services_list,
     monitor_config,
     root_path,
 )
 
-normal_metrics = [
-    # cpu
-    "container_cpu_usage_seconds_total",
-    "container_cpu_user_seconds_total",
-    "container_cpu_system_seconds_total",
-    "container_cpu_cfs_throttled_seconds_total",
-    "container_cpu_cfs_throttled_periods_total",
-    "container_cpu_cfs_periods_total",
-    "container_cpu_load_average_10s",
-    # memory
-    "container_memory_cache",
-    "container_memory_usage_bytes",
-    "container_memory_working_set_bytes",
-    "container_memory_rss",
-    "container_memory_mapped_file",
-    # spec
-    "container_spec_cpu_period",
-    "container_spec_cpu_quota",
-    "container_spec_memory_limit_bytes",
-    "container_spec_cpu_shares",
-    # threads
-    "container_threads",
-    "container_threads_max"
-    # network
-    "container_network_receive_errors_total",
-    "container_network_receive_packets_dropped_total",
-    "container_network_receive_packets_total",
-    "container_network_receive_bytes_total",
-    "container_network_transmit_bytes_total",
-    "container_network_transmit_errors_total",
-    "container_network_transmit_packets_dropped_total",
-    "container_network_transmit_packets_total",
+NODE_METRICS = [
+    "node:cpu_usage",
+    "node:memory_usage_percentage",
+    "node:disk_read",
+    "node:disk_written",
+    "node:disk_io_time",
+    "node:network_receive",
+    "node:network_transmit",
+]
+POD_METRICS = [
+    "pod:cpu_usage",
+    "pod:memory_usage",
 ]
 
-network_metrics = [
-    # network
-    "container_network_receive_errors_total",
-    "container_network_receive_packets_dropped_total",
-    "container_network_receive_packets_total",
-    "container_network_receive_bytes_total",
-    "container_network_transmit_bytes_total",
-    "container_network_transmit_errors_total",
-    "container_network_transmit_packets_dropped_total",
-    "container_network_transmit_packets_total",
+SERVICE_METRICS = [
+    "service:cpu_usage",
+    "service:memory_usage",
+    "service:network_receive",
+    "service:network_transmit",
+    "service:io",
+    "service:p95_latency",
+    "service:p75_latency",
+    "service:p50_latency",
+    "service:request_rate_per_second",
+    "service:error_rate",
 ]
 
+ALL_METRICS = NODE_METRICS + POD_METRICS + SERVICE_METRICS
 
-def time_format_transform(time):
+
+def time_format_transform(time_to_transform):
     # transform time data from int to datetime
-    if isinstance(time, int):
-        time = datetime.fromtimestamp(time)
-    elif isinstance(time, str):
-        time = int(time)
-        time = datetime.fromtimestamp(time)
-    return time
-
-
-def network_kpi_name_format(metric):
-    kpi_name = metric["__name__"]
-
-    if "interface" in metric:
-        kpi_name = ".".join([kpi_name, metric["interface"]])
-
-    return kpi_name
+    if isinstance(time_to_transform, int):
+        time_to_transform = datetime.fromtimestamp(time_to_transform)
+    elif isinstance(time_to_transform, str):
+        time_to_transform = int(time_to_transform)
+        time_to_transform = datetime.fromtimestamp(time_to_transform)
+    return time_to_transform
 
 
 class PrometheusAPI:
-    # disable_ssl - (bool) if True, will skip prometheus server's http requests' SSL certificate
-    def __init__(self, url: str, namespace: str):
-        self.namespace = namespace
-        self.port = 32000
-        self.port_forward_process = None
-        self.stop_event = threading.Event()
-        self.start_port_forward()
+    def __init__(self, url: str):
         self.client = PrometheusConnect(url, disable_ssl=True)
-        self.namespace = namespace
-        self.pod_list, self.service_list = self.initialize_pod_and_service_lists(
-            namespace
-        )
-
-    def is_port_in_use(self, port):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            return s.connect_ex(("XXX.XXX.XXX.XXX", port)) == 0
-
-    def print_output(self, stream):
-        """Thread function to print output from a subprocess stream non-blockingly."""
-        while not self.stop_event.is_set():
-            ready, _, _ = select.select([stream], [], [], 0.1)
-            if ready:
-                try:
-                    line = stream.readline()
-                    if line:
-                        print(line, end="")
-                    else:
-                        break
-                except ValueError:
-                    break
-
-    def start_port_forward(self):
-        """Starts port-forwarding to access Prometheus."""
-        if self.port_forward_process and self.port_forward_process.poll() is None:
-            print("Port-forwarding already active.")
-            return
-
-        for attempt in range(3):
-            if self.is_port_in_use(self.port):
-                print(
-                    f"Port {self.port} is already in use. Attempt {attempt + 1} of 3. Retrying in 3 seconds..."
-                )
-                time.sleep(3)
-                continue
-
-            command = f"kubectl port-forward svc/prometheus-kube-prometheus-prometheus  {self.port}:9090 -n observe"
-            self.port_forward_process = subprocess.Popen(
-                command,
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-
-            thread_out = threading.Thread(
-                target=self.print_output, args=(self.port_forward_process.stdout,)
-            )
-            thread_err = threading.Thread(
-                target=self.print_output, args=(self.port_forward_process.stderr,)
-            )
-            thread_out.start()
-            thread_err.start()
-
-            time.sleep(3)  # Wait a bit for the port-forward to establish
-
-            if self.port_forward_process.poll() is None:
-                print("Port forwarding established successfully.")
-                break
-            else:
-                print("Port forwarding failed. Retrying...")
-        else:
-            print("Failed to establish port forwarding after multiple attempts.")
-
-    def stop_port_forward(self):
-        """Stops the kubectl port-forward command."""
-        if self.port_forward_process:
-            self.port_forward_process.terminate()
-            self.port_forward_process.wait()
-            self.stop_event.set()
-            print("Port forwarding stopped.")
-
-    def cleanup(self):
-        """Cleanup resources like port-forwarding."""
-        self.stop_port_forward()
-
-    def initialize_pod_and_service_lists(self, custom_namespace=None):
-        namespace = custom_namespace or monitor_config["namespace"]
-        v1 = client.CoreV1Api()
-        pod_list = [
-            pod
-            for pod in get_pod_list(v1, namespace=namespace)
-            if not pod.startswith("loadgenerator-") and not pod.startswith("redis-cart")
-        ]
-        service_list = get_services_list(v1, namespace=namespace)
-        return pod_list, service_list
 
     # start_time: Union[int, datetime]
     # The start_time can be either int or datetime or string
     def query_range(
         self,
-        metric_name: str,
-        pod: str,
+        metric_list: list[str],
         start_time: int | datetime | str,
         end_time: int | datetime | str,
-        namespace: str = "default",
-        step: int = 60,
+        step: str = "10s",
+        save_path: str = ".",
+        save_to_file: bool = True,
     ):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        save_path = os.path.join(save_path, f"metric_{timestamp}.csv")
         start_time = time_format_transform(start_time)
         end_time = time_format_transform(end_time)
-        interface = "eth0"
-        if metric_name.endswith("_total") or metric_name in [
-            "container_last_seen",
-            "container_memory_cache",
-            "container_memory_max_usage_bytes",
-        ]:
-            if metric_name in network_metrics:
-                query = (
-                    f"irate({metric_name}{{pod='{pod}', interface='{interface}'}}[5m])"
-                )
-            # prometheus query
-            else:
-                query = (
-                    f"rate({metric_name}{{pod=~'{pod}', namespace='{namespace}'}}[5m])"
-                )
-        else:
-            query = f"{metric_name}{{pod=~'{pod}', namespace='{namespace}'}}"
-        data_raw = self.client.custom_query_range(
-            query, start_time, end_time, step=step
-        )
-
-        if len(data_raw) == 0:
-            return {"error": f"No data found for metric {metric_name} and pod {pod}"}
-        else:
-            data = []
-            for item in data_raw[0]["values"]:
-                date_time = datetime.fromtimestamp(int(item[0]))
-                date_time = date_time.astimezone(pytz.timezone("Asia/Shanghai"))
-                float_value = round(
-                    float(item[1]), 3
-                )  # float value is needed to be able to add it to the list as a whole.
-                data.append({"time": date_time, "value": float_value})
-            return data
-
-    def export_all_metrics(self, start_time, end_time, save_path, step=15):
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        save_path = os.path.join(save_path, f"metric_{timestamp}")
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-        # namespace = monitor_config["namespace"]
-        # container metrics
-        container_save_path = os.path.join(save_path, "container")
-        os.makedirs(container_save_path, exist_ok=True)
-        # istio metrics
-        # istio_save_path = os.path.join(save_path, "istio")
-        # os.makedirs(istio_save_path, exist_ok=True)
-
-        # interval_time = 2 * 60 * 60
-        interval_time = timedelta(seconds=2 * 60 * 60)
-        while start_time < end_time:
-            if start_time + interval_time > end_time:
-                current_et = end_time
-            else:
-                current_et = start_time + interval_time
-            for metric in normal_metrics:
-                data_raw = self.client.custom_query_range(
-                    f"{metric}{{namespace='{self.namespace}'}}",
-                    time_format_transform(start_time),
-                    time_format_transform(current_et),
-                    step=step,
-                )
-                # Debugging print statements
-                # print(f"Query: {metric}{{namespace='{self.namespace}'}}")
-                # print(f"Start Time: {start_time}, End Time: {current_et}")
-                # print(f"Data Raw Length: {len(data_raw)}")
-                # print(f"Data Raw: {data_raw}")
-                if len(data_raw) == 0:
-                    continue
-                timestamp_list = []
-                cmdb_id_list = []
-                kpi_list = []
-                value_list = []
+        return_pd = pd.DataFrame()
+        for metric in metric_list:
+            query = f"{metric}"
+            data_raw = self.client.custom_query_range(
+                query, start_time, end_time, step=step
+            )
+            if len(data_raw) == 0:
+                continue
+            timestamp_list = []
+            value_list = []
+            if metric in NODE_METRICS:
+                instance_list = []
+                disk_list = []
+                network_interface_list = []
                 for data in data_raw:
-                    if data["metric"]["pod"] not in self.pod_list:
-                        continue
-                    cmdb_id = data["metric"]["instance"] + "." + data["metric"]["pod"]
-                    if cmdb_id == "":
-                        continue
-                    kpi_name = metric
-                    if metric in network_metrics:
-                        kpi_name = network_kpi_name_format(data["metric"])
+                    for d in data["values"]:
+                        if "disk" in metric:
+                            disk_list.append(data["metric"]["device"])
+                        elif "network" in metric:
+                            network_interface_list.append(data["metric"]["device"])
+                        timestamp_list.append(int(d[0]))
+                        value_list.append(round(float(d[1]), 3))
+                        instance_list.append(data["metric"]["instance"])
+
+                dt = pd.DataFrame(
+                    {
+                        "timestamp": timestamp_list,
+                        "instance": instance_list,
+                        "value": value_list,
+                    }
+                )
+
+                if "disk" in metric:
+                    dt["disk_name"] = disk_list
+                    dt["node_metric"] = (
+                        dt["instance"].str.replace(":9100", "", regex=False)
+                        + f"_{metric}_"
+                        + dt["disk_name"]
+                    )
+                elif "network" in metric:
+                    dt["network_interface"] = network_interface_list
+                    dt["node_metric"] = (
+                        dt["instance"].str.replace(":9100", "", regex=False)
+                        + f"_{metric}_"
+                        + dt["network_interface"]
+                    )
+                else:
+                    dt["node_metric"] = (
+                        dt["instance"].str.replace(":9100", "", regex=False)
+                        + f"_{metric}"
+                    )
+
+                pivoted = dt.pivot(
+                    index="timestamp", columns="node_metric", values="value"
+                ).reset_index()
+
+            elif metric in POD_METRICS:
+                pod_list = []
+                for data in data_raw:
                     for d in data["values"]:
                         timestamp_list.append(int(d[0]))
-                        cmdb_id_list.append(cmdb_id)
-                        kpi_list.append(kpi_name)
+                        value_list.append(round(float(d[1]), 3))
+                        pod_list.append(data["metric"]["pod"])
+                dt = pd.DataFrame(
+                    {
+                        "timestamp": timestamp_list,
+                        "pod": pod_list,
+                        "value": value_list,
+                    }
+                )
+
+                dt["pod_metric"] = dt["pod"] + f"_{metric}"
+
+                pivoted = dt.pivot(
+                    index="timestamp", columns="pod_metric", values="value"
+                ).reset_index()
+            elif metric in SERVICE_METRICS:
+                service_name_list = []
+                for data in data_raw:
+                    for d in data["values"]:
+                        if "workload" in data["metric"]:
+                            service_name_list.append(data["metric"]["workload"])
+                        elif "service_name" in data["metric"]:
+                            service_name_list.append(data["metric"]["service_name"])
+                        timestamp_list.append(int(d[0]))
                         value_list.append(round(float(d[1]), 3))
                 dt = pd.DataFrame(
                     {
                         "timestamp": timestamp_list,
-                        "cmdb_id": cmdb_id_list,
-                        "kpi_name": kpi_list,
+                        "service_name": service_name_list,
                         "value": value_list,
                     }
                 )
-                dt = dt.sort_values(by="timestamp")
-                file_path = os.path.join(container_save_path, "kpi_" + metric + ".csv")
-                if os.path.exists(file_path):
-                    with open(file_path, "a", encoding="utf-8", newline="") as f:
-                        dt.to_csv(f, header=False, index=False)
-                else:
-                    dt.to_csv(file_path, index=False)
-            self.cleanup()  # Stop port-forwarding after metrics are exported
+                dt["service_metric"] = dt["service_name"] + f"_{metric}"
 
-            # # for metric in istio_metrics:
-            #     data_raw = self.client.custom_query_range(f"{metric}{{namespace='{namespace}'}}", time_format_transform(start_time), time_format_transform(current_et), step=step)
-            #     if len(data_raw) == 0:
-            #         continue
-            #     timestamp_list = []
-            #     cmdb_id_list = []
-            #     kpi_list = []
-            #     value_list = []
-            #     for data in data_raw:
-            #         cmdb_id = istio_cmdb_id_format(data['metric'])
-            #         pod_name = cmdb_id.split('.')[0]
-            #         if cmdb_id == '' or pod_name not in pod_list:
-            #             continue
-            #         kpi_name = istio_kpi_name_format(data['metric'])
-            #         for d in data['values']:
-            #             timestamp_list.append(int(d[0]))
-            #             cmdb_id_list.append(cmdb_id)
-            #             kpi_list.append(kpi_name)
-            #             value_list.append(round(float(d[1]), 3))
-            #     dt = pd.DataFrame({
-            #         'timestamp': timestamp_list,
-            #         'cmdb_id': cmdb_id_list,
-            #         'kpi_name': kpi_list,
-            #         'value': value_list
-            #     })
-            #     dt = dt.sort_values(by='timestamp')
-            #     file_path = os.path.join(istio_save_path, 'kpi_'+metric+'.csv')
-            #     if os.path.exists(file_path):
-            #         with open(file_path, 'a', encoding='utf-8', newline='') as f:
-            #             dt.to_csv(f, header=False, index=False)
-            #     else:
-            #         dt.to_csv(file_path, index=False)
-            start_time = current_et
+                pivoted = dt.pivot(
+                    index="timestamp", columns="service_metric", values="value"
+                ).reset_index()
+            else:
+                raise ValueError(f"Unknown metric category: {metric}")
 
-        # Print the folder structure
-        export_msg = f"Metrics data exported to directory: {save_path}\n\nFolder structure of exported metrics:\n"
-        for root, _dirs, files in os.walk(save_path):
-            level = root.replace(save_path, "").count(os.sep)
-            indent = " " * 4 * level
-            export_msg += f"{indent}{os.path.basename(root)}/\n"
-            subindent = " " * 4 * (level + 1)
-            for f in files:
-                export_msg += f"{subindent}{f}\n"
-        # print(export_msg)
-        return export_msg
+            if return_pd.empty:
+                return_pd = pivoted  # First metric
+            else:
+                return_pd = pd.merge(return_pd, pivoted, on="timestamp", how="outer")
 
-    def get_all_metrics(self):
-        """Get all of the metrics"""
-        all_metrics = self.client.all_metrics()
-        all_metrics = list(
-            filter(lambda x: True if x in normal_metrics else False, all_metrics)
+        if save_to_file:
+            if os.path.exists(save_path):
+                with open(save_path, "a", encoding="utf-8", newline="") as f:
+                    return_pd.to_csv(f, header=False, index=False)
+            else:
+                return_pd.to_csv(save_path, index=False)
+            logging.info(f"METRIC SAVE TO {save_path}")
+        return_pd.to_csv("./test.csv")
+        logging.info("QUERY DONE")
+        return return_pd
+
+    def query_all(
+        self,
+        start_time: int | datetime | str,
+        end_time: int | datetime | str,
+        step: str = "10s",
+    ):
+        return self.query_range(
+            ALL_METRICS, start_time, end_time, step, save_to_file=False
         )
-        return all_metrics
 
 
 if __name__ == "__main__":
-    prom = PrometheusAPI(monitor_config["prometheusApi"], monitor_config["namespace"])
+    prom = PrometheusAPI(monitor_config["prometheus_url"])
 
     # Define time range for exporting metrics
     end_time = datetime.now()
-    start_time = end_time - timedelta(minutes=7)
+    start_time = end_time - timedelta(minutes=5)
 
     # Define the save path for metrics
     save_path = root_path / "metrics_output"
 
-    prom.export_all_metrics(
-        start_time=start_time, end_time=end_time, save_path=str(save_path), step=10
-    )
+    prom.query_range(ALL_METRICS, start_time, end_time)

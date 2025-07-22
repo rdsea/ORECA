@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from rca_methods.baro import baro
 from rca_methods.utility import download_data, read_data
 
@@ -20,6 +19,7 @@ def test_baro_top_root_causes(sample_data):
     anomaly_detected_timestamp = 1692569339
     result = baro(sample_data, anomaly_detected_timestamp)
 
+    # print(result)
     root_causes = result["ranks"]
 
     assert root_causes[:5] == [

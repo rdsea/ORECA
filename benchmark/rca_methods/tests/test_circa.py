@@ -2,8 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
-
-from rca_methods.causalai import causalai
+from rca_methods.circa import circa
 from rca_methods.utility import download_data, read_data
 
 
@@ -16,9 +15,9 @@ def sample_data():
     return read_data(data_path)
 
 
-def test_causalai_top_root_causes(sample_data):
+def test_circa_top_root_causes(sample_data):
     anomaly_detected_timestamp = 1692569339
-    result = causalai(sample_data, inject_time=anomaly_detected_timestamp, dataset="ob")
+    result = circa(sample_data, inject_time=anomaly_detected_timestamp, dataset="ob")
 
     root_causes = result["ranks"]
     print(root_causes[:5])

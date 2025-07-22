@@ -15,7 +15,7 @@ spec:
       containers:
         - name: microsim
           image: yurishkuro/microsim
-          args: ["-d", "24h", "-s", "500ms"]
+          args: ["-d", "24h", "-s", "500ms", "-w", "10"]
           env:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: http://spm-metrics-source.default:4318
