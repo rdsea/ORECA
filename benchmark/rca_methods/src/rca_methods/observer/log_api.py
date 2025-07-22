@@ -11,7 +11,6 @@ from pathlib import Path
 import requests
 from kubernetes import client
 from loguru import logger
-
 from observer import (
     get_pod_list,
     get_services_list,

@@ -4,19 +4,23 @@ version = "0.1.0"
 description = "Add your description here"
 authors = [{ name = "nguu0123", email = "nguu0123@gmail.com" }]
 dependencies = [
-    "causal-learn>=XXX.XXX.XXX.XXX",
-    "scikit-network>=0.33.1",
-    "causalai @ git+https://github.com/salesforce/causalai.git",
-    "torch>=2.6.0",
-    "fastapi>=0.116.1",
+  "causal-learn>=XXX.XXX.XXX.XXX",
+  "scikit-network>=0.33.1",
+  "causalai @ git+https://github.com/salesforce/causalai.git",
+  "torch>=2.6.0",
+  "fastapi>=0.116.1",
+  "loguru>=0.7.3",
+  "requests>=2.32.4",
+  # "kubernetes>=33.1.0",
+  "pandas>=2.3.0",
+  "prometheus-client>=0.22.1",
+  # "pytz>=2025.2",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
 
 [project.optional-dependencies]
-test = [
-    "pytest>=8.4.1",
-]
+test = ["pytest>=8.4.1"]
 
 [build-system]
 requires = ["hatchling"]

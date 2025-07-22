@@ -3,12 +3,11 @@ import os
 from datetime import datetime, timedelta
 
 import pandas as pd
-from prometheus_api_client import PrometheusConnect
-
 from observer import (
     monitor_config,
     root_path,
 )
+from prometheus_api_client import PrometheusConnect
 
 NODE_METRICS = [
     "node:cpu_usage",
