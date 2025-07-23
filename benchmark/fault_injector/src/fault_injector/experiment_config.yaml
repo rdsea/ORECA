@@ -1,0 +1,12 @@
+experiment_name: cpu_hog_preprocessing
+fault_config:
+  duration: 30s
+  fault_type: ResourceHog.CPU
+anomaly_injection_period: 1s
+normal_rqs: 10
+load_generate_duration: 5s
+list_of_generator:
+  - localhost
+spawn_rate: 10
+ssh_username: username
+gateway_ip: localhost

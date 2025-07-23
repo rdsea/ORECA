@@ -10,6 +10,10 @@ class BaseRCA(ABC):
 
     @abstractmethod
     def run(
-        self, dataset: pd.DataFrame, top_k: int, injection_time: float | None, **kwargs
+        self,
+        dataset: pd.DataFrame,
+        injection_time: int | None,
+        top_k=5,
+        **kwargs,
     ) -> list[tuple[str, float]]:
         pass

@@ -4,6 +4,9 @@ import pandas as pd
 from sklearn.preprocessing import RobustScaler
 
 from rca_methods.base_rca import BaseRCA
+from rca_methods.io.time_series import (
+    preprocess,
+)
 
 warnings.filterwarnings("ignore")
 
@@ -13,27 +16,28 @@ class Baro(BaseRCA):
         pass
 
     def run(
-        self, dataset: pd.DataFrame, top_k: int, injection_time: float, **kwargs
+        self, dataset: pd.DataFrame, injection_time: int | None, top_k=5, **kwargs
     ) -> list[tuple[str, float]]:
-        anomalies = kwargs["anomalies"]
-        if anomalies is None:
-            normal_df = dataset[dataset["time"] < injection_time]
-            anomal_df = dataset[dataset["time"] >= injection_time]
+        dataset.fillna(0, inplace=True)
+        if "anomalies" not in kwargs:
+            normal_df = dataset[dataset["timestamp"] < injection_time]
+            anomal_df = dataset[dataset["timestamp"] >= injection_time]
         else:
+            anomalies = kwargs["anomalies"]
             normal_df = dataset.head(anomalies[0])
             anomal_df = dataset.tail(len(dataset) - anomalies[0])
 
-        # normal_df = preprocess(
-        #     data=normal_df,
-        #     dataset=dataset,
-        #     dk_select_useful=kwargs.get("dk_select_useful", False),
-        # )
-        #
-        # anomal_df = preprocess(
-        #     data=anomal_df,
-        #     dataset=dataset,
-        #     dk_select_useful=kwargs.get("dk_select_useful", False),
-        # )
+        normal_df = preprocess(
+            data=normal_df,
+            dataset=None,
+            dk_select_useful=kwargs.get("dk_select_useful", False),
+        )
+
+        anomal_df = preprocess(
+            data=anomal_df,
+            dataset=None,
+            dk_select_useful=kwargs.get("dk_select_useful", False),
+        )
 
         # intersect
         intersects = [x for x in normal_df.columns if x in anomal_df.columns]
