@@ -23,7 +23,7 @@ prometheus:
     additionalScrapeConfigs: |
       - job_name: aggregated-trace-metrics
         static_configs:
-        - targets: ['my-opentelemetry-collector.default:8889']
+        - targets: ['my-opentelemetry-collector.observe:8889']
       - job_name: 'cilium-metrics'
         kubernetes_sd_configs:
         - role: pod
