@@ -1,0 +1,15 @@
+name: resource-io-preprocessing
+namespace: default
+duration: 300s
+target:
+  namespace: default
+  label_selectors:
+    app: preprocessing
+io_chaos:
+  action: delay
+  path: /data
+  percent: "100"
+  delay: 500ms
+  methods:
+    - read
+    - write

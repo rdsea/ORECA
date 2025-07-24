@@ -3,48 +3,79 @@ import subprocess
 
 import yaml
 
-from experiment.config.resource_fault_config import StressChaosConfig
+from experiment.config.resource_fault_config import ResourcesChaosConfig
 
 
-def stress_config_to_yaml(config: StressChaosConfig) -> str:
+def resource_stress_config_to_yaml(config: ResourcesChaosConfig) -> str:
     """
-    Convert a StressChaosConfig object to a YAML string for Chaos Mesh.
+    Convert a ResourcesChaosConfig object to a YAML string for Chaos Mesh.
 
     Args:
-        config (StressChaosConfig): Validated config object.
+        config (ResourcesChaosConfig): Validated config object.
 
     Returns:
         str: YAML string.
     """
-    spec = {
-        "selector": {
-            "namespaces": [config.target.namespace],
-            "labelSelectors": config.target.label_selectors,
-        },
-        "mode": "all",
-        "duration": config.duration,
-    }
+    if config.io_chaos:
+        # Generate IOChaos YAML
+        spec = {
+            "action": config.io_chaos.action,
+            "mode": "all",
+            "selector": {
+                "namespaces": [config.target.namespace],
+                "labelSelectors": config.target.label_selectors,
+            },
+            "path": config.io_chaos.path,
+            "percent": config.io_chaos.percent,
+            "duration": config.duration,
+        }
 
-    if config.stress_cpu:
-        spec["stressors"] = spec.get("stressors", {})
-        spec["stressors"]["cpu"] = config.stress_cpu.dict(exclude_none=True)
+        if config.io_chaos.delay:
+            spec["delay"] = config.io_chaos.delay
+        if config.io_chaos.errno is not None:
+            spec["errno"] = config.io_chaos.errno
+        if config.io_chaos.methods:
+            spec["methods"] = config.io_chaos.methods
 
-    if config.stress_memory:
-        spec["stressors"] = spec.get("stressors", {})
-        spec["stressors"]["memory"] = config.stress_memory.dict(exclude_none=True)
+        return yaml.dump(
+            {
+                "apiVersion": "chaos-mesh.org/v1alpha1",
+                "kind": "IOChaos",
+                "metadata": {"name": config.name, "namespace": config.namespace},
+                "spec": spec,
+            },
+            sort_keys=False,
+        )
+    else:
+        spec = {
+            "selector": {
+                "namespaces": [config.target.namespace],
+                "labelSelectors": config.target.label_selectors,
+            },
+            "mode": "all",
+            "duration": config.duration,
+        }
 
-    return yaml.dump(
-        {
-            "apiVersion": "chaos-mesh.org/v1alpha1",
-            "kind": "StressChaos",
-            "metadata": {"name": config.name, "namespace": config.namespace},
-            "spec": spec,
-        },
-        sort_keys=False,
-    )
+        if config.stress_cpu:
+            spec["stressors"] = spec.get("stressors", {})
+            spec["stressors"]["cpu"] = config.stress_cpu.dict(exclude_none=True)
+
+        if config.stress_memory:
+            spec["stressors"] = spec.get("stressors", {})
+            spec["stressors"]["memory"] = config.stress_memory.dict(exclude_none=True)
+
+        return yaml.dump(
+            {
+                "apiVersion": "chaos-mesh.org/v1alpha1",
+                "kind": "StressChaos",
+                "metadata": {"name": config.name, "namespace": config.namespace},
+                "spec": spec,
+            },
+            sort_keys=False,
+        )
 
 
-class ChaosStressInjector:
+class ChaosResourceInjector:
     """
     Injector for CPU/Memory stress using Chaos Mesh.
 
@@ -54,13 +85,13 @@ class ChaosStressInjector:
         delete(): Deletes the stress experiment.
     """
 
-    def __init__(self, config: StressChaosConfig):
-        if not isinstance(config, StressChaosConfig):
-            raise TypeError("config must be an instance of StressChaosConfig")
+    def __init__(self, config: ResourcesChaosConfig):
+        if not isinstance(config, ResourcesChaosConfig):
+            raise TypeError("config must be an instance of ResourcesChaosConfig")
         self.config = config
 
     def generate_yaml(self) -> str:
-        return stress_config_to_yaml(self.config)
+        return resource_stress_config_to_yaml(self.config)
 
     def apply(self):
         yaml_content = self.generate_yaml()

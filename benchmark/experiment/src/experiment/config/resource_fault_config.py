@@ -1,4 +1,4 @@
-from experiment.config.fault_config import FaultSpecificConfig, TargetSelector
+from experiment.config.fault_config import TargetSelector
 from pydantic import BaseModel, model_validator
 
 
@@ -28,17 +28,27 @@ class StressMemoryConfig(BaseModel):
     size: str
 
 
-class StressChaosConfig(FaultSpecificConfig):
+class IOChaosConfig(BaseModel):
+    action: str
+    path: str
+    percent: str
+    delay: str | None = None
+    errno: int | None = None
+    methods: list[str] | None = None
+
+
+class ResourcesChaosConfig(BaseModel):
     """
-    Configuration for StressChaos.
+    General Chaos configuration supporting StressChaos and IOChaos.
 
     Attributes:
         name (str): Experiment name.
         namespace (str): Kubernetes namespace.
-        target (TargetSelector): Target pods to stress.
-        duration (str): Duration of the stress.
+        target (TargetSelector): Target pods.
+        duration (str): Duration of the chaos.
         stress_cpu (StressCPUConfig | None): CPU stress config.
         stress_memory (StressMemoryConfig | None): Memory stress config.
+        io_chaos (IOChaosConfig | None): I/O chaos config.
     """
 
     name: str
@@ -47,11 +57,14 @@ class StressChaosConfig(FaultSpecificConfig):
     duration: str
     stress_cpu: StressCPUConfig | None = None
     stress_memory: StressMemoryConfig | None = None
+    io_chaos: IOChaosConfig | None = None
 
     @model_validator(mode="before")
-    def validate_at_least_one_stress(cls, values):
-        if not any(values.get(key) for key in ["stress_cpu", "stress_memory"]):
+    def validate_at_least_one_fault(cls, values):
+        if not any(
+            values.get(key) for key in ["stress_cpu", "stress_memory", "io_chaos"]
+        ):
             raise ValueError(
-                "At least one of 'stress_cpu' or 'stress_memory' must be specified."
+                "At least one of 'stress_cpu', 'stress_memory', or 'io_chaos' must be specified."
             )
         return values
