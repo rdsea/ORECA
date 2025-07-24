@@ -1,0 +1,10 @@
+name: resource-memory-preprocessing
+namespace: default
+duration: 300s
+target:
+  namespace: default
+  label_selectors:
+    app: preprocessing
+stress_memory:
+  workers: 1
+  size: 150MB

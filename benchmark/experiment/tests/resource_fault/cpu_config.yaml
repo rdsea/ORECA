@@ -1,0 +1,10 @@
+name: resource-cpu-preprocessing
+namespace: default
+duration: 300s
+target:
+  namespace: default
+  label_selectors:
+    app: preprocessing
+stress_cpu:
+  workers: 1
+  load: 100

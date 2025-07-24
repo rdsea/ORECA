@@ -1,23 +1,22 @@
-experiment_name: network_delay_preprocessing
+experiment_name: resourcehog_cpu_preprocessing
 fault_config:
-  name: network-delay-preprocessing
+  name: resourcehog-cpu-preprocessing
   duration: 30s
-  fault_type: NetworkFault.DELAY
+  fault_type: ResourceHog.CPU
   fault_specific_config:
-    name: resource_hog_cpu_preprocessing
+    name: resourcehog-cpu-preprocessing
     namespace: default
     duration: 30s
     target:
       namespace: default
       label_selectors:
         app: preprocessing
-    delay:
-      latency: 100ms
-      correlation: "0.5"
-      jitter: 50ms
+    stress_cpu:
+      workers: 1
+      load: 100
 
 anomaly_injection_period: 30s
-normal_rqs: 15
+normal_rqs: 10
 load_generate_duration: 90s
 list_of_generator:
   - XXX.XXX.XXX.XXX

@@ -1,7 +1,6 @@
 import logging
 import re
 import select
-import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Timer
 
@@ -9,6 +8,7 @@ import paramiko
 import yaml
 
 from experiment.config.anomaly_model import RCAExperimentConfig
+from experiment.fault_injector.base import FaultInjector
 
 
 def parse_time_to_seconds(time_str: str) -> int:
@@ -44,6 +44,7 @@ class RCAExperiment:
 
     def __init__(self, config: RCAExperimentConfig):
         self.config = config
+        self.fault_injector = FaultInjector(self.config.fault_config)
 
     def _ssh_run_command(self, host: str, command: str) -> str:
         """
@@ -104,7 +105,6 @@ class RCAExperiment:
         Timer(
             inject_delay,
             self.inject_anomaly,
-            args=(self.config.fault_config.duration,),
         ).start()
 
         command_to_run = f"""docker run --network host rdsea/object_detection_client:latest \
@@ -126,26 +126,27 @@ class RCAExperiment:
                 result = future.result()
                 print(result)
 
-    def inject_anomaly(self, duration: str):
+    def inject_anomaly(self):
         """
         Simulates a fault for the given duration.
 
         Args:
             duration (str): Duration of the anomaly (e.g., '60s', '2m').
         """
-        anomaly_duration = parse_time_to_seconds(duration)
+        anomaly_duration = parse_time_to_seconds(self.config.fault_config.duration)
         logging.info(
             f"🔧 Injecting anomaly: {self.config.fault_config.fault_type} "
-            f"for {duration} in experiment: {self.config.experiment_name}"
+            f"for {self.config.fault_config.duration} in experiment: {self.config.experiment_name}"
         )
 
-        # NOTE: Actual fault injection logic should be implemented here.
-        # For now, we simulate it with sleep.
-        time.sleep(anomaly_duration)
+        self.fault_injector.inject()
+        Timer(anomaly_duration, self.clean_anomaly)
 
+    def clean_anomaly(self):
+        self.fault_injector.clean()
         logging.info(
             f"🛠️  Anomaly finished: {self.config.fault_config.fault_type} "
-            f"after {duration} in experiment: {self.config.experiment_name}"
+            f"after {self.config.fault_config.duration} in experiment: {self.config.experiment_name}"
         )
 
 

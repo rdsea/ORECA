@@ -1,0 +1,11 @@
+name: network-delay-preprocessing
+namespace: default
+duration: 30s
+target:
+  namespace: default
+  label_selectors:
+    app: preprocessing
+delay:
+  latency: 100ms
+  correlation: "0.5"
+  jitter: 50ms
