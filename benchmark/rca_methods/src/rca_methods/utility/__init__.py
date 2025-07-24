@@ -357,15 +357,15 @@ def read_data(data_path, strip=True):
     data = data.ffill()
     data = data.fillna(0)
 
-    # remove latency-50 columns
-    data = data.loc[:, ~data.columns.str.endswith("latency-50")]
-    # rename latency-90 columns to latency
-    data = data.rename(
-        columns={
-            c: c.replace("_latency-90", "_latency")
-            for c in data.columns
-            if c.endswith("_latency-90")
-        }
-    )
+    # # remove latency-50 columns
+    # data = data.loc[:, ~data.columns.str.endswith("latency-50")]
+    # # rename latency-90 columns to latency
+    # data = data.rename(
+    #     columns={
+    #         c: c.replace("_latency-90", "_latency")
+    #         for c in data.columns
+    #         if c.endswith("_latency-90")
+    #     }
+    # )
 
     return data

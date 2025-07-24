@@ -1,9 +1,9 @@
 [project]
-name = "fault_injector"
+name = "experiment"
 version = "0.1.0"
 description = "Add your description here"
 authors = [{ name = "nguu0123", email = "nguu0123@gmail.com" }]
-dependencies = []
+dependencies = ["paramiko>=3.5.1"]
 readme = "README.md"
 requires-python = ">= 3.10"
 
@@ -19,4 +19,4 @@ dev-dependencies = []
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/fault_injector"]
+packages = ["src/experiment"]

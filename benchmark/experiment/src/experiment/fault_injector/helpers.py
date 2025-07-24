@@ -1,5 +1,11 @@
 import subprocess
 
+sesa_object_classification_services_names = [
+    "preprocessing",
+    "ensemble",
+    "mobilenetv2",
+    "efficientnetb0",
+]
 # SocialNetwork service process names
 sn_svc_process_names = [
     "ComposePostServ",

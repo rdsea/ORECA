@@ -2,7 +2,7 @@ api: <api_path>
 username: elastic
 password: <update with elastic password>
 # Local
-prometheus_url: http://localhost:9090/prometheus
+prometheus_url: http://localhost:10001/prometheus
 # K8s
 # prometheus_url: http://prometheus-kube-prometheus-prometheus.redpanda.svc.cluster.local:9090/prometheus
 namespace: observe

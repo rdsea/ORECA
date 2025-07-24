@@ -1,0 +1,166 @@
+import logging
+import re
+import select
+import time
+from concurrent.futures import ThreadPoolExecutor
+from threading import Timer
+
+import paramiko
+import yaml
+
+from experiment.config.anomaly_model import RCAExperimentConfig
+
+
+def parse_time_to_seconds(time_str: str) -> int:
+    """
+    Converts a duration string like '5m', '10s', or '1h' into seconds.
+
+    Args:
+        time_str (str): Duration string.
+
+    Returns:
+        int: Duration in seconds.
+
+    Raises:
+        ValueError: If format is unrecognized.
+    """
+    match = re.match(r"(\d+)([smh])", time_str.lower())
+    if not match:
+        raise ValueError(f"Invalid time format: {time_str}")
+
+    value, unit = int(match[1]), match[2]
+    return {"s": value, "m": value * 60, "h": value * 3600}[unit]
+
+
+class RCAExperiment:
+    """
+    RCAExperiment runs an end-to-end root cause analysis experiment
+    that generates traffic and injects network anomalies (e.g., delay, loss, etc.)
+    on remote nodes over SSH.
+
+    Attributes:
+        config (RCAExperimentConfig): Validated configuration model.
+    """
+
+    def __init__(self, config: RCAExperimentConfig):
+        self.config = config
+
+    def _ssh_run_command(self, host: str, command: str) -> str:
+        """
+        Run a command on a remote machine via SSH and stream output.
+
+        Args:
+            host (str): Remote hostname or IP.
+            command (str): Shell command to execute.
+
+        Returns:
+            str: Exit status message or error.
+        """
+        try:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(hostname=host, username=self.config.ssh_username)
+
+            transport = ssh.get_transport()
+            channel = transport.open_session()
+            channel.get_pty()
+            channel.exec_command(command)
+
+            logging.info(f"--- [{host}] Command started ---")
+            while True:
+                rl, _, _ = select.select([channel], [], [], 1.0)
+                if channel in rl:
+                    try:
+                        output = channel.recv(1024).decode("utf-8")
+                        if output:
+                            print(output, end="", flush=True)
+                    except Exception as e:
+                        logging.error(f"[{host}] Error reading output: {e}")
+
+                if channel.exit_status_ready():
+                    break
+
+            exit_status = channel.recv_exit_status()
+            ssh.close()
+
+            return f"--- [{host}] Command finished with exit code {exit_status} ---"
+        except Exception as e:
+            return f"--- [{host}] SSH command failed ---\nError: {e}"
+
+    def run(self):
+        """
+        Starts the RCA experiment:
+        - Distributes load generator jobs across remote machines.
+        - Schedules delayed fault injection.
+        """
+        num_generators = len(self.config.list_of_generator)
+        if num_generators == 0:
+            raise ValueError("No load generator hosts provided.")
+
+        rqs_per_generator = int(self.config.normal_rqs / num_generators)
+        inject_delay = parse_time_to_seconds(self.config.anomaly_injection_period)
+
+        # Schedule anomaly injection using a timer
+        Timer(
+            inject_delay,
+            self.inject_anomaly,
+            args=(self.config.fault_config.duration,),
+        ).start()
+
+        command_to_run = f"""docker run --network host rdsea/object_detection_client:latest \
+            --host http://{self.config.gateway_ip} \
+            --user {rqs_per_generator} \
+            --run-time {self.config.load_generate_duration} \
+            --spawn-rate {self.config.spawn_rate}"""
+
+        logging.info("Starting load generators on remote nodes...")
+        logging.debug(f"Command: {command_to_run}")
+
+        with ThreadPoolExecutor(max_workers=num_generators) as executor:
+            futures = [
+                executor.submit(self._ssh_run_command, host, command_to_run)
+                for host in self.config.list_of_generator
+            ]
+
+            for future in futures:
+                result = future.result()
+                print(result)
+
+    def inject_anomaly(self, duration: str):
+        """
+        Simulates a fault for the given duration.
+
+        Args:
+            duration (str): Duration of the anomaly (e.g., '60s', '2m').
+        """
+        anomaly_duration = parse_time_to_seconds(duration)
+        logging.info(
+            f"🔧 Injecting anomaly: {self.config.fault_config.fault_type} "
+            f"for {duration} in experiment: {self.config.experiment_name}"
+        )
+
+        # NOTE: Actual fault injection logic should be implemented here.
+        # For now, we simulate it with sleep.
+        time.sleep(anomaly_duration)
+
+        logging.info(
+            f"🛠️  Anomaly finished: {self.config.fault_config.fault_type} "
+            f"after {duration} in experiment: {self.config.experiment_name}"
+        )
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(threadName)s - %(message)s",
+    )
+    try:
+        with open("experiment_config.yaml") as f:
+            config_data = yaml.safe_load(f)
+        experiment_config = RCAExperimentConfig(**config_data)
+        experiment = RCAExperiment(experiment_config)
+
+        # Uncomment to run
+        experiment.run()
+    except Exception as e:
+        logging.error(f"Failed to start experiment: {e}")
