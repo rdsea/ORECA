@@ -201,10 +201,10 @@ if __name__ == "__main__":
 
     # Define time range for exporting metrics
     end_time = datetime.now()
-    start_time = end_time - timedelta(minutes=15)
+    start_time = end_time - timedelta(minutes=20)
     # injection_time = 1753213321
 
     # Define the save path for metrics
     save_path = root_path / "metrics_output"
 
-    prom.query_range(ALL_METRICS, start_time, end_time, step="5s")
+    prom.query_range(ALL_METRICS, start_time, end_time, step="1s")

@@ -20,7 +20,7 @@ def sample_data():
 @pytest.fixture
 def own_sample_data() -> pd.DataFrame:
     base_path = Path(os.path.dirname(os.path.abspath(__file__)))
-    data_path = base_path / "cpu_3x_rqs.csv"
+    data_path = base_path / "network_delay_preprocessing.csv"
     return read_data(data_path)
 
 
@@ -30,8 +30,8 @@ def create_baro() -> Baro:
 
 
 def test_own_baro_top_root_causes(own_sample_data, create_baro):
-    injection_time = 1753213321
-    result = create_baro.run(own_sample_data, top_k=5, injection_time=injection_time)
+    injection_time = 1753426997 + 310
+    result = create_baro.run(own_sample_data, top_k=10, injection_time=injection_time)
     # previous = [
     #     "efficientnetb0-7c8ddf759c-nbwsz_pod:memory_usage",
     #     "XXX.XXX.XXX.XXX_node:network_transmit_lxc14a3877ba9b4",

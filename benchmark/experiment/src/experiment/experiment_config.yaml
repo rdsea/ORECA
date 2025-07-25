@@ -1,12 +1,12 @@
 experiment_name: network_delay_preprocessing
 fault_config:
   name: network-delay-preprocessing
-  duration: 30s
+  duration: 300s
   fault_type: NetworkFault.DELAY
   fault_specific_config:
-    name: resource_hog_cpu_preprocessing
+    name: network-delay-preprocessing
     namespace: default
-    duration: 30s
+    duration: 300s
     target:
       namespace: default
       label_selectors:
@@ -16,13 +16,13 @@ fault_config:
       correlation: "0.5"
       jitter: 50ms
 
-anomaly_injection_period: 30s
-normal_rqs: 15
-load_generate_duration: 90s
+anomaly_injection_period: 600s
+normal_rqs: 30
+load_generate_duration: 1200s
 list_of_generator:
   - XXX.XXX.XXX.XXX
-  # - XXX.XXX.XXX.XXX
-  # - XXX.XXX.XXX.XXX
+  - XXX.XXX.XXX.XXX
+  - XXX.XXX.XXX.XXX
 spawn_rate: 10
 ssh_username: aaltosea
 gateway_ip: XXX.XXX.XXX.XXX
