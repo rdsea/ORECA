@@ -7,6 +7,8 @@ from pydantic import BaseModel, field_validator, model_validator
 
 
 class AnomalyCategory(Enum):
+    """Enum for the category of an anomaly."""
+
     APPLICATION = "Application anomaly"
     WORKLOAD = "Workload anomaly"
     PLATFORM = "Platform anomaly"
@@ -14,21 +16,29 @@ class AnomalyCategory(Enum):
 
 
 class AnomalyInfo(NamedTuple):
+    """A named tuple to hold information about an anomaly."""
+
     label: str
     category: AnomalyCategory
 
 
 class AnomalyEnum(Enum):
+    """Base enum for anomalies."""
+
     @property
     def label(self) -> str:
+        """The label of the anomaly."""
         return self.value.label
 
     @property
     def category(self) -> AnomalyCategory:
+        """The category of the anomaly."""
         return self.value.category
 
 
 class ResourceHog(AnomalyEnum):
+    """Enum for resource hog anomalies."""
+
     CPU = AnomalyInfo("Cpu", AnomalyCategory.PLATFORM)
     MEMORY = AnomalyInfo("Memory", AnomalyCategory.PLATFORM)
     IO = AnomalyInfo("Io", AnomalyCategory.PLATFORM)
@@ -36,11 +46,15 @@ class ResourceHog(AnomalyEnum):
 
 
 class NetworkFault(AnomalyEnum):
+    """Enum for network faults."""
+
     DELAY = AnomalyInfo("Delay", AnomalyCategory.SYSTEM)
     DROP = AnomalyInfo("Package drop", AnomalyCategory.SYSTEM)
 
 
 class CodeLevelFault(AnomalyEnum):
+    """Enum for code-level faults."""
+
     INCORECT_PARAMETER_VALUE = AnomalyInfo(
         "Incorrect parameter values", AnomalyCategory.APPLICATION
     )
@@ -69,6 +83,8 @@ FAULT_TYPE_TO_MODEL: dict[AnomalyEnum, type[FaultSpecificConfig]] = {
 
 
 class FaultConfig(BaseModel):
+    """Configuration for a fault."""
+
     name: str
     duration: str
     fault_type: AnomalyEnum
@@ -77,6 +93,7 @@ class FaultConfig(BaseModel):
     @field_validator("fault_type", mode="before")
     @classmethod
     def parse_fault_type(cls, v):
+        """Parse the fault type from a string."""
         if isinstance(v, AnomalyEnum):
             return v
         try:
@@ -87,6 +104,7 @@ class FaultConfig(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def resolve_specific_config(cls, values):
+        """Resolve the fault-specific configuration."""
         fault_type = values.get("fault_type")
         config_data = values.get("fault_specific_config")
 
@@ -110,6 +128,8 @@ class FaultConfig(BaseModel):
 
 
 class RCAExperimentConfig(BaseModel):
+    """Configuration for an RCA experiment."""
+
     experiment_name: str
     fault_config: FaultConfig
     # When to inject the anomaly, for example, 5, 10 minutes after starting load generation

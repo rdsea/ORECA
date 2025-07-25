@@ -1,9 +1,20 @@
 def hello() -> str:
+    """Returns a greeting string."""
     return "Hello from rca-methods!"
 
 
 def rca(func):
-    """RCA Wrapper to tolerate the case when the RCA algorithm fails."""
+    """Decorator to wrap RCA algorithms, providing fault tolerance.
+
+    If the wrapped RCA algorithm fails, this decorator catches the exception
+    and returns a dummy result to prevent the entire process from crashing.
+
+    Args:
+        func (Callable): The RCA algorithm function to be wrapped.
+
+    Returns:
+        Callable: The wrapped function with fault tolerance.
+    """
 
     def wrapper(*args, **kwargs):
         try:

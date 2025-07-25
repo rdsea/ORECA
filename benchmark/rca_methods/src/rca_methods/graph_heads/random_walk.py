@@ -331,10 +331,22 @@ def random_walk(
 def second_order_random_walk(
     adj: np.ndarray,
     node_names: list[str] | None = None,
-    sli: Node = None,
-    num_loop=None,
-    previous_scores=None,
-):
+    sli: Node | None = None,
+    num_loop: int | None = None,
+    previous_scores: dict | None = None,
+) -> list[tuple[str, float]]:
+    """Performs a second-order random walk on the given adjacency matrix to rank nodes.
+
+    Args:
+        adj (np.ndarray): The adjacency matrix of the graph.
+        node_names (list[str] | None, optional): A list of node names. Defaults to None.
+        sli (Node | None, optional): The Service Level Indicator node. Defaults to None.
+        num_loop (int | None, optional): The number of random walk steps. Defaults to None.
+        previous_scores (dict | None, optional): Dictionary of previous scores for nodes. Defaults to None.
+
+    Returns:
+        list[tuple[str, float]]: A list of tuples, where each tuple contains the node name and its score, sorted in descending order of score.
+    """
     if node_names is None:
         node_names = [f"X{i}" for i in range(len(adj))]
 
@@ -377,7 +389,7 @@ def second_order_random_walk(
     # == end build the graph
 
     # prepare data for RandomWalk
-    sli = np.random.choice(nodes)
+    sli = np.random.choice(nodes) if sli is None else sli
     data = CaseData(data_loader=None, sli=sli, detect_time=0)
 
     if previous_scores is None:

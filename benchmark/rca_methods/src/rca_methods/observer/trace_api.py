@@ -15,7 +15,14 @@ from deployments.observer import root_path
 
 
 class TraceAPI:
+    """A client for interacting with the Jaeger tracing service."""
+
     def __init__(self, namespace: str):
+        """Initialize the TraceAPI client.
+
+        Args:
+            namespace (str): The Kubernetes namespace where Jaeger is deployed.
+        """
         self.port_forward_process = None
         self.namespace = namespace
         self.stop_event = threading.Event()
@@ -28,8 +35,16 @@ class TraceAPI:
             self.base_url = "http://localhost:16686"
             self.start_port_forward()
 
-    def get_nodeport(self, service_name, namespace):
-        """Fetch the NodePort for the given service."""
+    def get_nodeport(self, service_name: str, namespace: str) -> str | None:
+        """Fetch the NodePort for the given service.
+
+        Args:
+            service_name (str): The name of the service.
+            namespace (str): The namespace of the service.
+
+        Returns:
+            str | None: The NodePort as a string, or None if not found or an error occurs.
+        """
         try:
             result = subprocess.check_output(
                 [
@@ -69,7 +84,15 @@ class TraceAPI:
             if self.port_forward_process.poll() is not None:
                 break
 
-    def is_port_in_use(self, port):
+    def is_port_in_use(self, port: int) -> bool:
+        """Checks if a given port is currently in use.
+
+        Args:
+            port (int): The port number to check.
+
+        Returns:
+            bool: True if the port is in use, False otherwise.
+        """
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             return s.connect_ex(("XXX.XXX.XXX.XXX", port)) == 0
 
@@ -83,7 +106,6 @@ class TraceAPI:
                 time.sleep(3)
                 continue
 
-            # command = "kubectl port-forward svc/jaeger 16686:16686 -n hotel-reservation"
             command = f"kubectl port-forward svc/jaeger 16686:16686 -n {self.namespace}"
             self.port_forward_process = subprocess.Popen(
                 command,
@@ -112,16 +134,6 @@ class TraceAPI:
                 print("Port forwarding failed. Retrying...")
         else:
             print("Failed to establish port forwarding after multiple attempts.")
-        # TODO: modify this command for other microservices
-        # command = "kubectl port-forward svc/jaeger 16686:16686 -n hotel-reservation"
-        # self.port_forward_process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-        # thread_out = threading.Thread(target=self.print_output, args=(self.port_forward_process.stdout,))
-        # thread_err = threading.Thread(target=self.print_output, args=(self.port_forward_process.stderr,))
-        # thread_out.start()
-        # thread_err.start()
-        # # self.output_threads.extend([thread_out, thread_err])
-        # time.sleep(3)  # Wait a bit for the port-forward to establish
 
     def stop_port_forward(self):
         """Stops the kubectl port-forward command."""
@@ -165,9 +177,16 @@ class TraceAPI:
         end_time: datetime,
         limit: int | None = None,
     ) -> list:
-        """
-        Fetch traces for a specific service between start_time and end_time.
-        If limit is not specified, all available traces are fetched.
+        """Fetch traces for a specific service between start_time and end_time.
+
+        Args:
+            service_name (str): The name of the service to fetch traces for.
+            start_time (datetime): The start time for the trace query.
+            end_time (datetime): The end time for the trace query.
+            limit (int | None, optional): The maximum number of traces to fetch. If None, all available traces are fetched. Defaults to None.
+
+        Returns:
+            list: A list of traces.
         """
         # Calculate the lookback in milliseconds.
         lookback = int((datetime.now() - start_time).total_seconds())
@@ -187,8 +206,15 @@ class TraceAPI:
     def extract_traces(
         self, start_time: datetime, end_time: datetime, limit: int | None = None
     ) -> list:
-        """
-        Extract traces for all services between start_time and end_time.
+        """Extract traces for all services between start_time and end_time.
+
+        Args:
+            start_time (datetime): The start time for extracting traces.
+            end_time (datetime): The end time for extracting traces.
+            limit (int | None, optional): The maximum number of traces to extract per service. Defaults to None.
+
+        Returns:
+            list: A list of all extracted traces, with service names associated with each span.
         """
         services = self.get_services()
         print(f"services: {services}")
@@ -218,8 +244,15 @@ class TraceAPI:
         # print(f"all_traces: {all_traces}")
         return all_traces
 
-    def process_traces(self, traces) -> pd.DataFrame:
-        """Process raw traces data into a structured DataFrame."""
+    def process_traces(self, traces: list) -> pd.DataFrame:
+        """Process raw traces data into a structured DataFrame.
+
+        Args:
+            traces (list): A list of raw trace data.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing processed trace information.
+        """
         trace_id_list = []
         service_name_list = []
         operation_name_list = []
@@ -257,7 +290,16 @@ class TraceAPI:
         )
         return df
 
-    def save_traces(self, df, path) -> str:
+    def save_traces(self, df: pd.DataFrame, path: str) -> str:
+        """Saves processed trace data to a CSV file.
+
+        Args:
+            df (pd.DataFrame): The DataFrame containing processed trace data.
+            path (str): The directory path to save the CSV file.
+
+        Returns:
+            str: A message indicating the file path where traces data is exported.
+        """
         os.makedirs(path, exist_ok=True)
         file_path = os.path.join(path, f"traces_{int(time.time())}.csv")
         df.to_csv(file_path, index=False)

@@ -3,16 +3,30 @@ import pandas as pd
 from castle.algorithms import DAG_GNN, NotearsLowRank
 
 
-def dag_gnn(data: pd.DataFrame):
-    # rl learn
+def dag_gnn(data: pd.DataFrame) -> np.ndarray:
+    """Learns the causal graph using the DAG-GNN algorithm.
+
+    Args:
+        data (pd.DataFrame): The input data.
+
+    Returns:
+        np.ndarray: The learned causal matrix (adjacency matrix).
+    """
     gnn = DAG_GNN()
     gnn.learn(np.array(data))
 
     return np.array(gnn.causal_matrix)
 
 
-def notears_low_rank(data: pd.DataFrame):
-    # rl learn
+def notears_low_rank(data: pd.DataFrame) -> np.ndarray:
+    """Learns the causal graph using the Notears-LowRank algorithm.
+
+    Args:
+        data (pd.DataFrame): The input data.
+
+    Returns:
+        np.ndarray: The learned causal matrix (adjacency matrix).
+    """
     notears = NotearsLowRank()
     # notears.learn(np.array(data), rank=data.shape[1])
     notears.learn(np.array(data), rank=10)

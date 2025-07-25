@@ -3,6 +3,7 @@ from pyflink.table import StreamTableEnvironment
 
 
 def log_processing():
+    """Process logs from Kafka using Flink."""
     kafka_servers = "redpanda-0.redpanda.redpanda.svc.cluster.local:9093"
     source_topic = "prometheus-metric"
     kafka_consumer_group_id = "test"
@@ -15,6 +16,7 @@ def log_processing():
         "python.fn-execution.memory.managed", True
     )
 
+    # Create a Flink table from a Kafka topic.
     source_ddl = f"""
     CREATE TABLE prometheus_metric (
         `name` STRING,
@@ -57,6 +59,7 @@ def log_processing():
     );
     """
 
+    # Create a view that calculates the rate of CPU usage per pod.
     rate_per_pod_sql = """
     CREATE VIEW pod_cpu_usage_rate AS
     SELECT

@@ -1,11 +1,13 @@
 import subprocess
 
+# Service names for SESA object classification
 sesa_object_classification_services_names = [
     "preprocessing",
     "ensemble",
     "mobilenetv2",
     "efficientnetb0",
 ]
+
 # SocialNetwork service process names
 sn_svc_process_names = [
     "ComposePostServ",
@@ -50,22 +52,22 @@ hr_mongod_process_names = ["mongod"]
 hr_memcached_process_names = ["memcached"]
 
 
-def get_pids_by_name_contain(search_term):
-    """
-    Get a list of PIDs for processes whose command contains the given search term.
+def get_pids_by_name_contain(search_term: str) -> list[int]:
+    """Get a list of PIDs for processes whose command contains the given search term.
 
-    :param search_term: The term to search for in process names (case-sensitive).
-    :return: A list of PIDs (integers) matching the search term.
+    Args:
+        search_term (str): The term to search for in process names (case-sensitive).
+
+    Returns:
+        list[int]: A list of PIDs (integers) matching the search term.
     """
     try:
         result = subprocess.run(
             ["ps", "-e", "-o", "pid,comm"],
             text=True,
             capture_output=True,
+            check=True,
         )
-
-        if result.returncode != 0:
-            raise RuntimeError(f"Error running ps command: {result.stderr.strip()}")
 
         # Filter the output for lines containing the search term
         matching_pids = []
@@ -79,27 +81,30 @@ def get_pids_by_name_contain(search_term):
 
         return matching_pids
 
+    except subprocess.CalledProcessError as e:
+        print(f"Error running ps command: {e.stderr.strip()}")
+        return []
     except Exception as e:
         print(f"Error: {e}")
         return []
 
 
-def get_pids_by_name(search_term):
-    """
-    Get a list of PIDs for processes whose command exactly match the given search term.
+def get_pids_by_name(search_term: str) -> list[int]:
+    """Get a list of PIDs for processes whose command exactly matches the given search term.
 
-    :param search_term: The term to search for in process names (case-sensitive).
-    :return: A list of PIDs (integers) matching exactly the search term.
+    Args:
+        search_term (str): The term to search for in process names (case-sensitive).
+
+    Returns:
+        list[int]: A list of PIDs (integers) matching exactly the search term.
     """
     try:
         result = subprocess.run(
             ["ps", "-e", "-o", "pid,comm"],
             text=True,
             capture_output=True,
+            check=True,
         )
-
-        if result.returncode != 0:
-            raise RuntimeError(f"Error running ps command: {result.stderr.strip()}")
 
         # Filter the output for lines containing the search term
         matching_pids = []
@@ -113,6 +118,9 @@ def get_pids_by_name(search_term):
 
         return matching_pids
 
+    except subprocess.CalledProcessError as e:
+        print(f"Error running ps command: {e.stderr.strip()}")
+        return []
     except Exception as e:
         print(f"Error: {e}")
         return []

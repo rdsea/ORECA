@@ -7,13 +7,25 @@ from experiment.fault_injector.network import ChaosNetworkInjector, NetworkChaos
 
 
 class FaultInjector:
+    """Injects and cleans up various types of faults based on the provided configuration."""
+
     def __init__(self, fault_config: FaultConfig):
+        """Initialize the FaultInjector.
+
+        Args:
+            fault_config (FaultConfig): The configuration for the fault to be injected.
+        """
         self.config = fault_config
 
     def inject(
         self,
         microservices: list[str] | None = None,
     ):
+        """Injects the configured fault.
+
+        Args:
+            microservices (list[str], optional): A list of microservices to target. Defaults to None.
+        """
         match self.config.fault_type:
             case ResourceHog.CPU:
                 pass
@@ -42,6 +54,7 @@ class FaultInjector:
                 self.network_fault_injector.apply()
 
     def clean(self):
+        """Cleans up the injected fault."""
         match self.config.fault_type:
             case ResourceHog.CPU:
                 pass

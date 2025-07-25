@@ -10,6 +10,7 @@ from rca_methods.observer import (
     root_path,
 )
 
+# Node-level metrics
 NODE_METRICS = [
     "node:cpu_usage",
     "node:memory_usage_percentage",
@@ -19,11 +20,14 @@ NODE_METRICS = [
     "node:network_receive",
     "node:network_transmit",
 ]
+
+# Pod-level metrics
 POD_METRICS = [
     "pod:cpu_usage",
     "pod:memory_usage",
 ]
 
+# Service-level metrics
 SERVICE_METRICS = [
     "service:cpu_usage",
     "service:memory_usage",
@@ -37,10 +41,19 @@ SERVICE_METRICS = [
     "service:error_rate",
 ]
 
+# All metrics combined
 ALL_METRICS = NODE_METRICS + POD_METRICS + SERVICE_METRICS
 
 
 def time_format_transform(time_to_transform):
+    """Transform time data from int or string to datetime object.
+
+    Args:
+        time_to_transform (int | str): The time to transform.
+
+    Returns:
+        datetime: The transformed time as a datetime object.
+    """
     # transform time data from int to datetime
     if isinstance(time_to_transform, int):
         time_to_transform = datetime.fromtimestamp(time_to_transform)
@@ -51,11 +64,16 @@ def time_format_transform(time_to_transform):
 
 
 class PrometheusAPI:
+    """A wrapper for the Prometheus API client."""
+
     def __init__(self, url: str):
+        """Initialize the Prometheus API client.
+
+        Args:
+            url (str): The URL of the Prometheus server.
+        """
         self.client = PrometheusConnect(url, disable_ssl=True)
 
-    # start_time: Union[int, datetime]
-    # The start_time can be either int or datetime or string
     def query_range(
         self,
         metric_list: list[str],
@@ -65,6 +83,19 @@ class PrometheusAPI:
         save_path: str = ".",
         save_to_file: bool = True,
     ):
+        """Query a range of metrics from Prometheus.
+
+        Args:
+            metric_list (list[str]): A list of metrics to query.
+            start_time (int | datetime | str): The start time of the query range.
+            end_time (int | datetime | str): The end time of the query range.
+            step (str, optional): The step size for the query. Defaults to "10s".
+            save_path (str, optional): The path to save the metrics to. Defaults to ".".
+            save_to_file (bool, optional): Whether to save the metrics to a file. Defaults to True.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the queried metrics.
+        """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         save_path = os.path.join(save_path, f"metric_{timestamp}.csv")
         start_time = time_format_transform(start_time)
@@ -191,6 +222,16 @@ class PrometheusAPI:
         end_time: int | datetime | str,
         step: str = "10s",
     ):
+        """Query all metrics from Prometheus.
+
+        Args:
+            start_time (int | datetime | str): The start time of the query range.
+            end_time (int | datetime | str): The end time of the query range.
+            step (str, optional): The step size for the query. Defaults to "10s".
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the queried metrics.
+        """
         return self.query_range(
             ALL_METRICS, start_time, end_time, step, save_to_file=False
         )

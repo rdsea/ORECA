@@ -6,12 +6,25 @@ from rca_methods.graph_heads.rht import rht
 
 
 class Circa(BaseRCA):
+    """Circa RCA method implementation."""
+
     def __init__(self):
+        """Initializes the Circa RCA method."""
         pass
 
     def run(
         self, dataset: pd.DataFrame, top_k: int, injection_time: float, **kwargs
     ) -> list[tuple[str, float]]:
+        """Runs the Circa RCA method.
+
+        Args:
+            dataset (pd.DataFrame): The input dataset.
+            top_k (int): The number of top root causes to return.
+            injection_time (float): The time of fault injection.
+
+        Returns:
+            list[tuple[str, float]]: A list of top_k root causes with their scores.
+        """
         time_col = dataset["time"]
 
         dataset["time"] = time_col

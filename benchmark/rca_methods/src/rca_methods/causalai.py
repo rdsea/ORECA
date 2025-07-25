@@ -6,14 +6,34 @@ from causalai.application.common import rca_preprocess
 from rca_methods.base_rca import BaseRCA
 
 
-def drop_constant_column(df: pd.DataFrame):
+def drop_constant_column(df: pd.DataFrame) -> pd.DataFrame:
+    """Drops columns from a DataFrame that have only one unique value (constant columns)."""
     for col in df.columns:
         if df[col].nunique() == 1:
             df.drop(col, axis=1, inplace=True)
     return df
 
 
-def causalai(data, inject_time=None, dataset=None, with_bg=False, args=None, **kwargs):
+def causalai(
+    data: pd.DataFrame,
+    inject_time: int | None = None,
+    dataset: str | None = None,
+    with_bg: bool = False,
+    args: dict | None = None,
+    **kwargs,
+) -> dict:
+    """Runs the CausalAI root cause analysis method.
+
+    Args:
+        data (pd.DataFrame): The input dataset.
+        inject_time (int | None, optional): The injection time. Defaults to None.
+        dataset (str | None, optional): The dataset name. Defaults to None.
+        with_bg (bool, optional): Whether to include background knowledge. Defaults to False.
+        args (dict | None, optional): Additional arguments. Defaults to None.
+
+    Returns:
+        dict: A dictionary containing the ranks of the root causes.
+    """
     data = drop_constant_column(data)
 
     if "time" not in data.columns:
@@ -48,7 +68,10 @@ def causalai(data, inject_time=None, dataset=None, with_bg=False, args=None, **k
 
 
 class CausalAI(BaseRCA):
+    """CausalAI RCA method implementation."""
+
     def __init__(self):
+        """Initializes the CausalAI RCA method."""
         pass
 
     def run(
@@ -58,6 +81,17 @@ class CausalAI(BaseRCA):
         top_k=5,
         **kwargs,
     ) -> list[tuple[str, float]]:
+        """Runs the CausalAI RCA method.
+
+        Args:
+            dataset (pd.DataFrame): The input dataset.
+            injection_time (int | None): The time of fault injection.
+            top_k (int, optional): The number of top root causes to return. Defaults to 5.
+
+        Returns:
+            list[tuple[str, float]]: A list of tuples, where each tuple contains
+                                     the name of a potential root cause (str) and its score (float).
+        """
         data = drop_constant_column(dataset)
 
         # if "timestamp" not in data.columns:

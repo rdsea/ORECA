@@ -11,7 +11,14 @@ from deployments.paths import HELM_CHARTS
 
 
 class TelemetryService(ABC):
+    """Abstract base class for all telemetry services."""
+
     def __init__(self, config_file: Path):
+        """Initialize the TelemetryService.
+
+        Args:
+            config_file (Path): The path to the service's configuration file.
+        """
         self.config_file = config_file
         self.name = None
         self.namespace = None
@@ -22,6 +29,7 @@ class TelemetryService(ABC):
         self.load_service_json()
 
     def load_service_json(self):
+        """Load service metadata from the JSON configuration file."""
         with open(self.config_file) as file:
             metadata = json.load(file)
 
@@ -46,10 +54,12 @@ class TelemetryService(ABC):
             self.pvc_config_file = os.path.join(HELM_CHARTS, pvc)
 
     def get_service_json(self) -> dict:
+        """Get service metadata in JSON format."""
         with open(self.config_file) as file:
             return json.load(file)
 
     def get_service_summary(self) -> str:
+        """Get a summary of the service metadata in string format."""
         data = self.get_service_json()
         summary = (
             f"Telemetry Service Name: {data.get('Name', '')}\n"
@@ -63,6 +73,7 @@ class TelemetryService(ABC):
         return summary + operations
 
     def deploy(self):
+        """Deploy the telemetry service."""
         if self._is_service_running():
             print(f"{self.name} is already running. Skipping redeployment.")
             return
@@ -90,6 +101,7 @@ class TelemetryService(ABC):
         Helm.assert_if_deployed(self.namespace)
 
     def teardown(self):
+        """Teardown the telemetry service."""
         Helm.uninstall(
             self.helm_configs["release_name"], self.helm_configs["namespace"]
         )
@@ -97,12 +109,14 @@ class TelemetryService(ABC):
             self._delete_pv()
 
     def _apply_pv(self):
+        """Apply the PersistentVolume configuration."""
         print(f"Applying PersistentVolume from {self.pvc_config_file}")
         KubeCtl().exec_command(
             f"kubectl apply -f {self.pvc_config_file} -n {self.namespace}"
         )
 
     def _delete_pv(self):
+        """Delete the PersistentVolume."""
         if not self.pvc_config_file:
             return
         pv_name = self._get_pv_name_from_file(self.pvc_config_file)
@@ -114,11 +128,13 @@ class TelemetryService(ABC):
             print(f"PersistentVolume {pv_name} not found. Skipping deletion.")
 
     def _get_pv_name_from_file(self, pv_config_file):
+        """Get the PersistentVolume name from the configuration file."""
         with open(pv_config_file) as file:
             pv_config = yaml.safe_load(file)
             return pv_config["metadata"]["name"]
 
     def _pv_exists(self, pv_name: str) -> bool:
+        """Check if a PersistentVolume exists."""
         try:
             result = KubeCtl().exec_command(f"kubectl get pv {pv_name}")
             if "No resources found" in result or "Error" in result:
@@ -129,5 +145,5 @@ class TelemetryService(ABC):
 
     @abstractmethod
     def _is_service_running(self) -> bool:
-        """Check if the telemetry service is running."""
+        """Abstract method to check if the telemetry service is running."""
         pass

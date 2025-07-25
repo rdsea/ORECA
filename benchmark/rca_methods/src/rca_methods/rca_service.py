@@ -37,11 +37,15 @@ METRICS = [
 
 
 class RCARequest(BaseModel):
+    """Request model for RCA analysis."""
+
     injection_time: int | None = None
     experiment: str
 
 
 class RCAResponse(BaseModel):
+    """Response model for RCA analysis."""
+
     root_causes: list[tuple[str, float]]
 
 
@@ -55,19 +59,35 @@ rca_chosen = RCAFactory.create(rca_type)
 
 @app.post("/find_rca", response_model=RCAResponse)
 def find_rca(request: RCARequest):
+    """Finds the root causes of an anomaly.
+
+    Args:
+        request (RCARequest): The RCA request containing injection time and experiment name.
+
+    Returns:
+        RCAResponse: The RCA response containing the identified root causes.
+    """
     obs_data = query_data(request.injection_time)
     root_causes = rca_chosen.run(
         obs_data,
         top_k,
         request.injection_time,
     )
-    os.mkdir("./results")
-    with open(f"{request.experiment}.txt", "w") as f:
+    os.makedirs("./results", exist_ok=True)
+    with open(f"./results/{request.experiment}.txt", "w") as f:
         f.write(f"{root_causes}")
     return RCAResponse(root_causes=root_causes)
 
 
 def query_data(injection_time: int | None) -> pd.DataFrame:
+    """Queries Prometheus for metric data.
+
+    Args:
+        injection_time (int | None): The time of fault injection. If provided, data will be queried from 5 minutes before injection time.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the queried metric data.
+    """
     end_time = datetime.now()
     if injection_time:
         start_time = datetime.fromtimestamp(injection_time) - timedelta(minutes=5)

@@ -6,7 +6,19 @@ import torch
 import torch.nn as nn
 
 
-def activation_helper(activation, dim=None):
+def activation_helper(activation: str | None, dim: int | None = None):
+    """Helper function to get an activation function.
+
+    Args:
+        activation (str | None): Name of the activation function (e.g., "sigmoid", "tanh", "relu", "leakyrelu"). If None, returns an identity function.
+        dim (int | None, optional): Dimension for some activations (not used here). Defaults to None.
+
+    Returns:
+        torch.nn.Module: The activation function.
+
+    Raises:
+        ValueError: If an unsupported activation is provided.
+    """
     if activation == "sigmoid":
         act = nn.Sigmoid()
     elif activation == "tanh":
@@ -26,7 +38,17 @@ def activation_helper(activation, dim=None):
 
 
 class MLP(nn.Module):
-    def __init__(self, num_series, lag, hidden, activation):
+    """A Multi-Layer Perceptron (MLP) module."""
+
+    def __init__(self, num_series: int, lag: int, hidden: list[int], activation: str):
+        """Initialize the MLP.
+
+        Args:
+            num_series (int): Number of time series.
+            lag (int): Number of previous time points to use in prediction.
+            hidden (list[int]): List of number of hidden units per layer.
+            activation (str): Nonlinearity at each layer.
+        """
         super().__init__()
         self.activation = activation_helper(activation)
 
@@ -41,7 +63,15 @@ class MLP(nn.Module):
         # Register parameters.
         self.layers = nn.ModuleList(modules)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Perform forward pass.
+
+        Args:
+            x (torch.Tensor): Torch tensor of shape (batch, T, p).
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch, T - lag + 1, 1).
+        """
         x = x.transpose(2, 1)
         for i, fc in enumerate(self.layers):
             if i != 0:
@@ -52,15 +82,18 @@ class MLP(nn.Module):
 
 
 class CMlp(nn.Module):
-    def __init__(self, num_series, lag, hidden, activation="relu"):
-        """
-        CMlp model with one MLP per time series.
+    """CMLP model with one MLP per time series."""
+
+    def __init__(
+        self, num_series: int, lag: int, hidden: list[int], activation: str = "relu"
+    ):
+        """Initialize the CMlp model.
 
         Args:
-          num_series: dimensionality of multivariate time series.
-          lag: number of previous time points to use in prediction.
-          hidden: list of number of hidden units per layer.
-          activation: nonlinearity at each layer.
+            num_series (int): Dimensionality of multivariate time series.
+            lag (int): Number of previous time points to use in prediction.
+            hidden (list[int]): List of number of hidden units per layer.
+            activation (str, optional): Nonlinearity at each layer. Defaults to "relu".
         """
         super().__init__()
         self.p = num_series
@@ -72,28 +105,29 @@ class CMlp(nn.Module):
             [MLP(num_series, lag, hidden, activation) for _ in range(num_series)]
         )
 
-    def forward(self, x):
-        """
-        Perform forward pass.
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Perform forward pass.
 
         Args:
-          x: torch tensor of shape (batch, T, p).
+            x (torch.Tensor): Torch tensor of shape (batch, T, p).
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch, T - lag + 1, p).
         """
         return torch.cat([network(x) for network in self.networks], dim=2)
 
-    def gc(self, threshold=True, ignore_lag=True):
-        """
-        Extract learned Granger causality.
+    def gc(self, threshold: bool = True, ignore_lag: bool = True) -> torch.Tensor:
+        """Extract learned Granger causality.
 
         Args:
-          threshold: return norm of weights, or whether norm is nonzero.
-          ignore_lag: if true, calculate norm of weights jointly for all lags.
+            threshold (bool, optional): If True, returns whether norm is nonzero. Otherwise, returns norm of weights. Defaults to True.
+            ignore_lag (bool, optional): If True, calculates norm of weights jointly for all lags. Defaults to True.
 
         Returns:
-          GC: (p x p) or (p x p x lag) matrix. In first case, entry (i, j)
-            indicates whether variable j is Granger causal of variable i. In
-            second case, entry (i, j, k) indicates whether it's Granger causal
-            at lag k.
+            torch.Tensor: (p x p) or (p x p x lag) matrix. In first case, entry (i, j)
+                indicates whether variable j is Granger causal of variable i. In
+                second case, entry (i, j, k) indicates whether it's Granger causal
+                at lag k.
         """
         if ignore_lag:
             return_gc = [
@@ -111,17 +145,24 @@ class CMlp(nn.Module):
 
 
 class CMlpSparse(nn.Module):
-    def __init__(self, num_series, sparsity, lag, hidden, activation="relu"):
-        """
-        cMLP model that only uses specified interactions.
+    """cMLP model that only uses specified interactions."""
+
+    def __init__(
+        self,
+        num_series: int,
+        sparsity: torch.Tensor,
+        lag: int,
+        hidden: list[int],
+        activation: str = "relu",
+    ):
+        """Initialize the CMlpSparse model.
 
         Args:
-          num_series: dimensionality of multivariate time series.
-          sparsity: torch byte tensor indicating Granger causality, with size
-            (num_series, num_series).
-          lag: number of previous time points to use in prediction.
-          hidden: list of number of hidden units per layer.
-          activation: nonlinearity at each layer.
+            num_series (int): Dimensionality of multivariate time series.
+            sparsity (torch.Tensor): Torch byte tensor indicating Granger causality, with size (num_series, num_series).
+            lag (int): Number of previous time points to use in prediction.
+            hidden (list[int]): List of number of hidden units per layer.
+            activation (str, optional): Nonlinearity at each layer. Defaults to "relu".
         """
         super().__init__()
         self.p = num_series
@@ -141,28 +182,28 @@ class CMlpSparse(nn.Module):
             param_list += list(self.networks[i].parameters())
         self.param_list = nn.ParameterList(param_list)
 
-    def forward(self, x):
-        """
-        Perform forward pass.
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Perform forward pass.
 
         Args:
-          x: torch tensor of shape (batch, T, p).
+            x (torch.Tensor): Torch tensor of shape (batch, T, p).
+
+        Returns:
+            torch.Tensor: Output tensor.
         """
         return torch.cat(
             [self.networks[i](x[:, :, self.sparsity[i]]) for i in range(self.p)], dim=2
         )
 
 
-def prox_update(network, lam, lr, penalty):
-    """
-    Perform in place proximal update on first layer weight matrix.
+def prox_update(network: MLP, lam: float, lr: float, penalty: str):
+    """Perform in place proximal update on first layer weight matrix.
 
     Args:
-      network: MLP network.
-      lam: regularization parameter.
-      lr: learning rate.
-      penalty: one of GL (group lasso), GSGL (group sparse group lasso),
-        H (hierarchical).
+        network (MLP): MLP network.
+        lam (float): Regularization parameter.
+        lr (float): Learning rate.
+        penalty (str): Type of nonsmooth regularization (e.g., "GL", "GSGL", "H").
     """
     w = network.layers[0].weight
     hidden, p, lag = w.shape
@@ -191,14 +232,16 @@ def prox_update(network, lam, lr, penalty):
         raise ValueError(f"unsupported penalty: {penalty}")
 
 
-def regularize(network, lam, penalty):
-    """
-    Calculate regularization term for first layer weight matrix.
+def regularize(network: MLP, lam: float, penalty: str) -> torch.Tensor:
+    """Calculate regularization term for first layer weight matrix.
 
     Args:
-      network: MLP network.
-      penalty: one of GL (group lasso), GSGL (group sparse group lasso),
-        H (hierarchical).
+        network (MLP): MLP network.
+        lam (float): Regularization parameter.
+        penalty (str): Type of nonsmooth regularization (e.g., "GL", "GSGL", "H").
+
+    Returns:
+        torch.Tensor: The regularization term.
     """
     w = network.layers[0].weight
     hidden, p, lag = w.shape
@@ -217,12 +260,12 @@ def regularize(network, lam, penalty):
         raise ValueError(f"unsupported penalty: {penalty}")
 
 
-def ridge_regularize(network, lam):
+def ridge_regularize(network: MLP, lam: float) -> torch.Tensor:
     """Apply ridge penalty at all subsequent layers."""
     return lam * sum([torch.sum(fc.weight**2) for fc in network.layers[1:]])
 
 
-def restore_parameters(model, best_model):
+def restore_parameters(model: nn.Module, best_model: nn.Module):
     """Move parameter values from best_model to model."""
     for params, best_params in zip(
         model.parameters(), best_model.parameters(), strict=False
@@ -231,45 +274,47 @@ def restore_parameters(model, best_model):
 
 
 def train_model_gista(
-    cmlp,
-    x,
-    lam,
-    lam_ridge,
-    lr,
-    penalty,
-    max_iter,
-    check_every=100,
-    r=0.8,
-    lr_min=1e-8,
-    sigma=0.5,
-    monotone=False,
-    m=10,
-    lr_decay=0.5,
-    begin_line_search=True,
-    switch_tol=1e-3,
-    verbose=1,
-):
-    """
-    Train cMLP model with GISTA.
+    cmlp: CMlp,
+    x: torch.Tensor,
+    lam: float,
+    lam_ridge: float,
+    lr: float,
+    penalty: str,
+    max_iter: int,
+    check_every: int = 100,
+    r: float = 0.8,
+    lr_min: float = 1e-8,
+    sigma: float = 0.5,
+    monotone: bool = False,
+    m: int = 10,
+    lr_decay: float = 0.5,
+    begin_line_search: bool = True,
+    switch_tol: float = 1e-3,
+    verbose: int = 1,
+) -> tuple[list[torch.Tensor], list[torch.Tensor]]:
+    """Train cMLP model with GISTA.
 
     Args:
-      clstm: clstm model.
-      x: tensor of data, shape (batch, T, p).
-      lam: parameter for nonsmooth regularization.
-      lam_ridge: parameter for ridge regularization on output layer.
-      lr: learning rate.
-      penalty: type of nonsmooth regularization.
-      max_iter: max number of GISTA iterations.
-      check_every: how frequently to record loss.
-      r: for line search.
-      lr_min: for line search.
-      sigma: for line search.
-      monotone: for line search.
-      m: for line search.
-      lr_decay: for adjusting initial learning rate of line search.
-      begin_line_search: whether to begin with line search.
-      switch_tol: tolerance for switching to line search.
-      verbose: level of verbosity (0, 1, 2).
+        cmlp (CMlp): cmlp model.
+        x (torch.Tensor): Tensor of data, shape (batch, T, p).
+        lam (float): Parameter for nonsmooth regularization.
+        lam_ridge (float): Parameter for ridge regularization on output layer.
+        lr (float): Learning rate.
+        penalty (str): Type of nonsmooth regularization.
+        max_iter (int): Max number of GISTA iterations.
+        check_every (int, optional): How frequently to record loss. Defaults to 100.
+        r (float, optional): For line search. Defaults to 0.8.
+        lr_min (float, optional): For line search. Defaults to 1e-8.
+        sigma (float, optional): For line search. Defaults to 0.5.
+        monotone (bool, optional): For line search. Defaults to False.
+        m (int, optional): For line search. Defaults to 10.
+        lr_decay (float, optional): For adjusting initial learning rate of line search. Defaults to 0.5.
+        begin_line_search (bool, optional): Whether to begin with line search. Defaults to True.
+        switch_tol (float, optional): Tolerance for switching to line search. Defaults to 1e-3.
+        verbose (int, optional): Level of verbosity (0, 1, 2). Defaults to 1.
+
+    Returns:
+        tuple[list[torch.Tensor], list[torch.Tensor]]: A tuple containing lists of training loss and MSE.
     """
     p = cmlp.p
     lag = cmlp.lag
@@ -439,18 +484,34 @@ def train_model_gista(
 
 
 def train_model_adam(
-    cmlp,
-    x,
-    lr,
-    max_iter,
-    lam=0,
-    lam_ridge=0,
-    penalty="H",
-    lookback=5,
-    check_every=100,
-    verbose=1,
-):
-    """Train model with Adam."""
+    cmlp: CMlp,
+    x: torch.Tensor,
+    lr: float,
+    max_iter: int,
+    lam: float = 0,
+    lam_ridge: float = 0,
+    penalty: str = "H",
+    lookback: int = 5,
+    check_every: int = 100,
+    verbose: int = 1,
+) -> list[torch.Tensor]:
+    """Train model with Adam optimizer.
+
+    Args:
+        cmlp (CMlp): cmlp model.
+        x (torch.Tensor): Tensor of data, shape (batch, T, p).
+        lr (float): Learning rate.
+        max_iter (int): Max number of iterations.
+        lam (float, optional): Parameter for nonsmooth regularization. Defaults to 0.
+        lam_ridge (float, optional): Parameter for ridge regularization on output layer. Defaults to 0.
+        penalty (str, optional): Type of nonsmooth regularization. Defaults to "H".
+        lookback (int, optional): For early stopping. Defaults to 5.
+        check_every (int, optional): How frequently to record loss. Defaults to 100.
+        verbose (int, optional): Level of verbosity (0, 1, 2). Defaults to 1.
+
+    Returns:
+        list[torch.Tensor]: A list of training losses.
+    """
     lag = cmlp.lag
     p = x.shape[-1]
     loss_fn = nn.MSELoss(reduction="mean")
@@ -510,18 +571,34 @@ def train_model_adam(
 
 
 def train_model_ista(
-    cmlp,
-    x,
-    lr,
-    max_iter,
-    lam=0,
-    lam_ridge=0,
-    penalty="H",
-    lookback=5,
-    check_every=100,
-    verbose=1,
-):
-    """Train model with Adam."""
+    cmlp: CMlp,
+    x: torch.Tensor,
+    lr: float,
+    max_iter: int,
+    lam: float = 0,
+    lam_ridge: float = 0,
+    penalty: str = "H",
+    lookback: int = 5,
+    check_every: int = 100,
+    verbose: int = 1,
+) -> list[torch.Tensor]:
+    """Train model with ISTA (Iterative Soft-Thresholding Algorithm).
+
+    Args:
+        cmlp (CMlp): cmlp model.
+        x (torch.Tensor): Tensor of data, shape (batch, T, p).
+        lr (float): Learning rate.
+        max_iter (int): Max number of iterations.
+        lam (float, optional): Parameter for nonsmooth regularization. Defaults to 0.
+        lam_ridge (float, optional): Parameter for ridge regularization on output layer. Defaults to 0.
+        penalty (str, optional): Type of nonsmooth regularization. Defaults to "H".
+        lookback (int, optional): For early stopping. Defaults to 5.
+        check_every (int, optional): How frequently to record loss. Defaults to 100.
+        verbose (int, optional): Level of verbosity (0, 1, 2). Defaults to 1.
+
+    Returns:
+        list[torch.Tensor]: A list of training losses.
+    """
     lag = cmlp.lag
     p = x.shape[-1]
     loss_fn = nn.MSELoss(reduction="mean")
@@ -590,7 +667,15 @@ def train_model_ista(
     return train_loss_list
 
 
-def train_unregularized(cmlp, x, lr, max_iter, lookback=5, check_every=100, verbose=1):
+def train_unregularized(
+    cmlp: CMlp,
+    x: torch.Tensor,
+    lr: float,
+    max_iter: int,
+    lookback: int = 5,
+    check_every: int = 100,
+    verbose: int = 1,
+) -> list[torch.Tensor]:
     """Train model with Adam and no regularization."""
     lag = cmlp.lag
     p = x.shape[-1]
@@ -638,7 +723,16 @@ def train_unregularized(cmlp, x, lr, max_iter, lookback=5, check_every=100, verb
     return train_loss_list
 
 
-def cmlp(data: pd.DataFrame, max_iter=None):
+def cmlp(data: pd.DataFrame, max_iter: int | None = None) -> np.ndarray:
+    """Runs the CMLP (Causal Multi-Layer Perceptron) model for causal discovery.
+
+    Args:
+        data (pd.DataFrame): The input time series data.
+        max_iter (int | None, optional): Maximum number of iterations for training. Defaults to 50000.
+
+    Returns:
+        np.ndarray: The estimated Granger causality matrix (adjacency matrix).
+    """
     if max_iter is None:
         max_iter = 50000
 

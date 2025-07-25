@@ -3,6 +3,14 @@ from causallearn.search.ConstraintBased.FCI import fci
 
 
 def fci_default(data: pd.DataFrame):
+    """Applies the Fast Causal Inference (FCI) algorithm to discover causal relationships.
+
+    Args:
+        data (pd.DataFrame): The input data for causal discovery.
+
+    Returns:
+        The adjacency matrix representing the causal graph.
+    """
     node_names = data.columns.to_list()
 
     # fill nan by ffill

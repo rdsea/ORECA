@@ -33,9 +33,9 @@ def parse_time_to_seconds(time_str: str) -> int:
 
 
 class RCAExperiment:
-    """
-    RCAExperiment runs an end-to-end root cause analysis experiment
-    that generates traffic and injects network anomalies (e.g., delay, loss, etc.)
+    """Runs an end-to-end root cause analysis experiment.
+
+    This class generates traffic and injects network anomalies (e.g., delay, loss, etc.)
     on remote nodes over SSH.
 
     Attributes:
@@ -43,12 +43,16 @@ class RCAExperiment:
     """
 
     def __init__(self, config: RCAExperimentConfig):
+        """Initialize the RCAExperiment.
+
+        Args:
+            config (RCAExperimentConfig): The configuration for the experiment.
+        """
         self.config = config
         self.fault_injector = FaultInjector(self.config.fault_config)
 
     def _ssh_run_command(self, host: str, command: str) -> str:
-        """
-        Run a command on a remote machine via SSH and stream output.
+        """Run a command on a remote machine via SSH and stream output.
 
         Args:
             host (str): Remote hostname or IP.
@@ -89,10 +93,10 @@ class RCAExperiment:
             return f"--- [{host}] SSH command failed ---\nError: {e}"
 
     def run(self):
-        """
-        Starts the RCA experiment:
-        - Distributes load generator jobs across remote machines.
-        - Schedules delayed fault injection.
+        """Starts the RCA experiment.
+
+        This method distributes load generator jobs across remote machines and
+        schedules delayed fault injection.
         """
         num_generators = len(self.config.list_of_generator)
         if num_generators == 0:
@@ -127,11 +131,10 @@ class RCAExperiment:
                 print(result)
 
     def inject_anomaly(self):
-        """
-        Simulates a fault for the given duration.
+        """Injects the configured anomaly.
 
-        Args:
-            duration (str): Duration of the anomaly (e.g., '60s', '2m').
+        This method applies the fault using the fault injector and schedules
+        its cleanup after the specified duration.
         """
         anomaly_duration = parse_time_to_seconds(self.config.fault_config.duration)
         logging.info(
@@ -143,6 +146,10 @@ class RCAExperiment:
         Timer(anomaly_duration, self.clean_anomaly)
 
     def clean_anomaly(self):
+        """Cleans up the injected anomaly.
+
+        This method calls the fault injector's clean method to remove the fault.
+        """
         self.fault_injector.clean()
         logging.info(
             f"🛠️  Anomaly finished: {self.config.fault_config.fault_type} "

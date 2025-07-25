@@ -8,16 +8,18 @@ from deployments.service.telemetry.telemetry_service import TelemetryService
 
 
 class Grafana(TelemetryService):
-    """
-    DEPRECATED: Grafana is now installed as part of the Prometheus chart.
-    This class is no longer needed and will be removed in the future.
+    """DEPRECATED: Manages the deployment and teardown of the Grafana visualization service.
+
+    This class is deprecated as Grafana is now installed as part of the Prometheus chart.
+    It will be removed in future versions.
     """
 
     def __init__(self):
+        """Initialize the Grafana service manager."""
         super().__init__(GRAFANA_METADATA)
 
     def _is_service_running(self) -> bool:
-        """Check if Alloy is already running in the cluster."""
+        """Check if Grafana is already running in the cluster."""
         command = (
             f"kubectl get pods -n {self.namespace} -l app.kubernetes.io/name=grafana"
         )

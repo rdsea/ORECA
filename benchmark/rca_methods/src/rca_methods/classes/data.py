@@ -9,28 +9,32 @@ from rca_methods.classes.graph import Graph, Node
 
 
 class DataLoader:
-    """
-    The abstract interface to access data
-    """
+    """The abstract interface to access time series data."""
 
     @property
     def entities(self) -> Sequence[str]:
-        """
-        Fetch names of available entities
+        """Fetch names of available entities.
+
+        Returns:
+            Sequence[str]: A sequence of entity names.
         """
         raise NotImplementedError
 
     @property
     def metrics(self) -> dict[str, Sequence[str]]:
-        """
-        Fetch available metrics as a mapping from entity names to metric names
+        """Fetch available metrics as a mapping from entity names to metric names.
+
+        Returns:
+            dict[str, Sequence[str]]: A dictionary where keys are entity names and values are sequences of metric names.
         """
         raise NotImplementedError
 
     @property
     def nodes(self) -> Sequence[Node]:
-        """
-        Pairs of entity and metric
+        """Pairs of entity and metric.
+
+        Returns:
+            Sequence[Node]: A sequence of Node objects, each representing an entity-metric pair.
         """
         return [
             Node(entity=entity, metric=metric)
@@ -48,14 +52,17 @@ class DataLoader:
         **kwargs,
     ) -> None | Sequence[float]:
         # pylint: disable=too-many-arguments
-        """
-        Load the time series for the given metric of the given entity
+        """Load the time series for the given metric of the given entity.
 
-        start: expected start time of the time series,
-            which is a unix timestamp in seconds
-        end: expected end time of the time series,
-            which is a unix timestamp in seconds
-        interval: interval between two data points
+        Args:
+            entity (str): The name of the entity.
+            metric (str): The name of the metric.
+            start (float): The expected start time of the time series (unix timestamp in seconds).
+            end (float): The expected end time of the time series (unix timestamp in seconds).
+            interval (timedelta): The interval between two data points.
+
+        Returns:
+            None | Sequence[float]: The time series data as a sequence of floats, or None if no data is available.
         """
         raise NotImplementedError
 
@@ -67,19 +74,20 @@ class DataLoader:
         interval: timedelta,
         **kwargs,
     ) -> Sequence[float]:
-        """
-        Truncate the time series and fill missing data points
+        """Truncate the time series and fill missing data points.
 
         This method is edited from k-Shape, which is released under the MIT license.
         See https://github.com/sieve-microservices/kshape/blob/master/README.md
 
-        time_series: 2-tuples (timestamp, value),
-            where timestamp is a unix timestamp in seconds
-        start: expected start time of the time series,
-            which is a unix timestamp in seconds
-        end: expected end time of the time series,
-            which is a unix timestamp in seconds
-        interval: interval between two data points
+        Args:
+            time_series (Sequence[tuple[float, float]]): A sequence of 2-tuples (timestamp, value),
+                where timestamp is a unix timestamp in seconds.
+            start (float): The expected start time of the time series (unix timestamp in seconds).
+            end (float): The expected end time of the time series (unix timestamp in seconds).
+            interval (timedelta): The interval between two data points.
+
+        Returns:
+            Sequence[float]: The preprocessed time series data as a sequence of floats.
         """
         if not time_series:
             return None
@@ -112,23 +120,30 @@ class DataLoader:
 
 
 class MemoryDataLoader(DataLoader):
-    """
-    Implement DataLoader with data in memory
-    """
+    """Implementation of DataLoader that loads data from memory."""
 
     def __init__(self, data: dict[str, dict[str, Sequence[tuple[float, float]]]]):
-        """
-        data: data[entity][metric] is the 2-tuples (timestamp, value)
-            for the given metric of the given entity
+        """Initialize the MemoryDataLoader.
+
+        Args:
+            data (dict[str, dict[str, Sequence[tuple[float, float]]]]): A dictionary where
+                data[entity][metric] is a sequence of 2-tuples (timestamp, value)
+                for the given metric of the given entity.
         """
         self._data = data
 
     @property
     def entities(self) -> Sequence[str]:
+        """Returns a sequence of entity names available in the loaded data."""
         return tuple(self._data.keys())
 
     @property
     def metrics(self) -> dict[str, Sequence[str]]:
+        """Returns a dictionary of metrics available for each entity.
+
+        Returns:
+            dict[str, Sequence[str]]: A dictionary where keys are entity names and values are sequences of metric names.
+        """
         return {entity: tuple(metrics.keys()) for entity, metrics in self._data.items()}
 
     def load(
@@ -141,6 +156,18 @@ class MemoryDataLoader(DataLoader):
         **kwargs,
     ) -> None | Sequence[float]:
         # pylint: disable=too-many-arguments
+        """Load the time series for the given metric of the given entity from memory.
+
+        Args:
+            entity (str): The name of the entity.
+            metric (str): The name of the metric.
+            start (float): The expected start time of the time series (unix timestamp in seconds).
+            end (float): The expected end time of the time series (unix timestamp in seconds).
+            interval (timedelta): The interval between two data points.
+
+        Returns:
+            None | Sequence[float]: The time series data as a sequence of floats, or None if no data is available.
+        """
         if entity not in self._data or metric not in self._data[entity]:
             return None
         return self.preprocess(
@@ -154,9 +181,7 @@ class MemoryDataLoader(DataLoader):
 
 class CaseData:
     # pylint: disable=too-many-instance-attributes
-    """
-    Case data that algorithms can access
-    """
+    """Case data that algorithms can access for RCA."""
 
     def __init__(
         self,
@@ -169,6 +194,17 @@ class CaseData:
         prune: bool = True,
     ):
         # pylint: disable=too-many-arguments
+        """Initialize the CaseData.
+
+        Args:
+            data_loader (DataLoader): The data loader to access raw data.
+            sli (Node): The service level indicator (SLI) that is violated.
+            detect_time (float): Unix timestamp when the SLI is violated.
+            interval (datetime.timedelta, optional): Interval between data points. Defaults to 1 minute.
+            lookup_window (int, optional): Number of data points to look up for analysis. Defaults to 120.
+            detect_window (int, optional): Number of data points for analyzing the fault. Defaults to 10.
+            prune (bool, optional): Whether to prune constant time series. Defaults to True.
+        """
         self._data_loader = data_loader
         self._sli = sli
         self._detect_time = detect_time
@@ -182,44 +218,40 @@ class CaseData:
 
     @property
     def data_loader(self) -> DataLoader:
-        """
-        Interface to access raw data
-        """
+        """Interface to access raw data."""
         return self._data_loader
 
     @property
     def sli(self) -> Node:
-        """
-        The service level indicator (SLI) that is violated
-        """
+        """The service level indicator (SLI) that is violated."""
         return self._sli
 
     @property
     def detect_time(self) -> float:
-        """
-        Unix timestamp when the service level indicator (SLI) is violated
-        """
+        """Unix timestamp when the service level indicator (SLI) is violated."""
         return self._detect_time
 
     @property
     def train_window(self) -> int:
-        """
-        Number of data points for learning the normal pattern
-        """
+        """Number of data points for learning the normal pattern."""
         return self._train_window
 
     @property
     def test_window(self) -> int:
-        """
-        Number of data points for analyzing the fault
-        """
+        """Number of data points for analyzing the fault."""
         return self._test_window
 
     def load_data(
         self, graph: Graph = None, current: float | None = None
     ) -> dict[Node, Sequence[float]]:
-        """
-        Parepare data
+        """Prepare data for RCA algorithms.
+
+        Args:
+            graph (Graph, optional): The graph of the system. Defaults to None.
+            current (float | None, optional): The current timestamp. Defaults to None.
+
+        Returns:
+            dict[Node, Sequence[float]]: A dictionary where keys are Node objects and values are sequences of floats representing time series data.
         """
         if current is None:
             current = self._detect_time
@@ -249,24 +281,24 @@ class CaseData:
 
 
 class Case:
-    """
-    Case data for evaluation
-    """
+    """Case data for evaluation of RCA algorithms."""
 
     def __init__(self, data: CaseData, answer: set[Node]):
+        """Initialize the Case.
+
+        Args:
+            data (CaseData): The case data.
+            answer (set[Node]): The ground truth for this case.
+        """
         self._data = data
         self._answer = answer
 
     @property
     def data(self) -> CaseData:
-        """
-        Case data
-        """
+        """Case data."""
         return self._data
 
     @property
     def answer(self) -> set[Node]:
-        """
-        Ground truth for this case
-        """
+        """Ground truth for this case."""
         return self._answer

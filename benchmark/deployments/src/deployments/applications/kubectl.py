@@ -9,6 +9,8 @@ from rich.console import Console
 
 
 class KubeCtl:
+    """A wrapper for the Kubernetes API and kubectl CLI."""
+
     def __init__(self):
         """Initialize the KubeCtl object and load the Kubernetes configuration."""
         config.load_kube_config()

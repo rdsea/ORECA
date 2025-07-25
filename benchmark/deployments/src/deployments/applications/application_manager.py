@@ -13,7 +13,10 @@ from deployments.session import Session
 
 
 class ApplicationManager:
+    """A class for managing the lifecycle of applications and experiments."""
+
     def __init__(self):
+        """Initialize the ApplicationManager."""
         self.agent = None
         self.session = None
         self.probs = ProblemRegistry()
@@ -23,6 +26,7 @@ class ApplicationManager:
         self.kubectl = KubeCtl()
 
     def init_telemetry(self):
+        """Initialize the telemetry stack."""
         print("Setting up OpenEBS...")
 
         command = "kubectl get pods -n openebs"
@@ -34,7 +38,7 @@ class ApplicationManager:
                 "kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml"
             )
             self.kubectl.exec_command(
-                'kubectl patch storageclass openebs-hostpath -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
+                'kubectl patch storageclass openebs-hostpath -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\\'
             )
             self.kubectl.wait_for_ready("openebs")
             print("OpenEBS setup completed.")
@@ -45,16 +49,12 @@ class ApplicationManager:
         self.init_trace()
 
     def init_metric(self):
-        """
-        Setup and deploy Prometheus
-        """
+        """Initialize the metrics service (Prometheus)."""
         self.prometheus = Prometheus()
         self.prometheus.deploy()
 
     def init_log(self):
-        """
-        Setup and deploy Loki
-        """
+        """Initialize the logging service (Loki and Alloy)."""
         self.loki = Loki()
         self.loki.deploy()
 
@@ -62,32 +62,35 @@ class ApplicationManager:
         self.alloy.deploy()
 
     def init_trace(self):
-        """
-        Setup and deploy Jaeger
-        """
+        """Initialize the tracing service (Jaeger)."""
         self.jaeger = Jaeger()
         self.jaeger.deploy()
 
     def init_visualization(self):
+        """Initialize the visualization service (Grafana)."""
         self.grafana = Grafana()
         self.grafana.deploy()
 
     def init_fault_injection(self):
+        """Initialize the fault injection service (Chaos Mesh)."""
         self.chaos_mesh = ChaosMesh()
         self.chaos_mesh.deploy()
 
     def destroy(self):
+        """Destroy the telemetry stack."""
         self.destroy_metric()
         self.destroy_log()
         self.destroy_trace()
         self.destroy_visualization()
 
     def destroy_metric(self):
+        """Destroy the metrics service (Prometheus)."""
         if not hasattr(self, "prometheus"):
             self.prometheus = Prometheus()
         self.prometheus.teardown()
 
     def destroy_log(self):
+        """Destroy the logging service (Loki and Alloy)."""
         if not hasattr(self, "loki"):
             self.loki = Loki()
         self.loki.teardown()
@@ -97,16 +100,19 @@ class ApplicationManager:
         self.alloy.teardown()
 
     def destroy_visualization(self):
+        """Destroy the visualization service (Grafana)."""
         if not hasattr(self, "grafana"):
             self.grafana = Grafana()
         self.grafana.teardown()
 
     def destroy_trace(self):
+        """Destroy the tracing service (Jaeger)."""
         if not hasattr(self, "jaeger"):
             self.jaeger = Jaeger()
         self.jaeger.teardown()
 
     def destroy_fault_injection(self):
+        """Destroy the fault injection service (Chaos Mesh)."""
         if not hasattr(self, "chaos_mesh"):
             self.chaos_mesh = ChaosMesh()
         self.chaos_mesh.teardown()

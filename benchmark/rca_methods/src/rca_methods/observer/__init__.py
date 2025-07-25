@@ -14,7 +14,16 @@ monitor_config = full_load(open(root_path / "monitor_config.yaml"))
 
 
 # root_config = full_load(open(root_path / "config.yaml", "r"))
-def get_pod_list(v1, namespace="default"):
+def get_pod_list(v1: client.CoreV1Api, namespace: str = "default") -> list[str]:
+    """Retrieves a list of pod names within a specified Kubernetes namespace.
+
+    Args:
+        v1 (client.CoreV1Api): The Kubernetes CoreV1Api client.
+        namespace (str, optional): The namespace to list pods from. Defaults to "default".
+
+    Returns:
+        list[str]: A list of pod names.
+    """
     pod_list = v1.list_namespaced_pod(namespace)
     pod_names = []
     # list the names of all Pods and store their names in the list
@@ -23,7 +32,16 @@ def get_pod_list(v1, namespace="default"):
     return pod_names
 
 
-def get_services_list(v1, namespace="default"):
+def get_services_list(v1: client.CoreV1Api, namespace: str = "default") -> list[str]:
+    """Retrieves a list of service names within a specified Kubernetes namespace.
+
+    Args:
+        v1 (client.CoreV1Api): The Kubernetes CoreV1Api client.
+        namespace (str, optional): The namespace to list services from. Defaults to "default".
+
+    Returns:
+        list[str]: A list of service names.
+    """
     # get all of the list under certain namespace
     service_list = v1.list_namespaced_service(namespace)
 

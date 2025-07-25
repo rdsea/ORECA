@@ -12,15 +12,18 @@ from rca_methods.io.time_series import (
 )
 
 
-def calc_pearson(matrix, method="default", zero_diag=True):
-    """Calculate the pearson correlation between nodes
+def calc_pearson(
+    matrix: np.ndarray, method: str = "default", zero_diag: bool = True
+) -> list[list[float]]:
+    """Calculate the Pearson correlation between nodes.
 
-    Params:
-        matrix: data of shape [N, T], N is node num, T is sample num
-        method: method used, default for manually calculation,
-            numpy for numpy implementation
-        zero_diag:
-                if zero the self correlation value (in diagonal position)
+    Args:
+        matrix (np.ndarray): Data of shape [N, T], where N is the number of nodes and T is the number of samples.
+        method (str, optional): Method used for calculation. 'default' for manual calculation, 'numpy' for NumPy implementation. Defaults to "default".
+        zero_diag (bool, optional): If True, the self-correlation value (in diagonal position) will be set to 0.0. Defaults to True.
+
+    Returns:
+        list[list[float]]: A 2D list representing the Pearson correlation matrix.
     """
     if method == "numpy":
         res = np.corrcoef(np.array(matrix))
@@ -63,10 +66,27 @@ def calc_pearson(matrix, method="default", zero_diag=True):
     return res
 
 
-# relatoRank
 def secondorder_randomwalk(
-    m, epochs, start_node, label=None, walk_step=1000, print_trace=False
-):
+    m: np.ndarray,
+    epochs: int,
+    start_node: int,
+    label: list | None = None,
+    walk_step: int = 1000,
+    print_trace: bool = False,
+) -> list[tuple[int, float]]:
+    """Performs a second-order random walk on a given transition matrix.
+
+    Args:
+        m (np.ndarray): The transition matrix.
+        epochs (int): The number of epochs to run the random walk.
+        start_node (int): The starting node for the random walk.
+        label (list | None, optional): Labels for the nodes. Defaults to None.
+        walk_step (int, optional): The number of steps in each walk. Defaults to 1000.
+        print_trace (bool, optional): If True, prints the trace of the walk. Defaults to False.
+
+    Returns:
+        list[tuple[int, float]]: A list of tuples, where each tuple contains the node label and its score, sorted by score in descending order.
+    """
     if label is None:
         label = []
     n = m.shape[0]
@@ -90,21 +110,53 @@ def secondorder_randomwalk(
     return score_list
 
 
-def guiyi(p):
-    """Normalize matrix column-wise."""
-    nextp = [[0 for i in range(len(p[0]))] for j in range(len(p))]
+def guiyi(p: list[list[float]]) -> list[list[float]]:
+    """Normalize matrix column-wise.
+
+    Args:
+        p (list[list[float]]): The input matrix.
+
+    Returns:
+        list[list[float]]: The column-wise normalized matrix.
+    """
+    nextp = [[0 for _ in range(len(p[0]))] for _ in range(len(p))]
     for i in range(len(p)):
+        line_sum = (np.sum(p, axis=1))[i]
+        if line_sum == 0:
+            # Handle the case where the sum of the row is zero to avoid division by zero
+            # You might want to set nextp[i][j] to 0 or some other value based on your logic
+            continue
         for j in range(len(p[0])):
-            line_sum = (np.sum(p, axis=1))[i]
-            if line_sum == 0:
-                break
             nextp[i][j] = p[i][j] / line_sum
     return nextp
 
 
 def rela_to_rank(
-    rela, access, rank_paces, frontend, beta=0.1, rho=0.3, print_trace=False
-):
+    rela: list[list[float]],
+    access: np.ndarray,
+    rank_paces: int,
+    frontend: int,
+    beta: float = 0.1,
+    rho: float = 0.3,
+    print_trace: bool = False,
+) -> tuple[list[tuple[int, float]], list[list[float]], np.ndarray]:
+    """Calculates the relational ranking based on a second-order random walk.
+
+    Args:
+        rela (list[list[float]]): The relational matrix.
+        access (np.ndarray): The access matrix.
+        rank_paces (int): The number of paces for the random walk.
+        frontend (int): The frontend node.
+        beta (float, optional): Beta parameter. Defaults to 0.1.
+        rho (float, optional): Rho parameter. Defaults to 0.3.
+        print_trace (bool, optional): If True, prints the trace of the walk. Defaults to False.
+
+    Returns:
+        tuple[list[tuple[int, float]], list[list[float]], np.ndarray]: A tuple containing
+            - The ranked list of nodes.
+            - The normalized probability matrix.
+            - The second-order transition matrix.
+    """
     n = len(access)
     s = rela[frontend - 1]
     p = [[0 for col in range(n)] for row in range(n)]
@@ -158,12 +210,24 @@ def rela_to_rank(
 
 def cloudranger(
     data: pd.DataFrame,
-    inject_time=None,
-    dataset=None,
-    num_loop=None,
-    sli=None,
+    inject_time: int | None = None,
+    dataset: str | None = None,
+    num_loop: int | None = None,
+    sli: str | None = None,
     **kwargs,
-):
+) -> dict:
+    """Performs root cause analysis using the CloudRanger method.
+
+    Args:
+        data (pd.DataFrame): The input data.
+        inject_time (int | None, optional): The injection time. Defaults to None.
+        dataset (str | None, optional): The dataset name. Defaults to None.
+        num_loop (int | None, optional): Number of loops. Defaults to None.
+        sli (str | None, optional): Service Level Indicator. Defaults to None.
+
+    Returns:
+        dict: A dictionary containing the adjacency matrix, node names, and ranked root causes.
+    """
     data = preprocess(
         data=data,
         dataset=dataset,
@@ -172,7 +236,9 @@ def cloudranger(
     np_data = data.to_numpy()
     node_names = data.columns.to_list()
 
-    sli = node_names.index(sli)
+    sli_index = (
+        node_names.index(sli) if sli else 0
+    )  # Default to first node if sli is None
 
     # params
     pc_alpha = 0.1
@@ -188,14 +254,17 @@ def cloudranger(
     dep_graph = finalize_directed_adj(adj).T
 
     rank, _, _ = rela_to_rank(
-        rela, dep_graph, 10, sli, beta=beta, rho=rho, print_trace=False
+        rela, dep_graph, 10, sli_index + 1, beta=beta, rho=rho, print_trace=False
     )
 
     ranks = []
     for r in rank:  # (10, 1032.)
-        r = r[0]  # 10
-        # node_names[idx - 1]
-        ranks.append(node_names[r - 1])
+        r_idx = r[0] - 1  # Adjust for 0-based indexing
+        if 0 <= r_idx < len(node_names):
+            ranks.append(node_names[r_idx])
+        else:
+            # Handle cases where r[0] might be out of bounds
+            print(f"Warning: Node index {r_idx} out of bounds for node_names.")
 
     return {
         "adj": adj,

@@ -13,7 +13,13 @@ from deployments.observer.metric_api import PrometheusAPI
 from deployments.observer.trace_api import TraceAPI
 
 
-def collect_traces(start_time, end_time):
+def collect_traces(start_time: datetime, end_time: datetime):
+    """Collects traces within a specified time range and saves them to a file.
+
+    Args:
+        start_time (datetime): The start time for collecting traces.
+        end_time (datetime): The end time for collecting traces.
+    """
     tracer = TraceAPI(namespace=monitor_config["namespace"])
     traces = tracer.extract_traces(start_time, end_time)
     df_traces = tracer.process_traces(traces)
@@ -21,7 +27,13 @@ def collect_traces(start_time, end_time):
     tracer.save_traces(df_traces, save_path)
 
 
-def collect_logs(start_time, end_time):
+def collect_logs(start_time: datetime, end_time: datetime):
+    """Collects logs within a specified time range and saves them to a file.
+
+    Args:
+        start_time (datetime): The start time for collecting logs.
+        end_time (datetime): The end time for collecting logs.
+    """
     logger = LogAPI(
         monitor_config["api"], monitor_config["username"], monitor_config["password"]
     )
@@ -34,7 +46,13 @@ def collect_logs(start_time, end_time):
     )
 
 
-def collect_metrics(start_time, end_time):
+def collect_metrics(start_time: datetime, end_time: datetime):
+    """Collects metrics within a specified time range and saves them to a file.
+
+    Args:
+        start_time (datetime): The start time for collecting metrics.
+        end_time (datetime): The end time for collecting metrics.
+    """
     prom = PrometheusAPI(
         namespace=monitor_config["namespace"], url=monitor_config["prometheusApi"]
     )
@@ -45,6 +63,11 @@ def collect_metrics(start_time, end_time):
 
 
 def organize_collected_data():
+    """Organizes the collected telemetry data into a timestamped directory.
+
+    This function moves the latest collected log, trace, and metric files
+    into a new directory named `telemetry_data_<timestamp>`.
+    """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     final_save_path = root_path / f"telemetry_data_{timestamp}"
 
@@ -60,7 +83,7 @@ def organize_collected_data():
     trace_dest = final_save_path / "trace"
     metrics_dest = final_save_path / "metric"
 
-    def copy_latest_file(src_dir, dest_dir):
+    def copy_latest_file(src_dir: Path, dest_dir: Path):
         os.makedirs(dest_dir, exist_ok=True)
         items = list(Path(src_dir).glob("*"))
         if not items:

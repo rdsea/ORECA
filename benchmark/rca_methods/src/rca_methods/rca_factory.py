@@ -9,8 +9,21 @@ random.seed(42)
 
 
 class RCAFactory:
+    """A factory class for creating instances of various RCA (Root Cause Analysis) methods."""
+
     @staticmethod
     def create(rca_type: str) -> BaseRCA:
+        """Creates and returns an instance of the specified RCA method.
+
+        Args:
+            rca_type (str): The type of RCA method to create (e.g., "dummy", "circa", "baro").
+
+        Returns:
+            BaseRCA: An instance of the requested RCA method.
+
+        Raises:
+            ValueError: If an unsupported RCA type is provided.
+        """
         if rca_type == "dummy":
             return DummyRCA()
         elif rca_type == "circa":

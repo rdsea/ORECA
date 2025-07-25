@@ -6,6 +6,8 @@ from deployments.applications.kubectl import KubeCtl
 
 
 class Helm:
+    """A wrapper for the Helm CLI."""
+
     @staticmethod
     def install(
         release_name: str,
@@ -15,16 +17,15 @@ class Helm:
         values: str | None = None,
         locally: bool = False,
     ):
-        """Install a helm chart
+        """Install a Helm chart.
 
         Args:
-            release_name (str): Name of the release
-            chart_path (str): Path to the helm chart
-            namespace (str): Namespace to install the chart
-            version (str): Version of the chart
-            values (str, optional): Path to configuration file
-            locally (bool): Chart is locally available or from a repo
-            extra_args (List[str], optional): Extra arguments for the helm install command
+            release_name (str): The name of the release.
+            chart_path (str): The path to the Helm chart.
+            namespace (str): The namespace to install the chart in.
+            version (str, optional): The version of the chart. Defaults to None.
+            values (str, optional): The path to the configuration file. Defaults to None.
+            locally (bool, optional): Whether the chart is locally available or from a repo. Defaults to False.
         """
         print("== Helm Install ==")
 
@@ -55,11 +56,11 @@ class Helm:
 
     @staticmethod
     def uninstall(release_name: str, namespace: str):
-        """Uninstall a helm chart
+        """Uninstall a Helm chart.
 
         Args:
-            release_name (str): Name of the release
-            namespace (str): Namespace to uninstall the chart
+            release_name (str): The name of the release.
+            namespace (str): The namespace to uninstall the chart from.
         """
         print("== Helm Uninstall ==")
 
@@ -81,14 +82,14 @@ class Helm:
 
     @staticmethod
     def exists_release(release_name: str, namespace: str) -> bool:
-        """Check if a Helm release exists
+        """Check if a Helm release exists.
 
         Args:
-            release_name (str): Name of the release
-            namespace (str): Namespace to check
+            release_name (str): The name of the release.
+            namespace (str): The namespace to check in.
 
         Returns:
-            bool: True if release exists
+            bool: True if the release exists, False otherwise.
         """
         command = f"helm list -n {namespace}"
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
@@ -102,16 +103,13 @@ class Helm:
 
     @staticmethod
     def assert_if_deployed(namespace: str):
-        """Assert if all services in the application are deployed
+        """Assert if all services in the application are deployed.
 
         Args:
-            namespace (str): Namespace to check
-
-        Returns:
-            bool: True if deployed
+            namespace (str): The namespace to check.
 
         Raises:
-            Exception: If not deployed
+            Exception: If the services are not deployed.
         """
         kubectl = KubeCtl()
         try:
@@ -123,14 +121,14 @@ class Helm:
 
     @staticmethod
     def upgrade(**args):
-        """Upgrade a helm chart
+        """Upgrade a Helm chart.
 
         Args:
-            release_name (str): Name of the release
-            chart_path (str): Path to the helm chart
-            namespace (str): Namespace to upgrade the chart
-            values_file (str): Path to the values.yaml file
-            set_values (dict): Key-value pairs for --set options
+            release_name (str): The name of the release.
+            chart_path (str): The path to the Helm chart.
+            namespace (str): The namespace to upgrade the chart in.
+            values_file (str): The path to the values.yaml file.
+            set_values (dict): Key-value pairs for --set options.
         """
         print("== Helm Upgrade ==")
         release_name = args.get("release_name")
@@ -169,11 +167,11 @@ class Helm:
 
     @staticmethod
     def add_repo(name: str, url: str):
-        """Add a Helm repository
+        """Add a Helm repository.
 
         Args:
-            name (str): Name of the repository
-            url (str): URL of the repository
+            name (str): The name of the repository.
+            url (str): The URL of the repository.
         """
         print(f"== Helm Repo Add: {name} ==")
         command = f"helm repo add {name} {url}"
@@ -189,6 +187,7 @@ class Helm:
 
     @staticmethod
     def update_repo():
+        """Update the Helm repositories."""
         print("== Helm Repo Update ==")
         command = "helm repo update"
         process = subprocess.Popen(

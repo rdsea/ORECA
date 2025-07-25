@@ -20,7 +20,15 @@ from observer import (
 
 
 class LokiAPI:
+    """A client for interacting with the Loki logging service."""
+
     def __init__(self, namespace: str, application_namespace: str):
+        """Initialize the LokiAPI client.
+
+        Args:
+            namespace (str): The Kubernetes namespace where Loki is deployed.
+            application_namespace (str): The Kubernetes namespace of the application whose logs are to be queried.
+        """
         self.loki_namespace = namespace
         self.application_namespace = application_namespace
         self.port = 32000
@@ -34,6 +42,7 @@ class LokiAPI:
         self.base_url = f"http://localhost:{self.port}"
 
     def initialize_pod_and_service_lists(self):
+        """Initializes the lists of pods and services for the application namespace."""
         k8s_client = client.CoreV1Api()
         pod_list = [
             pod
@@ -43,7 +52,15 @@ class LokiAPI:
         service_list = get_services_list(k8s_client, namespace=self.loki_namespace)
         return pod_list, service_list
 
-    def is_port_in_use(self, port):
+    def is_port_in_use(self, port: int) -> bool:
+        """Checks if a given port is currently in use.
+
+        Args:
+            port (int): The port number to check.
+
+        Returns:
+            bool: True if the port is in use, False otherwise.
+        """
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             return s.connect_ex(("XXX.XXX.XXX.XXX", port)) == 0
 
@@ -62,7 +79,7 @@ class LokiAPI:
                     break
 
     def start_port_forward(self):
-        """Starts port-forwarding to access Prometheus."""
+        """Starts port-forwarding to access Loki."""
         if self.port_forward_process and self.port_forward_process.poll() is None:
             logger.info("Port-forwarding already active.")
             return
@@ -103,7 +120,17 @@ class LokiAPI:
         else:
             logger.error("Failed to establish port forwarding after multiple attempts.")
 
-    def query_loki(self, query, start_time, end_time) -> dict | None:
+    def query_loki(self, query: str, start_time: str, end_time: str) -> dict | None:
+        """Queries Loki for logs within a specified time range.
+
+        Args:
+            query (str): The Loki LogQL query string.
+            start_time (str): The start time for the query in RFC3339Nano format.
+            end_time (str): The end time for the query in RFC3339Nano format.
+
+        Returns:
+            dict | None: The JSON response from Loki, or None if the query fails.
+        """
         endpoint = f"{self.base_url}/loki/api/v1/query_range"
 
         payload = {"query": query, "start": start_time, "end": end_time}
@@ -156,10 +183,17 @@ class LokiAPI:
             print("Port forwarding stopped.")
 
     def cleanup(self):
-        """Cleanup resources like port-forwarding."""
+        """Cleans up resources like port-forwarding."""
         self.stop_port_forward()
 
     def query_loki_now(self):
+        """Queries Loki for logs from the last 300 minutes for a specific service.
+
+        This is an example method and uses a hardcoded service name.
+
+        Returns:
+            dict | None: The JSON response from Loki, or None if the query fails.
+        """
         query = '{service_name="frontend-6785bdb768-rb6tk"}'
         current_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
         start_time = (datetime.now() - timedelta(minutes=300)).strftime(
@@ -176,7 +210,14 @@ class LokiAPI:
         else:
             logger.error("No valid result returned")
 
-    def export_all_metrics(self, start_time, end_time, save_path):
+    def export_all_metrics(self, start_time: str, end_time: str, save_path: Path):
+        """Exports all logs for monitored pods to CSV files.
+
+        Args:
+            start_time (str): The start time for the query in RFC3339Nano format.
+            end_time (str): The end time for the query in RFC3339Nano format.
+            save_path (Path): The directory to save the log files.
+        """
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
@@ -193,15 +234,3 @@ class LokiAPI:
                 json.dump(result, f, indent=2)
 
         self.cleanup()
-
-
-if __name__ == "__main__":
-    loki = LokiAPI("observe", "default")
-
-    current_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
-    start_time = (datetime.now() - timedelta(minutes=300)).strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
-    end_time = current_time
-    base_path = Path(os.path.dirname(os.path.abspath(__file__)))
-    loki.export_all_metrics(start_time, end_time, base_path / "data")

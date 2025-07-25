@@ -8,7 +8,12 @@ from tigramite.pcmci import PCMCI
 
 
 class _ParCorr(ParCorr):
-    """Wrap ParCorr to handle constant"""
+    """Wrap ParCorr to handle constant time series data.
+
+    This class extends the ParCorr (Partial Correlation) class from Tigramite
+    to provide a custom implementation of `_get_single_residuals` that can
+    gracefully handle constant time series data by skipping them during standardization.
+    """
 
     _logger_name = f"{ParCorr.__module__}.{ParCorr.__name__}"
 
@@ -19,6 +24,17 @@ class _ParCorr(ParCorr):
         standardize: bool = True,
         return_means: bool = False,
     ) -> np.ndarray:
+        """Compute residuals for a single variable.
+
+        Args:
+            array (np.ndarray): The input data array.
+            target_var (int): The index of the target variable.
+            standardize (bool, optional): Whether to standardize the data. Defaults to True.
+            return_means (bool, optional): Whether to return the means. Defaults to False.
+
+        Returns:
+            np.ndarray: The residuals.
+        """
         y: np.ndarray = array[target_var, :]
         z: np.ndarray = np.copy(array[2:, :])
 
@@ -57,7 +73,15 @@ class _ParCorr(ParCorr):
 
 
 def _gather_tau(p_matrix: np.ndarray) -> np.ndarray:
-    # reason, result, tau
+    """Gathers the minimum p-value for each potential causal link from the p-matrix.
+
+    Args:
+        p_matrix (np.ndarray): The p-matrix from PCMCI, typically of shape (num_vars, num_vars, tau_max + 1).
+
+    Returns:
+        np.ndarray: A square matrix where each element [i, j] represents the minimum
+                    p-value for the causal link from variable i to variable j across all lags.
+    """
     num, result_num, _ = p_matrix.shape
     assert num == result_num
 
@@ -68,6 +92,16 @@ def _gather_tau(p_matrix: np.ndarray) -> np.ndarray:
 
 
 def pcmci(data, tau_max=3, alpha=0.2):
+    """Applies the PCMCI algorithm for causal discovery.
+
+    Args:
+        data: The input data for causal discovery.
+        tau_max (int, optional): The maximum time lag to consider. Defaults to 3.
+        alpha (float, optional): The significance level for conditional independence tests. Defaults to 0.2.
+
+    Returns:
+        np.ndarray: The adjacency matrix representing the causal graph.
+    """
     nodes = data.columns.to_list()
 
     dataframe = data_processing.DataFrame(data.to_numpy())

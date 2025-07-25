@@ -7,6 +7,11 @@ class Application:
     """Base class for all microservice applications."""
 
     def __init__(self, config_file: str):
+        """Initialize the Application class.
+
+        Args:
+            config_file (str): The path to the application's configuration file.
+        """
         self.config_file = config_file
         self.name = None
         self.namespace = None
@@ -37,7 +42,7 @@ class Application:
         """Get application metadata in JSON format.
 
         Returns:
-            dict: application metadata
+            dict: The application metadata.
         """
         with open(self.config_file) as file:
             app_json = json.load(file)
@@ -45,10 +50,11 @@ class Application:
 
     def get_app_summary(self) -> str:
         """Get a summary of the application metadata in string format.
+
         NOTE: for human and LLM-readable summaries!
 
         Returns:
-            str: application metadata
+            str: The application metadata.
         """
         app_json = self.get_app_json()
         app_name = app_json.get("Name", "")

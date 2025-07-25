@@ -76,24 +76,28 @@ def resource_stress_config_to_yaml(config: ResourcesChaosConfig) -> str:
 
 
 class ChaosResourceInjector:
-    """
-    Injector for CPU/Memory stress using Chaos Mesh.
-
-    Methods:
-        generate_yaml(): Returns the YAML as a string.
-        apply(): Applies the stress experiment.
-        delete(): Deletes the stress experiment.
-    """
+    """Injector for CPU/Memory stress using Chaos Mesh."""
 
     def __init__(self, config: ResourcesChaosConfig):
+        """Initialize the injector.
+
+        Args:
+            config (ResourcesChaosConfig): The configuration for the resource chaos experiment.
+        """
         if not isinstance(config, ResourcesChaosConfig):
             raise TypeError("config must be an instance of ResourcesChaosConfig")
         self.config = config
 
     def generate_yaml(self) -> str:
+        """Generate the YAML for the Chaos Mesh experiment.
+
+        Returns:
+            str: The YAML for the experiment.
+        """
         return resource_stress_config_to_yaml(self.config)
 
     def apply(self):
+        """Apply the Chaos Mesh experiment."""
         yaml_content = self.generate_yaml()
         command = f"kubectl apply -f - <<EOF\n{yaml_content}EOF"
         try:
@@ -105,6 +109,7 @@ class ChaosResourceInjector:
             raise RuntimeError(f"❌ Failed to apply StressChaos:\n{e}")
 
     def delete(self):
+        """Delete the Chaos Mesh experiment."""
         try:
             subprocess.run(
                 [

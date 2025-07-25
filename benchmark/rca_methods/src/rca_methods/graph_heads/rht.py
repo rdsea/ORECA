@@ -299,13 +299,19 @@ def rht(
     sli: Node = None,
     num_loop=None,
     previous_scores=None,
-):
-    """
-    adj: np.ndarray
-    data: pd.DataFrame
+) -> list[tuple[str, float]]:
+    """Performs Root Cause Analysis using Regression-based Hypothesis Testing (RHT).
 
-    return:
-    ranks : List[str]
+    Args:
+        adj (np.ndarray): The adjacency matrix of the causal graph.
+        inject_time (int): The time of fault injection.
+        data (pd.DataFrame): The input time series data.
+        sli (Node, optional): The Service Level Indicator node. Defaults to None.
+        num_loop (int, optional): Number of loops for random walk (if applicable). Defaults to None.
+        previous_scores (dict, optional): Previous scores for nodes. Defaults to None.
+
+    Returns:
+        list[tuple[str, float]]: A list of tuples, where each tuple contains the node name and its score, sorted in descending order of score.
     """
     node_names = data.columns.to_list()
 
@@ -355,7 +361,7 @@ def rht(
     scores: dict[Node, Score] = None
 
     timestamps = data["time"]
-    sli = np.random.choice(nodes)
+    sli = np.random.choice(nodes) if sli is None else sli
     services = list({c.split("_")[0] for c in data.columns if c != "time"})
     metrics = list({c.split("_")[1] for c in data.columns if c != "time"})
     out_data = {s: {} for s in services}

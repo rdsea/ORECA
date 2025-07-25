@@ -6,7 +6,10 @@ from deployments.service.telemetry.telemetry_service import TelemetryService
 
 
 class Prometheus(TelemetryService):
+    """Manages the deployment and teardown of the Prometheus monitoring service."""
+
     def __init__(self):
+        """Initialize the Prometheus service manager."""
         super().__init__(PROMETHEUS_METADATA)
 
     def _is_service_running(self) -> bool:

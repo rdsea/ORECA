@@ -6,7 +6,10 @@ from deployments.service.telemetry.telemetry_service import TelemetryService
 
 
 class Loki(TelemetryService):
+    """Manages the deployment and teardown of the Loki logging service."""
+
     def __init__(self):
+        """Initialize the Loki service manager."""
         super().__init__(LOKI_METADATA)
 
     def _is_service_running(self) -> bool:

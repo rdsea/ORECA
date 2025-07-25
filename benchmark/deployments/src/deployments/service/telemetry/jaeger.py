@@ -6,7 +6,10 @@ from deployments.service.telemetry.telemetry_service import TelemetryService
 
 
 class Jaeger(TelemetryService):
+    """Manages the deployment and teardown of the Jaeger tracing service."""
+
     def __init__(self):
+        """Initialize the Jaeger service manager."""
         super().__init__(JAEGER_METADATA)
 
     def _is_service_running(self) -> bool:

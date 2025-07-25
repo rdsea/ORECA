@@ -12,14 +12,10 @@ _Template = TypeVar("_Template")
 
 
 class ExtremeValue:
-    """
-    Extreme value with one threshold
-    """
+    """Extreme value with one threshold."""
 
     class Status(Enum):
-        """
-        Detection result
-        """
+        """Detection result."""
 
         NORMAL = auto()
         ABNORMAL = auto()
@@ -32,12 +28,13 @@ class ExtremeValue:
         key: Callable[[_Template], _Template] = asc_key,
         logging_level: int = logging.WARNING,
     ):
-        """
-        Constructor
+        """Initialize the ExtremeValue class.
 
-        Parameters:
-            q: Detection level (risk)
-            n_points: maximum number of candidates for maximum likelihood (default : 10)
+        Args:
+            q (float, optional): Detection level (risk). Defaults to 1e-4.
+            n_points (int, optional): Maximum number of candidates for maximum likelihood. Defaults to 10.
+            key (Callable[[_Template], _Template], optional): A function to extract the value from the data. Defaults to asc_key.
+            logging_level (int, optional): The logging level. Defaults to logging.WARNING.
         """
         self._proba = q
         self._n_points = n_points
@@ -54,22 +51,16 @@ class ExtremeValue:
 
     @property
     def extreme_quantile(self) -> float:
-        """
-        current threshold (bound between normal and abnormal events)
-        """
+        """Get the current threshold (bound between normal and abnormal events)."""
         return self._extreme_quantile
 
     @property
     def num_peaks(self) -> int:
-        """
-        number of observed peaks
-        """
+        """Get the number of observed peaks."""
         return self._peaks.size
 
     def summary(self) -> dict:
-        """
-        Summary running status
-        """
+        """Get a summary of the running status."""
         return {
             "Detection level q": self._proba,
             "initial threshold": self._init_threshold,
@@ -85,19 +76,17 @@ class ExtremeValue:
         npoints: int,
         method: str,
     ) -> np.ndarray:
-        """
-        Find possible roots of a scalar function
+        """Find possible roots of a scalar function.
 
-        Parameters:
-            fun: scalar function
-            jac: first order derivative of the function
-            bounds: (min,max) interval for the roots search
-            npoints: maximum number of roots to output
-            method:
-                'regular' : regular sample of the search interval,
-                'random' : uniform (distribution) sample of the search interval
+        Args:
+            fun (Callable[[float], float]): The scalar function.
+            jac (Callable[[float], float]): The first order derivative of the function.
+            bounds (tuple[float, float]): The (min,max) interval for the roots search.
+            npoints (int): The maximum number of roots to output.
+            method (str): The method to use for the search. Can be 'regular' or 'random'.
 
-        Returns: possible roots of the function
+        Returns:
+            np.ndarray: The possible roots of the function.
         """
         if method == "regular":
             step = (bounds[1] - bounds[0]) / (npoints + 1)
@@ -124,15 +113,15 @@ class ExtremeValue:
 
     @staticmethod
     def _log_likelihood(big_y: np.ndarray, gamma: float, sigma: float) -> float:
-        """
-        Compute the log-likelihood for the Generalized Pareto Distribution (μ=0)
+        """Compute the log-likelihood for the Generalized Pareto Distribution (μ=0).
 
-        Parameters:
-            Y: observations
-            gamma: GPD index parameter
-            sigma: GPD scale parameter (>0)
+        Args:
+            big_y (np.ndarray): The observations.
+            gamma (float): The GPD index parameter.
+            sigma (float): The GPD scale parameter (>0).
 
-        Returns: log-likelihood of the sample Y to be drawn from a GPD(gamma,sigma,mu=0)
+        Returns:
+            float: The log-likelihood of the sample Y to be drawn from a GPD(gamma,sigma,mu=0).
         """
         n = big_y.size
         if gamma != 0:
@@ -147,15 +136,16 @@ class ExtremeValue:
     def _grimshaw(
         self, peaks: np.ndarray, epsilon: float = 1e-8
     ) -> tuple[float, float, float]:
+        """Compute the GPD parameters estimation with the Grimshaw's trick.
+
+        Args:
+            peaks (np.ndarray): The peaks.
+            epsilon (float, optional): A numerical parameter. Defaults to 1e-8.
+
+        Returns:
+            tuple[float, float, float]: The gamma estimates, sigma estimates and corresponding log-likelihood.
+        """
         # pylint: disable=too-many-locals
-        """
-        Compute the GPD parameters estimation with the Grimshaw's trick
-
-        Parameters:
-            epsilon: numerical parameter to perform (default : 1e-8)
-
-        Returns: gamma estimates, sigma estimates and corresponding log-likelihood
-        """
 
         def _u(s: np.ndarray) -> float:
             return 1 + np.log(s).mean()
@@ -229,14 +219,15 @@ class ExtremeValue:
         return gamma_best, sigma_best, ll_best
 
     def _quantile(self, num: int, gamma: float, sigma: float) -> float:
-        """
-        Compute the quantile at level 1-q
+        """Compute the quantile at level 1-q.
 
-        Parameters:
-            gamma: GPD parameter
-            sigma: GPD parameter
+        Args:
+            num (int): The number of observations.
+            gamma (float): The GPD parameter.
+            sigma (float): The GPD parameter.
 
-        Returns: quantile at level 1-q for the GPD(gamma,sigma,mu=0)
+        Returns:
+            float: The quantile at level 1-q for the GPD(gamma,sigma,mu=0).
         """
         r = num * self._proba / self.num_peaks
         if gamma != 0:
@@ -246,9 +237,7 @@ class ExtremeValue:
         return self._init_threshold - self._key(sigma * np.log(r))
 
     def initialize(self, data: np.ndarray, init_threshold: float):
-        """
-        Run the calibration (initialization) step
-        """
+        """Run the calibration (initialization) step."""
         self._init_threshold = init_threshold
 
         # initial peaks
@@ -277,12 +266,15 @@ class ExtremeValue:
         )
 
     def run(self, datum: float, num: int, with_alarm: bool = True) -> Status:
-        """
-        Run SPOT on the stream
+        """Run SPOT on the stream.
 
-        Parameters:
-            with_alarm: If False, SPOT will adapt the threshold assuming
-                there is no abnormal values (default = True)
+        Args:
+            datum (float): The new data point.
+            num (int): The number of observations.
+            with_alarm (bool, optional): If False, SPOT will adapt the threshold assuming there is no abnormal values. Defaults to True.
+
+        Returns:
+            Status: The status of the new data point.
         """
         # If the observed value exceeds the current threshold (alarm case)
         if self._key(datum) > self._key(self._extreme_quantile):

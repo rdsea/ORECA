@@ -8,8 +8,9 @@ from anomaly_detections.spot.utils import moving_average
 
 
 class DSPOT(SPOT):
-    """
-    This class allows to run DSPOT algorithm on univariate dataset (upper-bound)
+    """DSPOT algorithm for univariate time series.
+
+    This class allows to run DSPOT algorithm on univariate dataset (upper-bound).
     """
 
     def __init__(
@@ -19,18 +20,23 @@ class DSPOT(SPOT):
         depth: int = 10,
         logging_level: int = logging.WARNING,
     ):
-        """
-        Constructor
+        """Initialize the DSPOT algorithm.
 
-        Parameters:
-            q: Detection level (risk)
-            n_points: maximum number of candidates for maximum likelihood (default : 10)
-            depth: Number of observations to compute the moving average
+        Args:
+            q (float, optional): Detection level (risk). Defaults to 1e-4.
+            n_points (int, optional): Maximum number of candidates for maximum likelihood. Defaults to 10.
+            depth (int, optional): Number of observations to compute the moving average. Defaults to 10.
+            logging_level (int, optional): The logging level. Defaults to logging.WARNING.
         """
         super().__init__(q=q, n_points=n_points, logging_level=logging_level)
         self._depth = depth
 
     def initialize(self, level: float = 0.98):
+        """Initialize the algorithm with the initial data.
+
+        Args:
+            level (float, optional): The level for the initial threshold. Defaults to 0.98.
+        """
         data: np.ndarray = (
             self._init_data[self._depth :]
             - moving_average(self._init_data, self._depth)[:-1]
@@ -43,6 +49,14 @@ class DSPOT(SPOT):
         self._num = data.size
 
     def run(self, with_alarm: bool = True) -> dict:
+        """Run the algorithm on the data stream.
+
+        Args:
+            with_alarm (bool, optional): If False, SPOT will adapt the threshold assuming there is no abnormal values. Defaults to True.
+
+        Returns:
+            dict: A dictionary containing the thresholds and the alarms.
+        """
         if self._num > self._init_data.size:
             self._logger.warning(
                 "the algorithm seems to have already been run, "

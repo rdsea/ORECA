@@ -1,10 +1,10 @@
 # Deployments
 
-- Used to help with deploying applications/workloads and defining the fault
+This directory contains scripts and configuration files for deploying applications, workloads, and defining fault scenarios.
 
-## Config
+## Configuration
 
-Currently we have 2 configs file:
+Two configuration files are used:
 
-- `config.yaml`: general config like k8s api-server url, data dir
-- `monitor_config.yaml`: config for getting the monitoring data
+*   `config.yaml`: Contains general configuration, such as the Kubernetes API server URL and the data directory.
+*   `monitor_config.yaml`: Contains configuration for retrieving monitoring data.

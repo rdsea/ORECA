@@ -6,7 +6,10 @@ from deployments.service.telemetry.telemetry_service import TelemetryService
 
 
 class Alloy(TelemetryService):
+    """Manages the deployment and teardown of the Alloy telemetry service."""
+
     def __init__(self):
+        """Initialize the Alloy service manager."""
         super().__init__(ALLOY_METADATA)
 
     def _is_service_running(self) -> bool:

@@ -14,8 +14,15 @@ def topological_sort(
     predecessors: Callable,
     successors: Callable,
 ) -> list[set]:
-    """
-    Sort nodes with predecessors first
+    """Sort nodes with predecessors first.
+
+    Args:
+        nodes (set): A set of nodes.
+        predecessors (Callable): A function that returns the predecessors of a node.
+        successors (Callable): A function that returns the successors of a node.
+
+    Returns:
+        list[set]: A list of sets, where each set contains nodes at the same topological level.
     """
     graph = {node: set(successors(node)) for node in nodes}
     components = list(nx.strongly_connected_components(nx.DiGraph(graph)))
@@ -34,94 +41,102 @@ def topological_sort(
 
 
 class Node:
-    """
-    The element of a graph
-    """
+    """Represents a node in a graph, consisting of an entity and a metric."""
 
     def __init__(self, entity: str, metric: str):
+        """Initialize a Node object.
+
+        Args:
+            entity (str): The entity name.
+            metric (str): The metric name.
+        """
         self._entity = entity
         self._metric = metric
 
     @property
     def entity(self) -> str:
-        """
-        Entity getter
-        """
+        """Entity getter."""
         return self._entity
 
     @property
     def metric(self) -> str:
-        """
-        Metric getter
-        """
+        """Metric getter."""
         return self._metric
 
     def asdict(self) -> dict[str, str]:
-        """
-        Serialized as a dict
+        """Serialize the node as a dictionary.
+
+        Returns:
+            dict[str, str]: A dictionary representation of the node.
         """
         return {"entity": self._entity, "metric": self._metric}
 
     def __eq__(self, obj: object) -> bool:
+        """Check if two Node objects are equal."""
         if isinstance(obj, Node):
             return self.entity == obj.entity and self.metric == obj.metric
         return False
 
     def __hash__(self) -> int:
+        """Return the hash of the Node object."""
         return hash((self.entity, self.metric))
 
     def __repr__(self) -> str:
+        """Return the string representation of the Node object."""
         return f"Node{(self.entity, self.metric)}"
 
 
 class LoadingInvalidGraphError(Exception):
-    """
-    This exception indicates that Graph tries to load from a broken file
-    """
+    """Exception raised when a Graph tries to load from a broken file."""
 
 
 class Graph:
-    """
-    The abstract interface to access relations
-    """
+    """Abstract base class for graph structures, providing an interface to access relations."""
 
     def __init__(self):
+        """Initialize a Graph object."""
         self._nodes: set[Node] = set()
         self._sorted_nodes: list[set[Node]] = None
 
     def dump(self, filename: str) -> bool:
-        """
-        Dump a graph into the given file
+        """Dump a graph into the given file.
 
-        Return whether the operation succeeds
+        Args:
+            filename (str): The path to the file.
+
+        Returns:
+            bool: True if the operation succeeds, False otherwise.
         """
         return False
 
     @classmethod
     def load(cls, filename: str) -> Union["Graph", None]:
-        """
-        Load a graph from the given file
+        """Load a graph from the given file.
+
+        Args:
+            filename (str): The path to the file.
 
         Returns:
-        - A graph, if available
-        - None, if dump/load is not supported
-        - Raise LoadingInvalidGraphException if the file cannot be parsed
+            Union["Graph", None]: A graph object if available, None if dump/load is not supported.
+
+        Raises:
+            LoadingInvalidGraphError: If the file cannot be parsed.
         """
         return None
 
     @property
     def nodes(self) -> set[Node]:
-        """
-        Get the set of nodes in the graph
-        """
+        """Get the set of nodes in the graph."""
         return self._nodes
 
     @property
     def edges(self) -> set[tuple]:
+        """Get the set of edges in the graph."""
         return list(self._graph.edges)
 
     @property
     def str_edges(self) -> set[tuple]:
+        """Get the set of edges in string format."""
         try:
             return [
                 (f"{i.entity}_{i.metric}", f"{j.entity}_{j.metric}")
@@ -132,10 +147,12 @@ class Graph:
 
     @property
     def topological_sort(self) -> list[set[Node]]:
-        """
-        Sort nodes with parents first
+        """Sort nodes with parents first.
 
         The graph specifies the parents of each node.
+
+        Returns:
+            list[set[Node]]: A list of sets, where each set contains nodes at the same topological level.
         """
         if self._sorted_nodes is None:
             self._sorted_nodes = topological_sort(
@@ -144,32 +161,50 @@ class Graph:
         return self._sorted_nodes
 
     def children(self, node: Node, **kwargs) -> set[Node]:
-        """
-        Get the children of the given node in the graph
+        """Get the children of the given node in the graph.
+
+        Args:
+            node (Node): The node to get children for.
+
+        Returns:
+            set[Node]: A set of child nodes.
         """
         raise NotImplementedError
 
     def parents(self, node: Node, **kwargs) -> set[Node]:
-        """
-        Get the parents of the given node in the graph
+        """Get the parents of the given node in the graph.
+
+        Args:
+            node (Node): The node to get parents for.
+
+        Returns:
+            set[Node]: A set of parent nodes.
         """
         raise NotImplementedError
 
 
 class MemoryGraph(Graph):
-    """
-    Implement Graph with data in memory
-    """
+    """Implementation of Graph with data stored in memory using NetworkX."""
 
     def __init__(self, graph: nx.DiGraph):
-        """
-        graph: The whole graph
+        """Initialize a MemoryGraph object.
+
+        Args:
+            graph (nx.DiGraph): The NetworkX directed graph.
         """
         super().__init__()
         self._graph = graph
         self._nodes.update(self._graph.nodes)
 
     def dump(self, filename: str) -> bool:
+        """Dump a graph into the given file.
+
+        Args:
+            filename (str): The path to the file.
+
+        Returns:
+            bool: True if the operation succeeds, False otherwise.
+        """
         nodes: list[Node] = list(self._graph.nodes)
         node_indexes = {node: index for index, node in enumerate(nodes)}
         edges = [
@@ -181,9 +216,21 @@ class MemoryGraph(Graph):
         except Exception:
             data = {"nodes": list(nodes), "edges": edges}
         dump_json(filename=filename, data=data)
+        return True
 
     @classmethod
     def load(cls, filename: str) -> Union["MemoryGraph", None]:
+        """Load a graph from the given file.
+
+        Args:
+            filename (str): The path to the file.
+
+        Returns:
+            Union["MemoryGraph", None]: A MemoryGraph object if available, None if dump/load is not supported.
+
+        Raises:
+            LoadingInvalidGraphError: If the file cannot be parsed.
+        """
         data: dict = load_json(filename=filename)
         if "nodes" not in data or "edges" not in data:
             raise LoadingInvalidGraphError(filename)
@@ -201,6 +248,15 @@ class MemoryGraph(Graph):
 
     @classmethod
     def from_adj(cls, adj: np.ndarray, nodes: list[Node]) -> Union["MemoryGraph", None]:
+        """Create a MemoryGraph from an adjacency matrix and a list of nodes.
+
+        Args:
+            adj (np.ndarray): The adjacency matrix.
+            nodes (list[Node]): A list of nodes corresponding to the adjacency matrix.
+
+        Returns:
+            Union["MemoryGraph", None]: A MemoryGraph object.
+        """
         graph = nx.DiGraph()
         graph.add_nodes_from(nodes)
 
@@ -217,11 +273,27 @@ class MemoryGraph(Graph):
         return MemoryGraph(graph)
 
     def children(self, node: Node, **kwargs) -> set[Node]:
+        """Get the children of the given node in the graph.
+
+        Args:
+            node (Node): The node to get children for.
+
+        Returns:
+            set[Node]: A set of child nodes.
+        """
         if not self._graph.has_node(node):
             return set()
         return set(self._graph.successors(node))
 
     def parents(self, node: Node, **kwargs) -> set[Node]:
+        """Get the parents of the given node in the graph.
+
+        Args:
+            node (Node): The node to get parents for.
+
+        Returns:
+            set[Node]: A set of parent nodes.
+        """
         if not self._graph.has_node(node):
             return set()
         return set(self._graph.predecessors(node))

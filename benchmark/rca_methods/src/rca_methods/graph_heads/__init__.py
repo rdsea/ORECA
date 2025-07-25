@@ -4,32 +4,38 @@ import numpy as np
 
 
 def finalize_directed_adj(adj: np.ndarray) -> np.ndarray:
+    """Finalizes a directed adjacency matrix by converting various edge types to a standard directed format.
+
+    In some causal discovery algorithms (like those in causallearn), the adjacency
+    matrix can contain different values representing various edge types (e.g.,
+    undirected, partially directed, bidirected, or edges with unknown orientation).
+    This function converts these into a simplified directed adjacency matrix where:
+
+    - `i --> j` is represented by `output_adj[j, i] = 1` and `output_adj[i, j] = 0`.
+    - `i <-- j` is represented by `output_adj[j, i] = 0` and `output_adj[i, j] = 1`.
+    - `i <-> j` (bidirected) is represented by `output_adj[j, i] = 1` and `output_adj[i, j] = 1`.
+
+    The conversion rules are as follows:
+    - `0` (no edge) remains `0`.
+    - `1` (directed edge, e.g., `i --> j` or `i <-- j`) is converted to a standard directed edge.
+    - `-1` (undirected edge, e.g., `i --- j`) is converted to a bidirected edge (`i <-> j`).
+    - `2` (partially directed edge, e.g., `i o-> j` or `i o-o j` in FCI) are converted
+      to directed or bidirected edges based on the combination.
+
+    IMPORTANT NOTE:
+    The edge direction in the output `adj` is from cause --> effect.
+    Before passing to algorithms like PageRank, you might need to transpose the
+    adjacency matrix (`adj.T`) to convert cause <-- effect relationships.
+
+    Args:
+        adj (np.ndarray): The input adjacency matrix, which may contain various edge type representations.
+
+    Returns:
+        np.ndarray: The finalized directed adjacency matrix with 0s and 1s.
+
+    Raises:
+        ValueError: If an unexpected combination of adjacency values is encountered.
     """
-    In causallearn, there are multiples edge types to allow unmeasured variables.
-    since there is no left step, we will convert the adj as follows
-    1. nul  to nul
-    2. -->  to  -->
-    3. ---  to  <->
-    4. <->  to  <->
-    5. o->  to  -->
-
-    . --o  to  not_determined_yet
-    . o-o  to  not_determined_yet
-
-    # rules for output_adj
-    - i --> j : adj[j, i] == 1 and adj[i, j] == 0
-    - i <-- j : adj[j, i] == 0 and adj[i, j] == 1
-    - i <-> j : adj[j, i] == 1 and adj[i, j] == 1
-
-    IMPORTATN NOTE:
-    # edge direction here is from cause --> effect
-    # before passing to pagerank, we need to do adj.T to convert cause <-- effect.
-    """
-    # # rules for output_adj
-    # - i --> j : adj[j, i] == 1 and adj[i, j] == 0
-    # - i <-- j : adj[j, i] == 0 and adj[i, j] == 1
-    # - i <-> j : adj[j, i] == 1 and adj[i, j] == 1
-    # """
     output_adj = np.zeros_like(adj)
     for i in range(adj.shape[0]):
         for j in range(adj.shape[1]):

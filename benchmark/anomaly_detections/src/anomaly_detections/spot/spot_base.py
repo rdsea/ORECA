@@ -7,16 +7,23 @@ import pandas as pd
 
 
 class SPOTBase:
-    """
-    The base class for the SPOT algorithm with data management
+    """Base class for the SPOT algorithm.
+
+    This class provides the basic functionality for the SPOT (Streaming Peaks-Over-Threshold) algorithm, including data management and plotting.
     """
 
     # colors for plot
     DEEP_SAFFRON = "#FF9933"
     AIR_FORCE_BLUE = "#5D8AA8"
+    # keys for the plot
     _plot_keys = ()
 
     def __init__(self, logging_level: int = logging.WARNING):
+        """Initialize the SPOTBase class.
+
+        Args:
+            logging_level (int, optional): The logging level. Defaults to logging.WARNING.
+        """
         self._data: np.ndarray = None
         self._init_data: np.ndarray = None
         self._num: int = 0
@@ -27,9 +34,7 @@ class SPOTBase:
         self._logger.setLevel(level=logging_level)
 
     def summary(self) -> dict:
-        """
-        Summar running status
-        """
+        """Get a summary of the running status."""
         report = {
             "name": "Streaming Peaks-Over-Threshold Object",
         }
@@ -54,6 +59,7 @@ class SPOTBase:
         return report
 
     def __str__(self):
+        """Get a string representation of the summary."""
         return json.dumps(self.summary(), indent=2, ensure_ascii=False)
 
     def fit(
@@ -61,12 +67,11 @@ class SPOTBase:
         init_data: np.ndarray | pd.Series | list | int | float,
         data: np.ndarray | pd.Series | list,
     ):
-        """
-        Import data to SPOT object
+        """Import data to the SPOT object.
 
-        Parameters:
-            init_data: initial batch to calibrate the algorithm
-            data: data for the run
+        Args:
+            init_data (np.ndarray | pd.Series | list | int | float): The initial batch of data to calibrate the algorithm.
+            data (np.ndarray | pd.Series | list): The data for the run.
         """
         if isinstance(data, list):
             self._data = np.array(data)
@@ -96,11 +101,10 @@ class SPOTBase:
             return
 
     def add(self, data: np.ndarray | pd.Series | list):
-        """
-        This function allows to append data to the already fitted data
+        """Append data to the already fitted data.
 
-        Parameters:
-            data: data to append
+        Args:
+            data (np.ndarray | pd.Series | list): The data to append.
         """
         if isinstance(data, list):
             data = np.array(data)
@@ -113,33 +117,33 @@ class SPOTBase:
         self._data = np.append(self._data, data)
 
     def initialize(self, level: float = 0.98):
-        """
-        Run the calibration (initialization) step
+        """Run the calibration (initialization) step.
 
-        Parameters:
-            level: Probability associated with the initial threshold t (default 0.98)
+        Args:
+            level (float, optional): The probability associated with the initial threshold t. Defaults to 0.98.
         """
         raise NotImplementedError
 
     def run(self, with_alarm: bool = True) -> dict:
-        """
-        Run SPOT on the stream
+        """Run SPOT on the stream.
 
-        Parameters:
-            with_alarm: If False, SPOT will adapt the threshold assuming
-                there is no abnormal values (default = True)
+        Args:
+            with_alarm (bool, optional): If False, SPOT will adapt the threshold assuming there is no abnormal values. Defaults to True.
+
+        Returns:
+            dict: A dictionary containing the results of the run.
         """
         raise NotImplementedError
 
     def plot(self, run_results: dict, with_alarm: bool = True):
-        """
-        Plot the results of given by the run
+        """Plot the results of the run.
 
-        Parameters:
-            run_results: results given by the 'run' method
-            with_alarm: If True, alarms are plotted. (default = True)
+        Args:
+            run_results (dict): The results given by the 'run' method.
+            with_alarm (bool, optional): If True, alarms are plotted. Defaults to True.
 
-        Returns: a list of the plots
+        Returns:
+            list: A list of the plots.
         """
         ticks = list(range(self._data.size))
 

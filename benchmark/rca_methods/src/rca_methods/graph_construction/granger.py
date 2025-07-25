@@ -1,8 +1,25 @@
 import numpy as np
+import pandas as pd
 from statsmodels.tsa.stattools import grangercausalitytests
 
 
-def granger(data, maxlag=None, p_val_threshold=0.05, test=None):
+def granger(
+    data: pd.DataFrame,
+    maxlag: int | None = None,
+    p_val_threshold: float = 0.05,
+    test: str | None = None,
+) -> np.ndarray:
+    """Performs Granger causality tests to infer causal relationships between time series.
+
+    Args:
+        data (pd.DataFrame): The input time series data.
+        maxlag (int | None, optional): The maximum number of lags to test. Defaults to 3.
+        p_val_threshold (float, optional): The p-value threshold for determining causality. Defaults to 0.05.
+        test (str | None, optional): The type of test to use (e.g., "ssr_ftest", "ssr_chi2test", "lrtest", "params_ftest"). If None, uses the average p-value from all tests. Defaults to None.
+
+    Returns:
+        np.ndarray: An adjacency matrix where adj[i, j] = 1 if j Granger-causes i, and 0 otherwise.
+    """
     assert test in [None, "ssr_ftest", "ssr_chi2test", "lrtest", "params_ftest"]
 
     # data: pandas dataframe

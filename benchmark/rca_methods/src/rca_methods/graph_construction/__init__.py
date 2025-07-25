@@ -7,7 +7,23 @@ import numpy as np
 # from .pc import pc_default
 
 
-def normalize_adj(adj):
+def normalize_adj(adj: np.ndarray) -> np.ndarray:
+    """Normalizes an adjacency matrix based on different edge types.
+
+    This function processes an adjacency matrix where values represent different
+    types of relationships (e.g., no edge, undirected, directed, FCI-specific).
+    It converts these into a normalized adjacency matrix where 1 indicates an
+    edge and 0 indicates no edge.
+
+    Args:
+        adj (np.ndarray): The input adjacency matrix.
+
+    Returns:
+        np.ndarray: The normalized adjacency matrix.
+
+    Raises:
+        ValueError: If an unexpected adjacency value combination is encountered.
+    """
     norm_adj = np.zeros_like(adj)
 
     node_num = len(adj)
