@@ -49,7 +49,7 @@ class NetworkFault(AnomalyEnum):
     """Enum for network faults."""
 
     DELAY = AnomalyInfo("Delay", AnomalyCategory.SYSTEM)
-    DROP = AnomalyInfo("Package drop", AnomalyCategory.SYSTEM)
+    LOSS = AnomalyInfo("Package loss", AnomalyCategory.SYSTEM)
 
 
 class CodeLevelFault(AnomalyEnum):
@@ -78,7 +78,7 @@ ALL_ANOMALY_ENUMS = {
 
 FAULT_TYPE_TO_MODEL: dict[AnomalyEnum, type[FaultSpecificConfig]] = {
     NetworkFault.DELAY: NetworkChaosConfig,
-    NetworkFault.DROP: NetworkChaosConfig,
+    NetworkFault.LOSS: NetworkChaosConfig,
 }
 
 

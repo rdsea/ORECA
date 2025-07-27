@@ -17,8 +17,8 @@ fault_config:
       jitter: 50ms
 
 anomaly_injection_period: 600s
-normal_rqs: 30
-load_generate_duration: 1200s
+normal_rqs: 24
+load_generate_duration: 1020s
 list_of_generator:
   - XXX.XXX.XXX.XXX
   - XXX.XXX.XXX.XXX

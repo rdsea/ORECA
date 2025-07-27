@@ -1,12 +1,12 @@
 experiment_name: resourcehog_cpu_preprocessing
 fault_config:
   name: resourcehog-cpu-preprocessing
-  duration: 30s
+  duration: 300s
   fault_type: ResourceHog.CPU
   fault_specific_config:
     name: resourcehog-cpu-preprocessing
     namespace: default
-    duration: 30s
+    duration: 300s
     target:
       namespace: default
       label_selectors:
@@ -15,13 +15,13 @@ fault_config:
       workers: 1
       load: 100
 
-anomaly_injection_period: 30s
-normal_rqs: 10
-load_generate_duration: 90s
+anomaly_injection_period: 300s
+normal_rqs: 24
+load_generate_duration: 1020s
 list_of_generator:
   - XXX.XXX.XXX.XXX
-  # - XXX.XXX.XXX.XXX
-  # - XXX.XXX.XXX.XXX
+  - XXX.XXX.XXX.XXX
+  - XXX.XXX.XXX.XXX
 spawn_rate: 10
 ssh_username: aaltosea
 gateway_ip: XXX.XXX.XXX.XXX

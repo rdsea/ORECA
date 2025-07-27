@@ -1,0 +1,27 @@
+experiment_name: network_loss_preprocessing
+fault_config:
+  name: network-loss-preprocessing
+  duration: 300s
+  fault_type: NetworkFault.LOSS
+  fault_specific_config:
+    name: network-loss-preprocessing
+    namespace: default
+    duration: 300s
+    target:
+      namespace: default
+      label_selectors:
+        app: preprocessing
+    loss:
+      loss: "50"
+      correlation: "0.5"
+
+anomaly_injection_period: 600s
+normal_rqs: 24
+load_generate_duration: 1020s
+list_of_generator:
+  - XXX.XXX.XXX.XXX
+  - XXX.XXX.XXX.XXX
+  - XXX.XXX.XXX.XXX
+spawn_rate: 10
+ssh_username: aaltosea
+gateway_ip: XXX.XXX.XXX.XXX

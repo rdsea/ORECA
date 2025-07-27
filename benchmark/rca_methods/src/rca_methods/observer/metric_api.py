@@ -81,6 +81,7 @@ class PrometheusAPI:
         end_time: int | datetime | str,
         step: str = "10s",
         save_path: str = ".",
+        experiment_name: str | None = None,
         save_to_file: bool = True,
     ):
         """Query a range of metrics from Prometheus.
@@ -97,7 +98,10 @@ class PrometheusAPI:
             pd.DataFrame: A DataFrame containing the queried metrics.
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        save_path = os.path.join(save_path, f"metric_{timestamp}.csv")
+        if experiment_name:
+            save_path = os.path.join(save_path, f"{experiment_name}.csv")
+        else:
+            save_path = os.path.join(save_path, f"metric_{timestamp}.csv")
         start_time = time_format_transform(start_time)
         end_time = time_format_transform(end_time)
         return_pd = pd.DataFrame()

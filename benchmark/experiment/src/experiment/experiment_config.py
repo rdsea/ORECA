@@ -1,11 +1,18 @@
 import logging
+import os
+import pathlib
 import re
 import select
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta
 from threading import Timer
 
 import paramiko
 import yaml
+from rca_methods.observer import (
+    monitor_config,
+)
+from rca_methods.observer.metric_api import ALL_METRICS, PrometheusAPI
 
 from experiment.config.anomaly_model import RCAExperimentConfig
 from experiment.fault_injector.base import FaultInjector
@@ -163,12 +170,34 @@ if __name__ == "__main__":
         format="%(asctime)s [%(levelname)s] %(threadName)s - %(message)s",
     )
     try:
-        with open("experiment_config.yaml") as f:
-            config_data = yaml.safe_load(f)
-        experiment_config = RCAExperimentConfig(**config_data)
-        experiment = RCAExperiment(experiment_config)
+        current_path = pathlib.Path(__file__).parent
+        config_path = current_path / "config" / "examples"
+        for file in os.listdir(config_path):
+            if "network" not in file:
+                continue
+            with open(config_path / file) as f:
+                config_data = yaml.safe_load(f)
 
-        # Uncomment to run
-        experiment.run()
+            for i in range(1, 4):
+                experiment_config = RCAExperimentConfig(**config_data)
+                experiment = RCAExperiment(experiment_config)
+
+                # Uncomment to run
+                experiment.run()
+
+                prom = PrometheusAPI(monitor_config["prometheus_url"])
+
+                # Define time range for exporting metrics
+                end_time = datetime.now()
+                start_time = end_time - timedelta(minutes=17)
+                # injection_time = 1753213321
+
+                prom.query_range(
+                    ALL_METRICS,
+                    start_time,
+                    end_time,
+                    experiment_name=f"{file.split('.')[0]}_{i}",
+                    step="1s",
+                )
     except Exception as e:
         logging.error(f"Failed to start experiment: {e}")

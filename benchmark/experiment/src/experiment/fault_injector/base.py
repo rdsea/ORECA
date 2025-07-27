@@ -35,7 +35,7 @@ class FaultInjector:
                 pass
             case ResourceHog.SOCKET:
                 pass
-            case NetworkFault.DELAY | NetworkFault.DROP:
+            case NetworkFault.DELAY | NetworkFault.LOSS:
                 if isinstance(self.config.fault_specific_config, NetworkChaosConfig):
                     self.network_fault_injector = ChaosNetworkInjector(
                         self.config.fault_specific_config
@@ -64,7 +64,7 @@ class FaultInjector:
                 pass
             case ResourceHog.SOCKET:
                 pass
-            case NetworkFault.DELAY | NetworkFault.DROP:
+            case NetworkFault.DELAY | NetworkFault.LOSS:
                 if hasattr(self, "network_fault_injector"):
                     self.network_fault_injector.delete()
                 else:
