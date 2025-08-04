@@ -10,7 +10,11 @@ kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/downloa
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 
 # Cilium
-# helm install cilium cilium/cilium --version 1.17.5 --namespace kube-system --values cilium_values.yml
+helm install cilium cilium/cilium --version 1.17.5 --namespace kube-system --values cilium_values.yml
+
+# Wait until all pod become ready
+# Apply metallb ip addr pool
+kubectl apply -f metallb_config.yml
 
 # Longhorn
 # helm repo add longhorn https://charts.longhorn.io
