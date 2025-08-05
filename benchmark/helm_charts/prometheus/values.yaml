@@ -1,14 +1,20 @@
 prometheus:
   prometheusSpec:
+    logLevel: debug
     routePrefix: /prometheus
     externalUrl: /prometheus
-    remoteWrite:
-      - url: "http://prom-kafka-adapter-node.redpanda.svc.cluster.local:80/receive"
-        name: prom-kafka-adapter-node
-      - url: "http://prom-kafka-adapter-service.redpanda.svc.cluster.local:80/receive"
-        name: prom-kafka-adapter-service
-      - url: "http://prom-kafka-adapter-pod.redpanda.svc.cluster.local:80/receive"
-        name: prom-kafka-adapter-pod
+    externalLabels:
+      # cluster: cloud-1
+      # environment: cloud
+      cluster: "edge-1"
+      environment: "edge"
+    # remoteWrite:
+    #   - url: "http://prom-kafka-adapter-node.redpanda.svc.cluster.local:80/receive"
+    #     name: prom-kafka-adapter-node
+    #   - url: "http://prom-kafka-adapter-service.redpanda.svc.cluster.local:80/receive"
+    #     name: prom-kafka-adapter-service
+    #   - url: "http://prom-kafka-adapter-pod.redpanda.svc.cluster.local:80/receive"
+    #     name: prom-kafka-adapter-pod
     storageSpec:
       ## Using PersistentVolumeClaim
       volumeClaimTemplate:
@@ -21,6 +27,31 @@ prometheus:
     selector: {}
 
     additionalScrapeConfigs: |
+      #NOTE: don't enable this for edge cluster
+      - job_name: 'federate'
+        scrape_interval: 30s
+        honor_timestamps: true
+        track_timestamps_staleness: false
+        honor_labels: true
+        metrics_path: '/prometheus/federate'
+        params:
+          'match[]':
+            - '{job="node-exporter"}'
+            - '{job="kubelet"}'
+
+        static_configs:
+          - targets:
+              - 'gateway.edge-1.svc:80'
+        relabel_configs:
+          - source_labels: [__name__]
+            regex: '.*'
+            action: keep
+          - source_labels: [__address__]
+            target_label: source
+            replacement: 'edge-1'
+          - target_label: federated
+            replacement: "true"
+
       - job_name: aggregated-trace-metrics
         static_configs:
         - targets: ['my-opentelemetry-collector.observe:8889']

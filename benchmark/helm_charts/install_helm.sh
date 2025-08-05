@@ -9,7 +9,7 @@ helm install cilium cilium/cilium --version 1.17.5 \
 # Create namespace for grafana dashboard as this's not automatically done by helm
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 kubectl create namespace dashboard
-helm install prometheus prometheus-community/kube-prometheus-stack -n observe --values values.yaml --create-namespace
+helm install prometheus prometheus-community/kube-prometheus-stack -n observe --values values.yaml --create-namespace --version 75.12.0
 
 # Longhorn
 # Install requirement before deploying longhorn to all node https://longhorn.io/docs/1.9.0/deploy/install/#installing-open-iscsi
@@ -18,9 +18,9 @@ helm install longhorn longhorn/longhorn --namespace longhorn-system --create-nam
 
 # Jaeger
 helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
-helm install jaeger jaegertracing/jaeger -n observe --create-namespace -f values.yaml
+helm install jaeger jaegertracing/jaeger -n observe --create-namespace -f values.yaml --version 3.4.1
 
 # Otel collector
 helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
 helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
-  -f values.yaml -n observe
+  -f values.yaml -n observe --version 0.129.0
