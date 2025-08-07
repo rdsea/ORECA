@@ -16,12 +16,17 @@ fault_config:
       size: 150MB
 
 anomaly_injection_period: 300s
-normal_rqs: 24
-load_generate_duration: 1020s
 list_of_generator:
   - XXX.XXX.XXX.XXX
   - XXX.XXX.XXX.XXX
   - XXX.XXX.XXX.XXX
-spawn_rate: 10
 ssh_username: aaltosea
-gateway_ip: XXX.XXX.XXX.XXX
+workload:
+  type: docker
+  config:
+    image: rdsea/object_detection_client:latest
+    args:
+      host: http://XXX.XXX.XXX.XXX
+      user: "24"
+      run-time: 1020s
+      spawn-rate: "10"

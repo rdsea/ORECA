@@ -11,7 +11,7 @@ from experiment.fault_injector.network import (
 @pytest.fixture()
 def get_chaos_network_delay_config():
     with open("./delay_config.yaml") as f:
-        return NetworkChaosConfig(**yaml.safe_load(f))
+        return NetworkChaosConfig.model_validate(yaml.safe_load(f))
 
 
 def test_load_config_from_yaml(get_chaos_network_delay_config):

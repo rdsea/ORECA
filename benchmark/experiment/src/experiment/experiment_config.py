@@ -2,20 +2,24 @@ import logging
 import os
 import pathlib
 import re
-import select
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from threading import Timer
 
-import paramiko
 import yaml
 from rca_methods.observer import (
     monitor_config,
 )
 from rca_methods.observer.metric_api import ALL_METRICS, PrometheusAPI
 
-from experiment.config.anomaly_model import RCAExperimentConfig
+from experiment.config.anomaly_model import (
+    DockerWorkloadConfig,
+    RCAExperimentConfig,
+    ShellWorkloadConfig,
+)
 from experiment.fault_injector.base import FaultInjector
+from experiment.workload_controller.base import WorkloadController
+from experiment.workload_controller.docker import DockerWorkloadGenerator
+from experiment.workload_controller.shell import ShellWorkloadGenerator
 
 
 def parse_time_to_seconds(time_str: str) -> int:
@@ -57,47 +61,26 @@ class RCAExperiment:
         """
         self.config = config
         self.fault_injector = FaultInjector(self.config.fault_config)
+        self.workload_generator = self._create_workload_generator()
 
-    def _ssh_run_command(self, host: str, command: str) -> str:
-        """Run a command on a remote machine via SSH and stream output.
-
-        Args:
-            host (str): Remote hostname or IP.
-            command (str): Shell command to execute.
-
-        Returns:
-            str: Exit status message or error.
-        """
-        try:
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(hostname=host, username=self.config.ssh_username)
-
-            transport = ssh.get_transport()
-            channel = transport.open_session()
-            channel.get_pty()
-            channel.exec_command(command)
-
-            logging.info(f"--- [{host}] Command started ---")
-            while True:
-                rl, _, _ = select.select([channel], [], [], 1.0)
-                if channel in rl:
-                    try:
-                        output = channel.recv(1024).decode("utf-8")
-                        if output:
-                            print(output, end="", flush=True)
-                    except Exception as e:
-                        logging.error(f"[{host}] Error reading output: {e}")
-
-                if channel.exit_status_ready():
-                    break
-
-            exit_status = channel.recv_exit_status()
-            ssh.close()
-
-            return f"--- [{host}] Command finished with exit code {exit_status} ---"
-        except Exception as e:
-            return f"--- [{host}] SSH command failed ---\nError: {e}"
+    def _create_workload_generator(self) -> WorkloadController:
+        workload_config = self.config.workload
+        if isinstance(workload_config.config, DockerWorkloadConfig):
+            return DockerWorkloadGenerator(
+                hosts=self.config.list_of_generator,
+                ssh_username=self.config.ssh_username,
+                docker_image=workload_config.config.image,
+                docker_args=workload_config.config.args,
+            )
+        elif isinstance(workload_config.config, ShellWorkloadConfig):
+            return ShellWorkloadGenerator(
+                hosts=self.config.list_of_generator,
+                ssh_username=self.config.ssh_username,
+                script_path=workload_config.config.script_path,
+                script_args=workload_config.config.script_args,
+            )
+        else:
+            raise ValueError(f"Invalid workload type: {workload_config.type}")
 
     def run(self):
         """Starts the RCA experiment.
@@ -105,11 +88,6 @@ class RCAExperiment:
         This method distributes load generator jobs across remote machines and
         schedules delayed fault injection.
         """
-        num_generators = len(self.config.list_of_generator)
-        if num_generators == 0:
-            raise ValueError("No load generator hosts provided.")
-
-        rqs_per_generator = int(self.config.normal_rqs / num_generators)
         inject_delay = parse_time_to_seconds(self.config.anomaly_injection_period)
 
         # Schedule anomaly injection using a timer
@@ -118,24 +96,7 @@ class RCAExperiment:
             self.inject_anomaly,
         ).start()
 
-        command_to_run = f"""docker run --network host rdsea/object_detection_client:latest \
-            --host http://{self.config.gateway_ip} \
-            --user {rqs_per_generator} \
-            --run-time {self.config.load_generate_duration} \
-            --spawn-rate {self.config.spawn_rate}"""
-
-        logging.info("Starting load generators on remote nodes...")
-        logging.debug(f"Command: {command_to_run}")
-
-        with ThreadPoolExecutor(max_workers=num_generators) as executor:
-            futures = [
-                executor.submit(self._ssh_run_command, host, command_to_run)
-                for host in self.config.list_of_generator
-            ]
-
-            for future in futures:
-                result = future.result()
-                print(result)
+        self.workload_generator.start()
 
     def inject_anomaly(self):
         """Injects the configured anomaly.
@@ -179,7 +140,7 @@ if __name__ == "__main__":
                 config_data = yaml.safe_load(f)
 
             for i in range(1, 4):
-                experiment_config = RCAExperimentConfig(**config_data)
+                experiment_config = RCAExperimentConfig.model_validate(config_data)
                 experiment = RCAExperiment(experiment_config)
 
                 # Uncomment to run

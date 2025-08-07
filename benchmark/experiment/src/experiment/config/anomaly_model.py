@@ -127,6 +127,41 @@ class FaultConfig(BaseModel):
         return values
 
 
+class DockerWorkloadConfig(BaseModel):
+    image: str
+    args: dict[str, str] = {}
+
+
+class ShellWorkloadConfig(BaseModel):
+    script_path: str
+    script_args: dict[str, str] = {}
+
+
+class WorkloadConfig(BaseModel):
+    type: str
+    config: DockerWorkloadConfig | ShellWorkloadConfig
+
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_specific_config(cls, values):
+        workload_type = values.get("type")
+        config_data = values.get("config")
+
+        if workload_type == "docker":
+            model_cls = DockerWorkloadConfig
+        elif workload_type == "shell":
+            model_cls = ShellWorkloadConfig
+        else:
+            raise ValueError(f"Unsupported workload type: {workload_type}")
+
+        if isinstance(config_data, dict):
+            values["config"] = model_cls.model_validate(config_data)
+        elif not isinstance(config_data, model_cls):
+            raise TypeError(f"Expected config of type {model_cls.__name__}")
+
+        return values
+
+
 class RCAExperimentConfig(BaseModel):
     """Configuration for an RCA experiment."""
 
@@ -134,10 +169,6 @@ class RCAExperimentConfig(BaseModel):
     fault_config: FaultConfig
     # When to inject the anomaly, for example, 5, 10 minutes after starting load generation
     anomaly_injection_period: str
-    normal_rqs: int
-    # Ip for ssh
-    load_generate_duration: str
     list_of_generator: list[str]
-    spawn_rate: float
     ssh_username: str
-    gateway_ip: str
+    workload: WorkloadConfig

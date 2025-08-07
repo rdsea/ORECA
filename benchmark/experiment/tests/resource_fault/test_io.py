@@ -11,7 +11,7 @@ from experiment.fault_injector.resource import (
 @pytest.fixture()
 def get_chaos_resource_io_config():
     with open("./io_config.yaml") as f:
-        return ResourcesChaosConfig(**yaml.safe_load(f))
+        return ResourcesChaosConfig.model_validate(yaml.safe_load(f))
 
 
 def test_load_io_config_from_yaml(get_chaos_resource_io_config):
@@ -21,6 +21,7 @@ def test_load_io_config_from_yaml(get_chaos_resource_io_config):
     assert config.io_chaos.action == "delay"
     assert config.io_chaos.path == "/data"
     assert config.io_chaos.percent == "100"
+    assert config.io_chaos.methods is not None
     assert "read" in config.io_chaos.methods
 
 

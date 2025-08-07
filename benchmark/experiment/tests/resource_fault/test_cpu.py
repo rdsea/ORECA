@@ -11,7 +11,7 @@ from experiment.fault_injector.resource import (
 @pytest.fixture()
 def get_chaos_resource_cpu_config():
     with open("./cpu_config.yaml") as f:
-        return ResourcesChaosConfig(**yaml.safe_load(f))
+        return ResourcesChaosConfig.model_validate(yaml.safe_load(f))
 
 
 def test_load_config_from_yaml(get_chaos_resource_cpu_config):

@@ -16,26 +16,27 @@ def resource_stress_config_to_yaml(config: ResourcesChaosConfig) -> str:
     Returns:
         str: YAML string.
     """
-    if config.io_chaos:
+    if config.io_chaos is not None:
+        io_chaos_config = config.io_chaos
         # Generate IOChaos YAML
         spec = {
-            "action": config.io_chaos.action,
+            "action": io_chaos_config.action,
             "mode": "all",
             "selector": {
                 "namespaces": [config.target.namespace],
                 "labelSelectors": config.target.label_selectors,
             },
-            "path": config.io_chaos.path,
-            "percent": config.io_chaos.percent,
+            "path": io_chaos_config.path,
+            "percent": io_chaos_config.percent,
             "duration": config.duration,
         }
 
-        if config.io_chaos.delay:
-            spec["delay"] = config.io_chaos.delay
-        if config.io_chaos.errno is not None:
-            spec["errno"] = config.io_chaos.errno
-        if config.io_chaos.methods:
-            spec["methods"] = config.io_chaos.methods
+        if io_chaos_config.delay is not None:
+            spec["delay"] = io_chaos_config.delay
+        if io_chaos_config.errno is not None:
+            spec["errno"] = io_chaos_config.errno
+        if io_chaos_config.methods is not None:
+            spec["methods"] = io_chaos_config.methods
 
         return yaml.dump(
             {
@@ -56,11 +57,11 @@ def resource_stress_config_to_yaml(config: ResourcesChaosConfig) -> str:
             "duration": config.duration,
         }
 
-        if config.stress_cpu:
+        if config.stress_cpu is not None:
             spec["stressors"] = spec.get("stressors", {})
             spec["stressors"]["cpu"] = config.stress_cpu.dict(exclude_none=True)
 
-        if config.stress_memory:
+        if config.stress_memory is not None:
             spec["stressors"] = spec.get("stressors", {})
             spec["stressors"]["memory"] = config.stress_memory.dict(exclude_none=True)
 
