@@ -56,7 +56,7 @@ class MLP(nn.Module):
         layer = nn.Conv1d(num_series, hidden[0], lag)
         modules = [layer]
 
-        for d_in, d_out in zip(hidden, hidden[1:] + [1], strict=False):
+        for d_in, d_out in zip(hidden, [*hidden[1:], 1], strict=False):
             layer = nn.Conv1d(d_in, d_out, 1)
             modules.append(layer)
 

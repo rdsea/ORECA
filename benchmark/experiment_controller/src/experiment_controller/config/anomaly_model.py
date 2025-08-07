@@ -1,9 +1,10 @@
 from enum import Enum
 from typing import NamedTuple
 
+from pydantic import BaseModel, field_validator, model_validator
+
 from experiment_controller.config.fault_config import FaultSpecificConfig
 from experiment_controller.fault_controller.network import NetworkChaosConfig
-from pydantic import BaseModel, field_validator, model_validator
 
 
 class AnomalyCategory(Enum):

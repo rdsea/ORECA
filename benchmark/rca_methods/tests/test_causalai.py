@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+
 from rca_methods.causalai import CausalAI
 from rca_methods.utility import download_data, read_data
 

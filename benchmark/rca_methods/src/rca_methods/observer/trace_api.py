@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
+
 from deployments.observer import root_path
 
 

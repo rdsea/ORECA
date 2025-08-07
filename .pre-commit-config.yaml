@@ -19,17 +19,17 @@ repos:
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.11.13
+    rev: v0.12.7
     hooks:
       # Run the linter.
       - id: ruff-check
-        args: [--fix, --config=ruff.toml]
+        args: [--fix, -v]
         exclude: applications/online-boutique/
       # Run the formatter.
       - id: ruff-format
 
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.27.2
+    rev: v8.28.0
     hooks:
       - id: gitleaks
 

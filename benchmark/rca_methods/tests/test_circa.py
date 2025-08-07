@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
+
 from rca_methods.circa import circa
 from rca_methods.utility import download_data, read_data
 
