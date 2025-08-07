@@ -2,7 +2,7 @@ from enum import Enum
 from typing import NamedTuple
 
 from experiment.config.fault_config import FaultSpecificConfig
-from experiment.fault_injector.network import NetworkChaosConfig
+from experiment.fault_controller.network import NetworkChaosConfig
 from pydantic import BaseModel, field_validator, model_validator
 
 

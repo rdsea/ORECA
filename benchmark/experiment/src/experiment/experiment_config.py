@@ -16,7 +16,7 @@ from experiment.config.anomaly_model import (
     RCAExperimentConfig,
     ShellWorkloadConfig,
 )
-from experiment.fault_injector.base import FaultInjector
+from experiment.fault_controller.base import FaultController
 from experiment.workload_controller.base import WorkloadController
 from experiment.workload_controller.docker import DockerWorkloadGenerator
 from experiment.workload_controller.shell import ShellWorkloadGenerator
@@ -60,7 +60,7 @@ class RCAExperiment:
             config (RCAExperimentConfig): The configuration for the experiment.
         """
         self.config = config
-        self.fault_injector = FaultInjector(self.config.fault_config)
+        self.fault_controller = FaultController(self.config.fault_config)
         self.workload_generator = self._create_workload_generator()
 
     def _create_workload_generator(self) -> WorkloadController:
@@ -110,7 +110,7 @@ class RCAExperiment:
             f"for {self.config.fault_config.duration} in experiment: {self.config.experiment_name}"
         )
 
-        self.fault_injector.inject()
+        self.fault_controller.inject()
         Timer(anomaly_duration, self.clean_anomaly)
 
     def clean_anomaly(self):
@@ -118,7 +118,7 @@ class RCAExperiment:
 
         This method calls the fault injector's clean method to remove the fault.
         """
-        self.fault_injector.clean()
+        self.fault_controller.clean()
         logging.info(
             f"🛠️  Anomaly finished: {self.config.fault_config.fault_type} "
             f"after {self.config.fault_config.duration} in experiment: {self.config.experiment_name}"

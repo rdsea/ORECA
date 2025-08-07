@@ -2,8 +2,8 @@ import time
 
 import pytest
 import yaml
-from experiment.fault_injector.resource import (
-    ChaosResourceInjector,
+from experiment.fault_controller.resource import (
+    ChaosResourceController,
     ResourcesChaosConfig,
 )
 
@@ -25,9 +25,9 @@ def test_load_io_config_from_yaml(get_chaos_resource_io_config):
     assert "read" in config.io_chaos.methods
 
 
-def test_injector_apply_and_delete_io(get_chaos_resource_io_config):
+def test_controller_apply_and_delete_io(get_chaos_resource_io_config):
     config = get_chaos_resource_io_config
-    injector = ChaosResourceInjector(config)
-    injector.apply()
+    controller = ChaosResourceController(config)
+    controller.apply()
     time.sleep(300)  # let the chaos run
-    injector.delete()
+    controller.delete()

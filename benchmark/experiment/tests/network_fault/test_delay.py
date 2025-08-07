@@ -2,8 +2,8 @@ import time
 
 import pytest
 import yaml
-from experiment.fault_injector.network import (
-    ChaosNetworkInjector,
+from experiment.fault_controller.network import (
+    ChaosNetworkController,
     NetworkChaosConfig,
 )
 
@@ -23,9 +23,9 @@ def test_load_config_from_yaml(get_chaos_network_delay_config):
     assert config.target.label_selectors == {"app": "preprocessing"}
 
 
-def test_injector_apply_and_delete(get_chaos_network_delay_config):
+def test_controller_apply_and_delete(get_chaos_network_delay_config):
     config = get_chaos_network_delay_config
-    injector = ChaosNetworkInjector(config)
-    injector.apply()
+    controller = ChaosNetworkController(config)
+    controller.apply()
     time.sleep(30)
-    injector.delete()
+    controller.delete()

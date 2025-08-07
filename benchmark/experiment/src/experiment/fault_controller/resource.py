@@ -76,8 +76,8 @@ def resource_stress_config_to_yaml(config: ResourcesChaosConfig) -> str:
         )
 
 
-class ChaosResourceInjector:
-    """Injector for CPU/Memory stress using Chaos Mesh."""
+class ChaosResourceController:
+    """controller for CPU/Memory stress using Chaos Mesh."""
 
     def __init__(self, config: ResourcesChaosConfig):
         """Initialize the injector.

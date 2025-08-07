@@ -3,14 +3,17 @@ import logging
 from pydantic import ValidationError
 
 from experiment.config.anomaly_model import FaultConfig, NetworkFault, ResourceHog
-from experiment.fault_injector.network import ChaosNetworkInjector, NetworkChaosConfig
+from experiment.fault_controller.network import (
+    ChaosNetworkController,
+    NetworkChaosConfig,
+)
 
 
-class FaultInjector:
+class FaultController:
     """Injects and cleans up various types of faults based on the provided configuration."""
 
     def __init__(self, fault_config: FaultConfig):
-        """Initialize the FaultInjector.
+        """Initialize the FaultController.
 
         Args:
             fault_config (FaultConfig): The configuration for the fault to be injected.
@@ -37,21 +40,21 @@ class FaultInjector:
                 pass
             case NetworkFault.DELAY | NetworkFault.LOSS:
                 if isinstance(self.config.fault_specific_config, NetworkChaosConfig):
-                    self.network_fault_injector = ChaosNetworkInjector(
+                    self.network_fault_controller = ChaosNetworkController(
                         self.config.fault_specific_config
                     )
                 else:
                     try:
-                        self.network_fault_injector = ChaosNetworkInjector(
+                        self.network_fault_controller = ChaosNetworkController(
                             NetworkChaosConfig.model_validate(
                                 self.config.fault_specific_config
                             )
                         )
                     except ValidationError:
                         logging.error(
-                            "Can't validate the fault_specific_config for network fault injector"
+                            "Can't validate the fault_specific_config for network fault controller"
                         )
-                self.network_fault_injector.apply()
+                self.network_fault_controller.apply()
 
     def clean(self):
         """Cleans up the injected fault."""
@@ -65,9 +68,9 @@ class FaultInjector:
             case ResourceHog.SOCKET:
                 pass
             case NetworkFault.DELAY | NetworkFault.LOSS:
-                if hasattr(self, "network_fault_injector"):
-                    self.network_fault_injector.delete()
+                if hasattr(self, "network_fault_controller"):
+                    self.network_fault_controller.delete()
                 else:
                     logging.error(
-                        "Can't clean Network fault as network_fault_injector is not created yet"
+                        "Can't clean Network fault as network_fault_controller is not created yet"
                     )

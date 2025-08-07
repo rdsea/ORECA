@@ -48,7 +48,7 @@ def chaos_config_to_yaml(config: NetworkChaosConfig) -> str:
     return yaml.dump(metadata, sort_keys=False)
 
 
-class ChaosNetworkInjector:
+class ChaosNetworkController:
     """
     Utility for applying and removing Chaos Mesh network experiments via kubectl.
 
@@ -63,7 +63,7 @@ class ChaosNetworkInjector:
 
     def __init__(self, config: NetworkChaosConfig):
         """
-        Initialize the injector with a validated network chaos configuration.
+        Initialize the controller with a validated network chaos configuration.
 
         Args:
             config (NetworkChaosConfig): Validated network chaos configuration.

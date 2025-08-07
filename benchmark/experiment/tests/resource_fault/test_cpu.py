@@ -2,8 +2,8 @@ import time
 
 import pytest
 import yaml
-from experiment.fault_injector.resource import (
-    ChaosResourceInjector,
+from experiment.fault_controller.resource import (
+    ChaosResourceController,
     ResourcesChaosConfig,
 )
 
@@ -22,9 +22,9 @@ def test_load_config_from_yaml(get_chaos_resource_cpu_config):
     assert config.target.label_selectors == {"app": "preprocessing"}
 
 
-def test_injector_apply_and_delete(get_chaos_resource_cpu_config):
+def test_controller_apply_and_delete(get_chaos_resource_cpu_config):
     config = get_chaos_resource_cpu_config
-    injector = ChaosResourceInjector(config)
-    injector.apply()
+    controller = ChaosResourceController(config)
+    controller.apply()
     time.sleep(300)
-    injector.delete()
+    controller.delete()
