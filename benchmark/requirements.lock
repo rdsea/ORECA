@@ -11,7 +11,7 @@
 
 -e file:anomaly_detections
 -e file:deployments
--e file:experiment
+-e file:experiment_controller
 -e file:rca_methods
 annotated-types==0.7.0
     # via pydantic
@@ -235,7 +235,7 @@ pandas==2.3.0
     # via rca-methods
     # via statsmodels
 paramiko==3.5.1
-    # via experiment
+    # via experiment-controller
 patsy==1.0.1
     # via statsmodels
 pillow==11.2.1

@@ -2,7 +2,6 @@ import logging
 import subprocess
 
 import yaml
-
 from experiment.config.network_fault_config import NetworkChaosConfig
 
 

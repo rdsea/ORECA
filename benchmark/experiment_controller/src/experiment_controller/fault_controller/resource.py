@@ -2,7 +2,6 @@ import logging
 import subprocess
 
 import yaml
-
 from experiment.config.resource_fault_config import ResourcesChaosConfig
 
 

@@ -1,12 +1,11 @@
 import logging
 
-from pydantic import ValidationError
-
 from experiment.config.anomaly_model import FaultConfig, NetworkFault, ResourceHog
 from experiment.fault_controller.network import (
     ChaosNetworkController,
     NetworkChaosConfig,
 )
+from pydantic import ValidationError
 
 
 class FaultController:

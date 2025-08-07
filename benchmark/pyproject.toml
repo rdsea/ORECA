@@ -24,7 +24,12 @@ allow-direct-references = true
 
 
 [tool.rye.workspace]
-members = ["deployments", "rca_methods", "experiment", "anomaly_detections"]
+members = [
+  "deployments",
+  "rca_methods",
+  "experiment_controller",
+  "anomaly_detections",
+]
 
 [tool.ruff.format]
 docstring-code-format = true
