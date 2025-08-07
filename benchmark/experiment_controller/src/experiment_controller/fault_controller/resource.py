@@ -2,7 +2,8 @@ import logging
 import subprocess
 
 import yaml
-from experiment.config.resource_fault_config import ResourcesChaosConfig
+
+from experiment_controller.config.resource_fault_config import ResourcesChaosConfig
 
 
 def resource_stress_config_to_yaml(config: ResourcesChaosConfig) -> str:

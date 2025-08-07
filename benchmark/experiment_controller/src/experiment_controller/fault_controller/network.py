@@ -2,7 +2,8 @@ import logging
 import subprocess
 
 import yaml
-from experiment.config.network_fault_config import NetworkChaosConfig
+
+from experiment_controller.config.network_fault_config import NetworkChaosConfig
 
 
 def chaos_config_to_yaml(config: NetworkChaosConfig) -> str:

@@ -6,19 +6,20 @@ from datetime import datetime, timedelta
 from threading import Timer
 
 import yaml
-from experiment.config.anomaly_model import (
-    DockerWorkloadConfig,
-    RCAExperimentConfig,
-    ShellWorkloadConfig,
-)
-from experiment.fault_controller.base import FaultController
-from experiment.workload_controller.base import WorkloadController
-from experiment.workload_controller.docker import DockerWorkloadGenerator
-from experiment.workload_controller.shell import ShellWorkloadGenerator
 from rca_methods.observer import (
     monitor_config,
 )
 from rca_methods.observer.metric_api import ALL_METRICS, PrometheusAPI
+
+from experiment_controller.config.anomaly_model import (
+    DockerWorkloadConfig,
+    RCAExperimentConfig,
+    ShellWorkloadConfig,
+)
+from experiment_controller.fault_controller.base import FaultController
+from experiment_controller.workload_controller.base import WorkloadController
+from experiment_controller.workload_controller.docker import DockerWorkloadGenerator
+from experiment_controller.workload_controller.shell import ShellWorkloadGenerator
 
 
 def parse_time_to_seconds(time_str: str) -> int:

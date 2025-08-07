@@ -2,7 +2,7 @@ import time
 
 import pytest
 import yaml
-from experiment.fault_controller.network import (
+from experiment_controller.fault_controller.network import (
     ChaosNetworkController,
     NetworkChaosConfig,
 )

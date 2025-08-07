@@ -1,4 +1,4 @@
-from experiment.workload_controller.base import WorkloadController
+from experiment_controller.workload_controller.base import WorkloadController
 
 
 class DockerWorkloadGenerator(WorkloadController):

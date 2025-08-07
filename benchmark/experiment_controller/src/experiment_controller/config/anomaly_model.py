@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import NamedTuple
 
-from experiment.config.fault_config import FaultSpecificConfig
-from experiment.fault_controller.network import NetworkChaosConfig
+from experiment_controller.config.fault_config import FaultSpecificConfig
+from experiment_controller.fault_controller.network import NetworkChaosConfig
 from pydantic import BaseModel, field_validator, model_validator
 
 

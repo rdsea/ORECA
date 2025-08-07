@@ -1,4 +1,4 @@
-from experiment.config.fault_config import TargetSelector
+from experiment_controller.config.fault_config import TargetSelector
 from pydantic import BaseModel, model_validator
 
 
