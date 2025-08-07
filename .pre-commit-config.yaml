@@ -55,3 +55,8 @@ repos:
         files: /.*\.json$
       - id: check-toml
         files: /.*\.toml$
+  - repo: https://github.com/kynan/nbstripout
+    rev: 4439d61ff1913ee7d1c0168948d79f0ae0da9799
+    hooks:
+      - id: nbstripout
+        files: "benchmark/rca_methods/jupyterhub/Untitled-checkpoint.ipynb"
