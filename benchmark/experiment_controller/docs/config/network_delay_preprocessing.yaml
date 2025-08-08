@@ -28,9 +28,9 @@ workload:
     image: rdsea/object_detection_client:latest
     args:
       host: http://XXX.XXX.XXX.XXX
-      user: "24"
+      user: "8"
       run-time: 1020s
-      spawn-rate: "10"
+      spawn-rate: "1"
 elastic_controller_config:
   elastic_used:
     - name: "Horizontal Pod Autoscaler"

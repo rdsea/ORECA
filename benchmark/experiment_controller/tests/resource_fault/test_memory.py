@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 
 import pytest
 import yaml
@@ -11,7 +12,8 @@ from experiment_controller.fault_controller.resource import (
 
 @pytest.fixture()
 def get_chaos_resource_memory_config():
-    with open("./memory_config.yaml") as f:
+    config_path = Path(__file__).parent / "memory_config.yaml"
+    with open(config_path) as f:
         return ResourcesChaosConfig.model_validate(yaml.safe_load(f))
 
 
@@ -27,5 +29,5 @@ def test_controller_apply_and_delete(get_chaos_resource_memory_config):
     config = get_chaos_resource_memory_config
     controller = ChaosResourceController(config)
     controller.apply()
-    time.sleep(300)
+    time.sleep(5)
     controller.delete()

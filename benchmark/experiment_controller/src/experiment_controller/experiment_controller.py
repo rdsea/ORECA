@@ -1,10 +1,5 @@
-import os
-import pathlib
 import re
-from datetime import datetime, timedelta
 from threading import Timer
-
-import yaml
 
 from experiment_controller.config.anomaly_model import (
     DockerWorkloadConfig,
@@ -19,10 +14,6 @@ from experiment_controller.logger import logger
 from experiment_controller.workload_controller.base import WorkloadController
 from experiment_controller.workload_controller.docker import DockerWorkloadGenerator
 from experiment_controller.workload_controller.shell import ShellWorkloadGenerator
-from rca_methods.observer import (
-    monitor_config,
-)
-from rca_methods.observer.metric_api import ALL_METRICS, PrometheusAPI
 
 
 def parse_time_to_seconds(time_str: str) -> int:
@@ -135,38 +126,3 @@ class RCAExperiment:
             f"🛠️  Anomaly finished: {self.config.fault_config.fault_type} "
             f"after {self.config.fault_config.duration} in experiment: {self.config.experiment_name}"
         )
-
-
-if __name__ == "__main__":
-    try:
-        current_path = pathlib.Path(__file__).parent
-        config_path = current_path / "config" / "examples"
-        for file in os.listdir(config_path):
-            if "network" not in file:
-                continue
-            with open(config_path / file) as f:
-                config_data = yaml.safe_load(f)
-
-            for i in range(1, 4):
-                experiment_config = RCAExperimentConfig.model_validate(config_data)
-                experiment = RCAExperiment(experiment_config)
-
-                # Uncomment to run
-                experiment.run()
-
-                prom = PrometheusAPI(monitor_config["prometheus_url"])
-
-                # Define time range for exporting metrics
-                end_time = datetime.now()
-                start_time = end_time - timedelta(minutes=17)
-                # injection_time = 1753213321
-
-                prom.query_range(
-                    ALL_METRICS,
-                    start_time,
-                    end_time,
-                    experiment_name=f"{file.split('.')[0]}_{i}",
-                    step="1s",
-                )
-    except Exception as e:
-        logger.error(f"Failed to start experiment: {e}")
