@@ -31,3 +31,10 @@ workload:
       user: "24"
       run-time: 1020s
       spawn-rate: "10"
+elastic_controller_config:
+  elastic_used:
+    - name: "Example Elastic Infrastructure"
+      type: infrastructure
+      active: true
+      # how_to_activate: "user_defined_function_to_activate"
+      # how_to_deactivate: "user_defined_function_to_deactivate"
