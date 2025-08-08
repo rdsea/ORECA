@@ -60,7 +60,7 @@ class ElasticController:
     def activate_all(self):
         failed_elastic_config: list[ElasticCategory] = []
         for elastic_config in self.config.elastic_used:
-            if elastic_config.how_to_activate:
+            if elastic_config.how_to_activate and elastic_config.active:
                 try:
                     elastic_config.how_to_activate()
                 except Exception:
@@ -76,7 +76,7 @@ class ElasticController:
     def deactivate_all(self):
         failed_elastic_config: list[ElasticCategory] = []
         for elastic_config in self.config.elastic_used:
-            if elastic_config.how_to_deactivate:
+            if elastic_config.how_to_deactivate and elastic_config.active:
                 try:
                     elastic_config.how_to_deactivate()
                 except Exception:

@@ -33,7 +33,7 @@ workload:
       spawn-rate: "10"
 elastic_controller_config:
   elastic_used:
-    - name: "Example Elastic Infrastructure"
+    - name: "Horizontal Pod Autoscaler"
       type: infrastructure
       active: true
       # how_to_activate: "user_defined_function_to_activate"

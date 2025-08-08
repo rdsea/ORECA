@@ -1,19 +1,19 @@
-experiment_name: resourcehog_cpu_preprocessing
+experiment_name: resourcehog_memory_preprocessing
 fault_config:
-  name: resourcehog-cpu-preprocessing
+  name: resourcehog-memory-preprocessing
   duration: 300s
-  fault_type: ResourceHog.CPU
+  fault_type: ResourceHog.MEMORY
   fault_specific_config:
-    name: resourcehog-cpu-preprocessing
+    name: resourcehog-memory-preprocessing
     namespace: default
     duration: 300s
     target:
       namespace: default
       label_selectors:
         app: preprocessing
-    stress_cpu:
+    stress_mem:
       workers: 1
-      load: 100
+      size: 150MB
 
 anomaly_injection_period: 300s
 list_of_generator:
@@ -32,7 +32,7 @@ workload:
       spawn-rate: "10"
 elastic_controller_config:
   elastic_used:
-    - name: "Example Elastic Infrastructure"
+    - name: "Horizontal Pod Autoscaler"
       type: infrastructure
       active: true
       # how_to_activate: "user_defined_function_to_activate"

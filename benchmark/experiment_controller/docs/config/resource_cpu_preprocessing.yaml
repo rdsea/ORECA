@@ -1,21 +1,21 @@
-experiment_name: network_loss_preprocessing
+experiment_name: resourcehog_cpu_preprocessing
 fault_config:
-  name: network-loss-preprocessing
+  name: resourcehog-cpu-preprocessing
   duration: 300s
-  fault_type: NetworkFault.LOSS
+  fault_type: ResourceHog.CPU
   fault_specific_config:
-    name: network-loss-preprocessing
+    name: resourcehog-cpu-preprocessing
     namespace: default
     duration: 300s
     target:
       namespace: default
       label_selectors:
         app: preprocessing
-    loss:
-      loss: "50"
-      correlation: "0.5"
+    stress_cpu:
+      workers: 1
+      load: 100
 
-anomaly_injection_period: 600s
+anomaly_injection_period: 300s
 list_of_generator:
   - XXX.XXX.XXX.XXX
   - XXX.XXX.XXX.XXX
@@ -32,7 +32,7 @@ workload:
       spawn-rate: "10"
 elastic_controller_config:
   elastic_used:
-    - name: "Example Elastic Infrastructure"
+    - name: "Horizontal Pod Autoscaler"
       type: infrastructure
       active: true
       # how_to_activate: "user_defined_function_to_activate"
