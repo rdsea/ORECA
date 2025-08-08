@@ -12,6 +12,9 @@ from experiment_controller.config.anomaly_model import (
     RCAExperimentConfig,
     ShellWorkloadConfig,
 )
+from experiment_controller.elastic_controller.elastic_controller import (
+    ElasticController,
+)
 from experiment_controller.fault_controller.base import FaultController
 from experiment_controller.workload_controller.base import WorkloadController
 from experiment_controller.workload_controller.docker import DockerWorkloadGenerator
@@ -62,6 +65,10 @@ class RCAExperiment:
         self.config = config
         self.fault_controller = FaultController(self.config.fault_config)
         self.workload_generator = self._create_workload_generator()
+        if self.config.elastic_controller_config:
+            self.elastic_controller = ElasticController(
+                self.config.elastic_controller_config
+            )
 
     def _create_workload_generator(self) -> WorkloadController:
         workload_config = self.config.workload
@@ -89,6 +96,9 @@ class RCAExperiment:
         schedules delayed fault injection.
         """
         inject_delay = parse_time_to_seconds(self.config.anomaly_injection_period)
+
+        if self.config.elastic_controller_config:
+            self.elastic_controller.activate_all()
 
         # Schedule anomaly injection using a timer
         Timer(
@@ -119,6 +129,8 @@ class RCAExperiment:
         This method calls the fault injector's clean method to remove the fault.
         """
         self.fault_controller.clean()
+        if self.config.elastic_controller_config:
+            self.elastic_controller.deactivate_all()
         logging.info(
             f"🛠️  Anomaly finished: {self.config.fault_config.fault_type} "
             f"after {self.config.fault_config.duration} in experiment: {self.config.experiment_name}"

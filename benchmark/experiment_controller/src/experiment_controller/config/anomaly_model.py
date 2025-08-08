@@ -4,6 +4,9 @@ from typing import NamedTuple
 from pydantic import BaseModel, field_validator, model_validator
 
 from experiment_controller.config.fault_config import FaultSpecificConfig
+from experiment_controller.elastic_controller.elastic_controller import (
+    ElasticControllerConfig,
+)
 from experiment_controller.fault_controller.network import NetworkChaosConfig
 
 
@@ -173,3 +176,4 @@ class RCAExperimentConfig(BaseModel):
     list_of_generator: list[str]
     ssh_username: str
     workload: WorkloadConfig
+    elastic_controller_config: ElasticControllerConfig | None = None
