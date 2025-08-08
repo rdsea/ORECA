@@ -1,5 +1,3 @@
-import logging
-
 from pydantic import ValidationError
 
 from experiment_controller.config.anomaly_model import (
@@ -11,6 +9,7 @@ from experiment_controller.fault_controller.network import (
     ChaosNetworkController,
     NetworkChaosConfig,
 )
+from experiment_controller.logger import logger
 
 
 class FaultController:
@@ -55,7 +54,7 @@ class FaultController:
                             )
                         )
                     except ValidationError:
-                        logging.error(
+                        logger.error(
                             "Can't validate the fault_specific_config for network fault controller"
                         )
                 self.network_fault_controller.apply()
@@ -75,6 +74,6 @@ class FaultController:
                 if hasattr(self, "network_fault_controller"):
                     self.network_fault_controller.delete()
                 else:
-                    logging.error(
+                    logger.error(
                         "Can't clean Network fault as network_fault_controller is not created yet"
                     )

@@ -1,9 +1,10 @@
 import abc
-import logging
 import select
 from concurrent.futures import ThreadPoolExecutor
 
 import paramiko
+
+from experiment_controller.logger import logger
 
 
 class WorkloadController(abc.ABC):
@@ -30,7 +31,7 @@ class WorkloadController(abc.ABC):
             channel.get_pty()
             channel.exec_command(command)
 
-            logging.info(f"--- [{host}] Command started ---")
+            logger.info(f"--- [{host}] Command started ---")
             while True:
                 rl, _, _ = select.select([channel], [], [], 1.0)
                 if channel in rl:
@@ -39,7 +40,7 @@ class WorkloadController(abc.ABC):
                         if output:
                             print(output, end="", flush=True)
                     except Exception as e:
-                        logging.error(f"[{host}] Error reading output: {e}")
+                        logger.error(f"[{host}] Error reading output: {e}")
 
                 if channel.exit_status_ready():
                     break
@@ -52,11 +53,11 @@ class WorkloadController(abc.ABC):
             return f"--- [{host}] SSH command failed ---\nError: {e}"
 
     def _run_on_all_hosts(self, command: str):
-        logging.info("Starting load generators on remote nodes...")
-        logging.debug(f"Command: {command}")
+        logger.info("Starting load generators on remote nodes...")
+        logger.debug(f"Command: {command}")
 
         if not self.hosts:
-            logging.warning("No load generator hosts provided.")
+            logger.warning("No load generator hosts provided.")
             return
 
         with ThreadPoolExecutor(max_workers=len(self.hosts)) as executor:

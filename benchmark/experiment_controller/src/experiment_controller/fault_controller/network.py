@@ -1,9 +1,9 @@
-import logging
 import subprocess
 
 import yaml
 
 from experiment_controller.config.network_fault_config import NetworkChaosConfig
+from experiment_controller.logger import logger
 
 
 def chaos_config_to_yaml(config: NetworkChaosConfig) -> str:
@@ -95,7 +95,7 @@ class ChaosNetworkController:
         command = f"kubectl apply -f - <<EOF\n{yaml_content}EOF"
         try:
             print(f"🚀 Applying Chaos Mesh experiment: {self.config.name}")
-            logging.info(command)
+            logger.info(command)
             subprocess.run(command, shell=True, check=True, executable="/bin/bash")
             print("✅ Chaos experiment applied successfully.")
         except subprocess.CalledProcessError as e:

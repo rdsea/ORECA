@@ -1,4 +1,3 @@
-import logging
 import os
 import pathlib
 import re
@@ -16,6 +15,7 @@ from experiment_controller.elastic_controller.elastic_controller import (
     ElasticController,
 )
 from experiment_controller.fault_controller.base import FaultController
+from experiment_controller.logger import logger
 from experiment_controller.workload_controller.base import WorkloadController
 from experiment_controller.workload_controller.docker import DockerWorkloadGenerator
 from experiment_controller.workload_controller.shell import ShellWorkloadGenerator
@@ -115,7 +115,7 @@ class RCAExperiment:
         its cleanup after the specified duration.
         """
         anomaly_duration = parse_time_to_seconds(self.config.fault_config.duration)
-        logging.info(
+        logger.info(
             f"🔧 Injecting anomaly: {self.config.fault_config.fault_type} "
             f"for {self.config.fault_config.duration} in experiment: {self.config.experiment_name}"
         )
@@ -131,17 +131,13 @@ class RCAExperiment:
         self.fault_controller.clean()
         if self.config.elastic_controller_config:
             self.elastic_controller.deactivate_all()
-        logging.info(
+        logger.info(
             f"🛠️  Anomaly finished: {self.config.fault_config.fault_type} "
             f"after {self.config.fault_config.duration} in experiment: {self.config.experiment_name}"
         )
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(threadName)s - %(message)s",
-    )
     try:
         current_path = pathlib.Path(__file__).parent
         config_path = current_path / "config" / "examples"
@@ -173,4 +169,4 @@ if __name__ == "__main__":
                     step="1s",
                 )
     except Exception as e:
-        logging.error(f"Failed to start experiment: {e}")
+        logger.error(f"Failed to start experiment: {e}")
