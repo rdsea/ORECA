@@ -59,11 +59,13 @@ def resource_stress_config_to_yaml(config: ResourcesChaosConfig) -> str:
 
         if config.stress_cpu is not None:
             spec["stressors"] = spec.get("stressors", {})
-            spec["stressors"]["cpu"] = config.stress_cpu.dict(exclude_none=True)
+            spec["stressors"]["cpu"] = config.stress_cpu.model_dump(exclude_none=True)
 
         if config.stress_memory is not None:
             spec["stressors"] = spec.get("stressors", {})
-            spec["stressors"]["memory"] = config.stress_memory.dict(exclude_none=True)
+            spec["stressors"]["memory"] = config.stress_memory.model_dump(
+                exclude_none=True
+            )
 
         return yaml.dump(
             {

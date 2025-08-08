@@ -32,12 +32,12 @@ def chaos_config_to_yaml(config: NetworkChaosConfig) -> str:
 
     if config.bandwidth is not None:
         metadata["spec"]["action"] = "bandwidth"
-        metadata["spec"]["bandwidth"] = config.bandwidth.dict(exclude_none=True)
+        metadata["spec"]["bandwidth"] = config.bandwidth.model_dump(exclude_none=True)
     else:
         if config.delay is not None:
-            metadata["spec"]["delay"] = config.delay.dict(exclude_none=True)
+            metadata["spec"]["delay"] = config.delay.model_dump(exclude_none=True)
         elif config.loss is not None:
-            metadata["spec"]["loss"] = config.loss.dict(exclude_none=True)
+            metadata["spec"]["loss"] = config.loss.model_dump(exclude_none=True)
         else:
             raise ValueError(
                 "If 'bandwidth' is not specified, at least 'delay' or 'loss' must be."
