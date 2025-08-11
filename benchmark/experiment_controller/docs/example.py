@@ -1,12 +1,41 @@
 import pathlib
 
 import yaml
-
 from experiment_controller.config.anomaly_model import (
     RCAExperimentConfig,
 )
 from experiment_controller.experiment_controller import RCAExperiment
 from experiment_controller.logger import logger
+from kubernetes import config, utils
+from kubernetes.client import AutoscalingV2Api
+
+
+def how_to_activate(namespace="default"):
+    """apply hpa"""
+    config.load_kube_config()
+    k8s_client = config.new_client_from_config()
+    current_path = pathlib.Path(__file__).parent
+    hpa_path = str(current_path / "hpa.yaml")
+    utils.create_from_yaml(
+        k8s_client=k8s_client, yaml_file=hpa_path, namespace=namespace
+    )
+
+
+def how_to_deactivate(namespace="default"):
+    """delete hpa"""
+    config.load_kube_config()
+    k8s_client = config.new_client_from_config()
+    current_path = pathlib.Path(__file__).parent
+    hpa_path = current_path / "hpa.yaml"
+    with open(hpa_path) as f:
+        hpa_manifests = yaml.safe_load_all(f)
+        api = AutoscalingV2Api(k8s_client)
+        for hpa in hpa_manifests:
+            if hpa:
+                api.delete_namespaced_horizontal_pod_autoscaler(
+                    name=hpa["metadata"]["name"], namespace=namespace
+                )
+
 
 if __name__ == "__main__":
     current_path = pathlib.Path(__file__).parent

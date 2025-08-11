@@ -273,8 +273,9 @@ pyasn1-modules==0.4.2
     # via google-auth
 pycparser==2.22
     # via cffi
-pydantic==2.11.5
+pydantic==2.11.7
     # via deployments
+    # via experiment-controller
     # via fastapi
 pydantic-core==2.33.2
     # via pydantic
@@ -306,6 +307,7 @@ pytz==2025.2
     # via deployments
     # via pandas
 pyyaml==6.0.2
+    # via experiment-controller
     # via kubernetes
     # via pre-commit
     # via ray
