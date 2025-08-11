@@ -1,7 +1,7 @@
 import pathlib
 
 import yaml
-from experiment_controller.config.anomaly_model import (
+from experiment_controller.config.experiment_config import (
     RCAExperimentConfig,
 )
 from experiment_controller.experiment_controller import RCAExperiment

@@ -1,9 +1,9 @@
 import re
 from threading import Timer
 
-from experiment_controller.config.anomaly_model import (
+from experiment_controller.config.experiment_config import RCAExperimentConfig
+from experiment_controller.config.workload_config import (
     DockerWorkloadConfig,
-    RCAExperimentConfig,
     ShellWorkloadConfig,
 )
 from experiment_controller.elastic_controller.elastic_controller import (

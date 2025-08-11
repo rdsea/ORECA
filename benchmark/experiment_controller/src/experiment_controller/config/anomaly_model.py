@@ -1,13 +1,9 @@
 from enum import Enum
 from typing import NamedTuple
 
-from pydantic import BaseModel, field_validator, model_validator
-
 from experiment_controller.config.fault_config import FaultSpecificConfig
-from experiment_controller.elastic_controller.elastic_controller import (
-    ElasticControllerConfig,
-)
 from experiment_controller.fault_controller.network import NetworkChaosConfig
+from pydantic import BaseModel, field_validator, model_validator
 
 
 class AnomalyCategory(Enum):
@@ -129,51 +125,3 @@ class FaultConfig(BaseModel):
 
         values["fault_type"] = fault_type
         return values
-
-
-class DockerWorkloadConfig(BaseModel):
-    image: str
-    args: dict[str, str] = {}
-
-
-class ShellWorkloadConfig(BaseModel):
-    script_path: str
-    script_args: dict[str, str] = {}
-
-
-class WorkloadConfig(BaseModel):
-    type: str
-    config: DockerWorkloadConfig | ShellWorkloadConfig
-
-    @model_validator(mode="before")
-    @classmethod
-    def resolve_specific_config(cls, values):
-        workload_type = values.get("type")
-        config_data = values.get("config")
-
-        if workload_type == "docker":
-            model_cls = DockerWorkloadConfig
-        elif workload_type == "shell":
-            model_cls = ShellWorkloadConfig
-        else:
-            raise ValueError(f"Unsupported workload type: {workload_type}")
-
-        if isinstance(config_data, dict):
-            values["config"] = model_cls.model_validate(config_data)
-        elif not isinstance(config_data, model_cls):
-            raise TypeError(f"Expected config of type {model_cls.__name__}")
-
-        return values
-
-
-class RCAExperimentConfig(BaseModel):
-    """Configuration for an RCA experiment."""
-
-    experiment_name: str
-    fault_config: FaultConfig
-    # When to inject the anomaly, for example, 5, 10 minutes after starting load generation
-    anomaly_injection_period: str
-    list_of_generator: list[str]
-    ssh_username: str
-    workload: WorkloadConfig
-    elastic_controller_config: ElasticControllerConfig | None = None
