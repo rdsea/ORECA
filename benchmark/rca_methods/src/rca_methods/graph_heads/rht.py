@@ -317,9 +317,9 @@ def rht(
 
     # == prepare the graph
     nodes = [
-        Node(name.split("_")[0], name.split("_")[1])
+        Node(name.split(":")[0], name.split(":")[1])
         for name in node_names
-        if name != "time"
+        if name != "timestamp"
     ]
     graph = nx.DiGraph()
 
@@ -360,10 +360,10 @@ def rht(
     scorer = RHTScorer()
     scores: dict[Node, Score] = None
 
-    timestamps = data["time"]
+    timestamps = data["timestamp"]
     sli = np.random.choice(nodes) if sli is None else sli
-    services = list({c.split("_")[0] for c in data.columns if c != "time"})
-    metrics = list({c.split("_")[1] for c in data.columns if c != "time"})
+    services = list({c.split("_")[0] for c in data.columns if c != "timestamp"})
+    metrics = list({c.split("_")[1] for c in data.columns if c != "timestamp"})
     out_data = {s: {} for s in services}
     for s in services:
         for m in metrics:

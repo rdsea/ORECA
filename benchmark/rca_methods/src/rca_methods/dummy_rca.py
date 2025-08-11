@@ -8,11 +8,13 @@ from rca_methods.base_rca import BaseRCA
 class DummyRCA(BaseRCA):
     """A dummy RCA method that returns random root causes."""
 
-    def __init__(self):
+    def __init__(self, profile: bool = False):
         """Initializes the DummyRCA method."""
-        pass
+        super().__init__(profile)
 
-    def run(self, dataset: pd.DataFrame, top_k: int) -> list[tuple[str, float]]:
+    def _run(
+        self, dataset: pd.DataFrame, injection_time: int | None, top_k=5, **kwargs
+    ) -> list[tuple[str, float]]:
         """Runs the DummyRCA method.
 
         Args:

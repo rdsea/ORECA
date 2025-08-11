@@ -8,12 +8,12 @@ from rca_methods.graph_heads.rht import rht
 class Circa(BaseRCA):
     """Circa RCA method implementation."""
 
-    def __init__(self):
+    def __init__(self, profile: bool = False):
         """Initializes the Circa RCA method."""
-        pass
+        super().__init__(profile)
 
-    def run(
-        self, dataset: pd.DataFrame, top_k: int, injection_time: float, **kwargs
+    def _run(
+        self, dataset: pd.DataFrame, injection_time: int | None, top_k=5, **kwargs
     ) -> list[tuple[str, float]]:
         """Runs the Circa RCA method.
 
@@ -25,9 +25,6 @@ class Circa(BaseRCA):
         Returns:
             list[tuple[str, float]]: A list of top_k root causes with their scores.
         """
-        time_col = dataset["time"]
-
-        dataset["time"] = time_col
 
         # dataset = preprocess(
         #     data=data,
@@ -35,11 +32,11 @@ class Circa(BaseRCA):
         #     dk_select_useful=kwargs.get("dk_select_useful", False),
         # )
 
-        pc_input = dataset.drop(columns=["time"])
+        pc_input = dataset.drop(columns=["timestamp"])
         pc_input.columns.to_list()
 
-        adj = pc_default(pc_input, dataset="ob")
+        adj = pc_default(pc_input)
         ranks = rht(adj, injection_time, dataset)
+        print(f"Ranks: {ranks}")
         ranks = sorted(ranks, key=lambda x: x[1], reverse=True)
-        ranks = [x[0] for x in ranks]
         return ranks[:top_k]

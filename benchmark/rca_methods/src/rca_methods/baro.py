@@ -12,10 +12,10 @@ warnings.filterwarnings("ignore")
 
 
 class Baro(BaseRCA):
-    def __init__(self):
-        pass
+    def __init__(self, profile: bool = False):
+        super().__init__(profile)
 
-    def run(
+    def _run(
         self, dataset: pd.DataFrame, injection_time: int | None, top_k=5, **kwargs
     ) -> list[tuple[str, float]]:
         dataset.fillna(0, inplace=True)
@@ -56,7 +56,6 @@ class Baro(BaseRCA):
             ranks.append((col, score))
 
         ranks = sorted(ranks, key=lambda x: x[1], reverse=True)
-        ranks = [x[0] for x in ranks]
 
         return ranks[:top_k]
         # return {

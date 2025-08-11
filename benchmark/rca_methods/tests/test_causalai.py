@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-
 from rca_methods.causalai import CausalAI
 from rca_methods.utility import download_data, read_data
 
@@ -43,5 +42,4 @@ def test_causalai_top_root_causes_own(own_sample_data, create_causalai):
         own_sample_data, top_k=5, injection_time=injection_time
     )
 
-    root_causes = result["ranks"]
-    print(root_causes[:5])
+    print(result[:5])
