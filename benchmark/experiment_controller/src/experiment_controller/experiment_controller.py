@@ -1,5 +1,10 @@
 import re
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
 from threading import Timer
+
+from rca_methods.observer.metric_api import ALL_METRICS, PrometheusAPI, monitor_config
 
 from experiment_controller.config.experiment_config import RCAExperimentConfig
 from experiment_controller.config.workload_config import (
@@ -86,18 +91,27 @@ class RCAExperiment:
         This method distributes load generator jobs across remote machines and
         schedules delayed fault injection.
         """
-        inject_delay = parse_time_to_seconds(self.config.anomaly_injection_period)
 
-        if self.config.elastic_controller_config:
-            self.elastic_controller.activate_all()
+        current_path = Path(__file__).parent
+        for i in range(self.config.number_of_run):
+            inject_delay = parse_time_to_seconds(self.config.anomaly_injection_period)
+            save_path = current_path / self.config.experiment_name / str(i + 1)
 
-        # Schedule anomaly injection using a timer
-        Timer(
-            inject_delay,
-            self.inject_anomaly,
-        ).start()
+            if self.config.elastic_controller_config:
+                self.elastic_controller.activate_all()
 
-        self.workload_generator.start()
+            # Schedule anomaly injection using a timer
+            Timer(
+                inject_delay,
+                self.inject_anomaly,
+            ).start()
+
+            self.workload_generator.start()
+            if self.config.clean_up:
+                self.clean_up_after_experiment()
+            time.sleep(parse_time_to_seconds(self.config.time_between_run))
+
+            self.collect_telemetry(save_path)
 
     def inject_anomaly(self):
         """Injects the configured anomaly.
@@ -126,3 +140,36 @@ class RCAExperiment:
             f"🛠️  Anomaly finished: {self.config.fault_config.fault_type} "
             f"after {self.config.fault_config.duration} in experiment: {self.config.experiment_name}"
         )
+
+    def clean_up_after_experiment(self):
+        pass
+
+    def collect_telemetry(self, save_path: Path):
+        self.collect_metric(save_path)
+        self.collect_log()
+        self.collect_trace()
+
+    def collect_metric(self, save_path: Path):
+        prom = PrometheusAPI(monitor_config["prometheus_url"])
+
+        # Define time range for exporting metrics
+        end_time = datetime.now()
+        start_time = end_time - timedelta(minutes=17)
+        # injection_time = 1753213321
+
+        logger.info(f"Start querying metrics from {monitor_config['prometheus_url']}")
+        prom.query_range(
+            ALL_METRICS,
+            start_time,
+            end_time,
+            save_path=save_path,
+            experiment_name=self.config.experiment_name,
+            step="1s",
+        )
+        logger.info("Finished querying metrics")
+
+    def collect_log(self):
+        pass
+
+    def collect_trace(self):
+        pass

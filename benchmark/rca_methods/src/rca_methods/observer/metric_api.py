@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import pandas as pd
 from prometheus_api_client import PrometheusConnect
@@ -80,7 +81,7 @@ class PrometheusAPI:
         start_time: int | datetime | str,
         end_time: int | datetime | str,
         step: str = "10s",
-        save_path: str = ".",
+        save_path: str | Path = ".",
         experiment_name: str | None = None,
         save_to_file: bool = True,
     ):

@@ -10,6 +10,9 @@ class RCAExperimentConfig(BaseModel):
     """Configuration for an RCA experiment."""
 
     experiment_name: str
+    number_of_run: int
+    time_between_run: str
+    clean_up: bool
     fault_config: FaultConfig
     # When to inject the anomaly, for example, 5, 10 minutes after starting load generation
     anomaly_injection_period: str
