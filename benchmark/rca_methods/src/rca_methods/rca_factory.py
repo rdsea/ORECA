@@ -1,4 +1,5 @@
 import random
+from enum import Enum
 
 from rca_methods.baro import Baro
 from rca_methods.base_rca import BaseRCA
@@ -8,15 +9,21 @@ from rca_methods.dummy_rca import DummyRCA
 random.seed(42)
 
 
+class RCAMethodEnum(Enum):
+    DUMMY = "dummy"
+    BARO = "baro"
+    CIRCA = "circa"
+
+
 class RCAFactory:
     """A factory class for creating instances of various RCA (Root Cause Analysis) methods."""
 
     @staticmethod
-    def create(rca_type: str) -> BaseRCA:
+    def create(rca_type: RCAMethodEnum) -> BaseRCA:
         """Creates and returns an instance of the specified RCA method.
 
         Args:
-            rca_type (str): The type of RCA method to create (e.g., "dummy", "circa", "baro").
+            rca_type (RCAMethodEnum): The type of RCA method to create.
 
         Returns:
             BaseRCA: An instance of the requested RCA method.
@@ -24,10 +31,10 @@ class RCAFactory:
         Raises:
             ValueError: If an unsupported RCA type is provided.
         """
-        if rca_type == "dummy":
+        if rca_type == RCAMethodEnum.DUMMY:
             return DummyRCA()
-        elif rca_type == "circa":
+        elif rca_type == RCAMethodEnum.CIRCA:
             return Circa()
-        elif rca_type == "baro":
+        elif rca_type == RCAMethodEnum.BARO:
             return Baro()
         raise ValueError(f"Unsupported RCA type: {rca_type}")
