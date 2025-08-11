@@ -3,7 +3,6 @@ class RCAEvaluator:
 
     def __init__(self, k_values: list | None = None):
         """Initialize the evaluator.
-
         Args:
             k_values (list, optional): A list of k values for which to compute the metrics. Defaults to [1, 3, 5].
         """
@@ -11,59 +10,108 @@ class RCAEvaluator:
             k_values = [1, 3, 5]
         self.k_values = k_values
 
-    def ac_at_k(self, predictions: dict, ground_truth: dict, k: int) -> float:
-        """Calculate the Accuracy at K (AC@k) metric.
-
+    def precision_at_k(self, predictions: dict, ground_truth: dict, k: int) -> float:
+        """Calculate the Precision at K (Precision@k) metric.
         Args:
             predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
             ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
             k (int): The value of k.
-
         Returns:
-            float: The AC@k score.
+            float: The Precision@k score.
         """
         total_cases = len(predictions)
-        ac_sum = 0.0
+        precision_sum = 0.0
 
         for case_id in predictions:
             pred_list = predictions[case_id][:k]
             gt_set = ground_truth.get(case_id, set())
             match_count = sum(1 for pred in pred_list if pred in gt_set)
-            ac = match_count / min(k, len(gt_set)) if gt_set else 0.0
-            ac_sum += ac
+            precision = match_count / k if k > 0 else 0.0
+            precision_sum += precision
 
-        return ac_sum / total_cases if total_cases > 0 else 0.0
+        return precision_sum / total_cases if total_cases > 0 else 0.0
 
-    def avg_at_k(self, predictions: dict, ground_truth: dict, k: int) -> float:
-        """Calculate the Average Accuracy at K (Avg@k) metric.
-
+    def recall_at_k(self, predictions: dict, ground_truth: dict, k: int) -> float:
+        """Calculate the Recall at K (Recall@k) metric.
         Args:
             predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
             ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
             k (int): The value of k.
-
         Returns:
-            float: The Avg@k score.
+            float: The Recall@k score.
         """
-        avg_sum = 0.0
-        for j in range(1, k + 1):
-            avg_sum += self.ac_at_k(predictions, ground_truth, j)
-        return avg_sum / k
+        total_cases = len(predictions)
+        recall_sum = 0.0
 
-    def evaluate(self, predictions: dict, ground_truth: dict) -> dict:
-        """Evaluate the predictions against the ground truth.
+        for case_id in predictions:
+            pred_list = predictions[case_id][:k]
+            gt_set = ground_truth.get(case_id, set())
+            match_count = sum(1 for pred in pred_list if pred in gt_set)
+            recall = match_count / len(gt_set) if gt_set else 0.0
+            recall_sum += recall
 
+        return recall_sum / total_cases if total_cases > 0 else 0.0
+
+    def accuracy_at_k(self, predictions: dict, ground_truth: dict, k: int) -> float:
+        """Calculate the Accuracy at K (Accuracy@k) metric.
         Args:
             predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
             ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
+            k (int): The value of k.
+        Returns:
+            float: The Accuracy@k score.
+        """
+        total_cases = len(predictions)
+        correct_predictions = 0
 
+        for case_id in predictions:
+            pred_list = predictions[case_id][:k]
+            gt_set = ground_truth.get(case_id, set())
+            if any(pred in gt_set for pred in pred_list):
+                correct_predictions += 1
+
+        return correct_predictions / total_cases if total_cases > 0 else 0.0
+
+    def mean_reciprocal_rank(self, predictions: dict, ground_truth: dict) -> float:
+        """Calculate the Mean Reciprocal Rank (MRR) metric.
+        Args:
+            predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
+            ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
+        Returns:
+            float: The MRR score.
+        """
+        total_cases = len(predictions)
+        mrr_sum = 0.0
+
+        for case_id in predictions:
+            pred_list = predictions[case_id]
+            gt_set = ground_truth.get(case_id, set())
+            for i, pred in enumerate(pred_list):
+                if pred in gt_set:
+                    mrr_sum += 1 / (i + 1)
+                    break
+        return mrr_sum / total_cases if total_cases > 0 else 0.0
+
+    def evaluate(self, predictions: dict, ground_truth: dict) -> dict:
+        """Evaluate the predictions against the ground truth.
+        Args:
+            predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
+            ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
         Returns:
             dict: A dictionary of evaluation results, where the keys are the metric names and the values are the scores.
         """
         results = {}
         for k in self.k_values:
-            results[f"AC@{k}"] = self.ac_at_k(predictions, ground_truth, k)
-            results[f"Avg@{k}"] = self.avg_at_k(predictions, ground_truth, k)
+            results[f"precision_at_{k}"] = self.precision_at_k(
+                predictions, ground_truth, k
+            )
+            results[f"recall_at_{k}"] = self.recall_at_k(predictions, ground_truth, k)
+            results[f"accuracy_at_{k}"] = self.accuracy_at_k(
+                predictions, ground_truth, k
+            )
+        results["mean_reciprocal_rank"] = self.mean_reciprocal_rank(
+            predictions, ground_truth
+        )
         return results
 
 

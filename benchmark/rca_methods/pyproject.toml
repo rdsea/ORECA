@@ -14,7 +14,7 @@ dependencies = [
   # "kubernetes>=33.1.0",
   "pandas>=2.3.0",
   "prometheus-client>=0.22.1",
-  # "pytz>=2025.2",
+  "psutil>=6.0.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
