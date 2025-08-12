@@ -4,7 +4,9 @@ from enum import Enum
 from rca_methods.baro import Baro
 from rca_methods.base_rca import BaseRCA
 from rca_methods.causalai import CausalAI
+from rca_methods.causalrca import CausalRCA
 from rca_methods.circa import Circa
+from rca_methods.cloudranger import CloudRanger
 from rca_methods.dummy_rca import DummyRCA
 
 random.seed(42)
@@ -15,6 +17,8 @@ class RCAMethodEnum(Enum):
     BARO = "baro"
     CIRCA = "circa"
     CAUSALAI = "causalai"
+    CLOUDRANGER = "cloudranger"
+    CAUSALRCA = "causalrca"
 
 
 class RCAFactory:
@@ -41,4 +45,8 @@ class RCAFactory:
             return Baro()
         elif rca_type == RCAMethodEnum.CAUSALAI:
             return CausalAI()
+        elif rca_type == RCAMethodEnum.CLOUDRANGER:
+            return CloudRanger()
+        elif rca_type == RCAMethodEnum.CAUSALRCA:
+            return CausalRCA()
         raise ValueError(f"Unsupported RCA type: {rca_type}")
