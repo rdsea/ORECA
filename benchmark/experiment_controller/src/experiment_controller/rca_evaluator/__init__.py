@@ -1,16 +1,30 @@
 """RCA Evaluator module for the experiment controller."""
 
+import logging
 import os
 from pathlib import Path
 
 import pandas as pd
+import yaml
 from rca_methods.rca_factory import RCAFactory, RCAMethodEnum
+from rca_methods.utility import read_data
+from tqdm import tqdm
+
+from experiment_controller.config.experiment_config import RCAExperimentConfig
+from experiment_controller.experiment_controller import parse_time_to_seconds
+from experiment_controller.logger import logger
 
 
 class RCAEvaluator:
     """Evaluator for comparing different RCA methods against telemetry data."""
 
-    def __init__(self, dataset_path: Path, rca_methods: list[RCAMethodEnum]):
+    def __init__(
+        self,
+        dataset_path: Path,
+        rca_methods: list[RCAMethodEnum],
+        k_values: list[int] | None = None,
+        verbose: bool = False,
+    ):
         """Initialize the RCA evaluator with a path to telemetry data.
 
         Args:
@@ -18,24 +32,231 @@ class RCAEvaluator:
         """
         self.dataset_path = dataset_path
         self.rca_methods = rca_methods
+        self.predictions = {}
+        self.ground_truth = {}
+        self.experiment_fault_types = {}  # Track fault type for each experiment
+        self.verbose = verbose
+
+        if self.verbose:
+            logger.setLevel(logging.INFO)
+
+        if k_values is None:
+            k_values = [1, 3, 5]
+        self.k_values = k_values
 
     def create_report(self):
-        for dir in os.listdir(self.dataset_path):
-            self.process_experiment(self.dataset_path / dir)
+        experiment_dirs = [
+            self.dataset_path / dir
+            for dir in os.listdir(self.dataset_path)
+            if os.path.isdir(self.dataset_path / dir)
+        ]
+        for dir in tqdm(experiment_dirs, desc="Processing experiments"):
+            self.process_experiment(dir)
+
+        # Generate and print results table
+        self.print_results_table()
+
+    def print_results_table(self):
+        """Generate and print a table of results organized by fault type."""
+        # Collect all fault types
+        fault_types = list(set(self.experiment_fault_types.values()))
+
+        # For each RCA method, organize results by fault type
+        for rca_method in self.rca_methods:
+            print(f"\n# RCA Evaluation Results for {rca_method.name}")
+            print(
+                "\n| Fault Type | Precision@1 | Recall@1 | Accuracy@1 | Precision@3 | Recall@3 | Accuracy@3 | Precision@5 | Recall@5 | Accuracy@5 | MRR |"
+            )
+            print(
+                "|------------|-------------|----------|------------|-------------|----------|------------|-------------|----------|------------|-----|"
+            )
+
+            # Evaluate results for each fault type
+            for fault_type in fault_types:
+                # Filter experiments by fault type
+                filtered_predictions = {}
+                filtered_ground_truth = {}
+
+                for experiment_id, fault in self.experiment_fault_types.items():
+                    if fault == fault_type:
+                        if (
+                            rca_method.name in self.predictions
+                            and experiment_id in self.predictions[rca_method.name]
+                        ):
+                            filtered_predictions[experiment_id] = self.predictions[
+                                rca_method.name
+                            ][experiment_id]
+                            filtered_ground_truth[experiment_id] = self.ground_truth[
+                                experiment_id
+                            ]
+
+                # Only evaluate if we have experiments for this fault type
+                if filtered_predictions:
+                    results = self.evaluate(filtered_predictions, filtered_ground_truth)
+                    print(
+                        f"| {fault_type} | {results['precision_at_1']:.3f} | {results['recall_at_1']:.3f} | {results['accuracy_at_1']:.3f} | "
+                        f"{results['precision_at_3']:.3f} | {results['recall_at_3']:.3f} | {results['accuracy_at_3']:.3f} | "
+                        f"{results['precision_at_5']:.3f} | {results['recall_at_5']:.3f} | {results['accuracy_at_5']:.3f} | "
+                        f"{results['mean_reciprocal_rank']:.3f} |"
+                    )
+                else:
+                    print(f"| {fault_type} | - | - | - | - | - | - | - | - | - | - |")
 
     def process_experiment(self, experiment_dir: Path):
-        for run_number in os.listdir(experiment_dir):
-            self.process_data(experiment_dir / run_number)
+        with open(experiment_dir / "experiment_config.yaml") as f:
+            experiment_config = RCAExperimentConfig.model_validate(yaml.safe_load(f))
 
-    def process_data(self, data_dir: Path):
+        run_dirs = [
+            experiment_dir / run_number
+            for run_number in os.listdir(experiment_dir)
+            if os.path.isdir(experiment_dir / run_number)
+        ]
+        for run_dir in tqdm(
+            run_dirs,
+            desc=f"Processing runs for {experiment_config.experiment_name}",
+            leave=False,
+        ):
+            run_number = run_dir.name
+            experiment_id = f"{experiment_config.experiment_name}_{run_number}"
+            self.ground_truth[experiment_id] = {experiment_config.ground_truth}
+            # Store fault type for this experiment
+            self.experiment_fault_types[experiment_id] = str(
+                experiment_config.fault_config.fault_type
+            )
+            self.process_data(run_dir, experiment_config, experiment_id)
+
+    def process_data(
+        self, data_dir: Path, experiment_config: RCAExperimentConfig, experiment_id: str
+    ):
         data = self.load_data(data_dir / "metric.csv")
-        for rca_method in self.rca_methods:
-            self.evaluate_rca(rca_method, data)
+        injection_time = data["timestamp"][0] + parse_time_to_seconds(
+            experiment_config.anomaly_injection_period
+        )
+
+        for rca_method in tqdm(
+            self.rca_methods, desc=f"Evaluating RCA methods for {experiment_id}"
+        ):
+            logger.info(
+                f"Running RCA method {rca_method.name} for experiment {experiment_id}"
+            )
+            self.evaluate_rca(rca_method, data, injection_time, experiment_id)
 
     def load_data(self, data_path: Path) -> pd.DataFrame:
-        return pd.DataFrame()
+        return read_data(data_path)
 
-    def evaluate_rca(self, rca_method: RCAMethodEnum, data: pd.DataFrame):
+    def evaluate_rca(
+        self,
+        rca_method: RCAMethodEnum,
+        data: pd.DataFrame,
+        injection_time: int,
+        experiment_id: str,
+    ):
         rca = RCAFactory.create(rca_method)
-        rca.run(data, injection_time=None, top_k=5)
-        pass
+        rootcause = rca.run(data, injection_time, top_k=5)
+        if rca_method.name not in self.predictions:
+            self.predictions[rca_method.name] = {}
+        self.predictions[rca_method.name][experiment_id] = rootcause
+
+    def precision_at_k(self, predictions: dict, ground_truth: dict, k: int) -> float:
+        """Calculate the Precision at K (Precision@k) metric.
+        Args:
+            predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
+            ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
+            k (int): The value of k.
+        Returns:
+            float: The Precision@k score.
+        """
+        total_cases = len(predictions)
+        precision_sum = 0.0
+
+        for case_id in predictions:
+            pred_list = predictions[case_id][:k]
+            gt_set = ground_truth.get(case_id, set())
+            match_count = sum(1 for pred in pred_list if pred in gt_set)
+            precision = match_count / k if k > 0 else 0.0
+            precision_sum += precision
+
+        return precision_sum / total_cases if total_cases > 0 else 0.0
+
+    def recall_at_k(self, predictions: dict, ground_truth: dict, k: int) -> float:
+        """Calculate the Recall at K (Recall@k) metric.
+        Args:
+            predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
+            ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
+            k (int): The value of k.
+        Returns:
+            float: The Recall@k score.
+        """
+        total_cases = len(predictions)
+        recall_sum = 0.0
+
+        for case_id in predictions:
+            pred_list = predictions[case_id][:k]
+            gt_set = ground_truth.get(case_id, set())
+            match_count = sum(1 for pred in pred_list if pred in gt_set)
+            recall = match_count / len(gt_set) if gt_set else 0.0
+            recall_sum += recall
+
+        return recall_sum / total_cases if total_cases > 0 else 0.0
+
+    def accuracy_at_k(self, predictions: dict, ground_truth: dict, k: int) -> float:
+        """Calculate the Accuracy at K (Accuracy@k) metric.
+        Args:
+            predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
+            ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
+            k (int): The value of k.
+        Returns:
+            float: The Accuracy@k score.
+        """
+        total_cases = len(predictions)
+        correct_predictions = 0
+
+        for case_id in predictions:
+            pred_list = predictions[case_id][:k]
+            gt_set = ground_truth.get(case_id, set())
+            if any(pred in gt_set for pred in pred_list):
+                correct_predictions += 1
+
+        return correct_predictions / total_cases if total_cases > 0 else 0.0
+
+    def mean_reciprocal_rank(self, predictions: dict, ground_truth: dict) -> float:
+        """Calculate the Mean Reciprocal Rank (MRR) metric.
+        Args:
+            predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
+            ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
+        Returns:
+            float: The MRR score.
+        """
+        total_cases = len(predictions)
+        mrr_sum = 0.0
+
+        for case_id in predictions:
+            pred_list = predictions[case_id]
+            gt_set = ground_truth.get(case_id, set())
+            for i, pred in enumerate(pred_list):
+                if pred in gt_set:
+                    mrr_sum += 1 / (i + 1)
+                    break
+        return mrr_sum / total_cases if total_cases > 0 else 0.0
+
+    def evaluate(self, predictions: dict, ground_truth: dict) -> dict:
+        """Evaluate the predictions against the ground truth.
+        Args:
+            predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
+            ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
+        Returns:
+            dict: A dictionary of evaluation results, where the keys are the metric names and the values are the scores.
+        """
+        results = {}
+        for k in self.k_values:
+            results[f"precision_at_{k}"] = self.precision_at_k(
+                predictions, ground_truth, k
+            )
+            results[f"recall_at_{k}"] = self.recall_at_k(predictions, ground_truth, k)
+            results[f"accuracy_at_{k}"] = self.accuracy_at_k(
+                predictions, ground_truth, k
+            )
+        results["mean_reciprocal_rank"] = self.mean_reciprocal_rank(
+            predictions, ground_truth
+        )
+        return results

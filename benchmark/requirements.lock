@@ -374,6 +374,7 @@ torch==2.7.1
     # via rca-methods
 tqdm==4.67.1
     # via causal-learn
+    # via experiment-controller
 triton==3.3.1
     # via torch
 typing-extensions==4.14.0

@@ -3,6 +3,7 @@ from enum import Enum
 
 from rca_methods.baro import Baro
 from rca_methods.base_rca import BaseRCA
+from rca_methods.causalai import CausalAI
 from rca_methods.circa import Circa
 from rca_methods.dummy_rca import DummyRCA
 
@@ -13,6 +14,7 @@ class RCAMethodEnum(Enum):
     DUMMY = "dummy"
     BARO = "baro"
     CIRCA = "circa"
+    CAUSALAI = "causalai"
 
 
 class RCAFactory:
@@ -37,4 +39,6 @@ class RCAFactory:
             return Circa()
         elif rca_type == RCAMethodEnum.BARO:
             return Baro()
+        elif rca_type == RCAMethodEnum.CAUSALAI:
+            return CausalAI()
         raise ValueError(f"Unsupported RCA type: {rca_type}")

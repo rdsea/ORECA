@@ -63,6 +63,7 @@ class CausalAI(BaseRCA):
             time_metric_name="timestamp",
             prior_knowledge=None,
         )
+        print("running")
 
         root_causes, _ = model.run(
             pvalue_thres=0.001, max_condition_set_size=4, return_graph=True

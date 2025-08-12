@@ -27,7 +27,7 @@ def sample_data():
 @pytest.fixture
 def own_sample_data() -> pd.DataFrame:
     base_path = Path(os.path.dirname(os.path.abspath(__file__)))
-    data_path = base_path / "cpu_3x_rqs.csv"
+    data_path = base_path / "network_delay_preprocessing.csv"
     return read_data(data_path)
 
 

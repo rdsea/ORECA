@@ -56,6 +56,7 @@ class Baro(BaseRCA):
             ranks.append((col, score))
 
         ranks = sorted(ranks, key=lambda x: x[1], reverse=True)
+        ranks = [x[0] for x in ranks]
 
         return ranks[:top_k]
         # return {

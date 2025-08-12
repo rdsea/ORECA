@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from pathlib import Path
 
 # import zipfile
 # from os.path import join
@@ -138,7 +139,7 @@ def download_metric_sample(
     download_data(remote_url, local_path)
 
 
-def read_data(data_path: str, strip: bool = True) -> pd.DataFrame:
+def read_data(data_path: str | Path, strip: bool = True) -> pd.DataFrame:
     """Reads CSV data for root cause analysis and performs basic preprocessing.
 
     Args:
