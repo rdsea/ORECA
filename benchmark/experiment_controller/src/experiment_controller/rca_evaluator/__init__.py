@@ -142,7 +142,11 @@ class RCAEvaluator:
             self.evaluate_rca(rca_method, data, injection_time, experiment_id)
 
     def load_data(self, data_path: Path) -> pd.DataFrame:
-        return read_data(data_path)
+        data = read_data(data_path)
+        return self.preprocess_data(data)
+
+    def preprocess_data(self, df: pd.DataFrame):
+        return df.drop(columns=df.columns[df.columns.str.contains("node|pod")])
 
     def evaluate_rca(
         self,
