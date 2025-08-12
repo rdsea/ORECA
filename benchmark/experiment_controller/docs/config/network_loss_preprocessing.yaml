@@ -14,6 +14,7 @@ fault_config:
     loss:
       loss: "50"
       correlation: "0.5"
+ground_truth: "your_ground_truth_here"
 
 anomaly_injection_period: 600s
 list_of_generator:

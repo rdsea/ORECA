@@ -14,6 +14,7 @@ class RCAExperimentConfig(BaseModel):
     time_between_run: str
     clean_up: bool
     fault_config: FaultConfig
+    ground_truth: str
     # When to inject the anomaly, for example, 5, 10 minutes after starting load generation
     anomaly_injection_period: str
     list_of_generator: list[str]

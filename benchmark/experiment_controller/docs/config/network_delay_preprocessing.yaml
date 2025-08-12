@@ -15,6 +15,7 @@ fault_config:
       latency: 100ms
       correlation: "0.5"
       jitter: 50ms
+ground_truth: "your_ground_truth_here"
 
 anomaly_injection_period: 600s
 list_of_generator:
