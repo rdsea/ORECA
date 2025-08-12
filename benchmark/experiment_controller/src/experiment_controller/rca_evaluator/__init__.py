@@ -1,5 +1,3 @@
-"""RCA Evaluator module for the experiment controller."""
-
 import logging
 import os
 from pathlib import Path
@@ -16,7 +14,32 @@ from experiment_controller.logger import logger
 
 
 class RCAEvaluator:
-    """Evaluator for comparing different RCA methods against telemetry data."""
+    """Evaluator for comparing different RCA methods against telemetry data.
+
+    The RCA evaluator processes experiment data and evaluates the performance of
+    different RCA methods using standard information retrieval metrics.
+
+    Results are organized by fault type and displayed in a table format for easy comparison.
+
+    Example:
+        >>> from rca_methods.rca_factory import (
+        ...     RCAMethodEnum,
+        ... )
+        >>> evaluator = RCAEvaluator(
+        ...     dataset_path=Path(
+        ...         "path/to/experiments"
+        ...     ),
+        ...     rca_methods=[
+        ...         RCAMethodEnum.BARO
+        ...     ],
+        ... )
+        >>> evaluator.create_report()
+
+        # RCA Evaluation Results for BARO
+        | Fault Type | Precision@1 | Recall@1 | Accuracy@1 | Precision@3 | Recall@3 | Accuracy@3 | Precision@5 | Recall@5 | Accuracy@5 | MRR |
+        |------------|-------------|----------|------------|-------------|----------|------------|-------------|----------|------------|-----|
+        | NetworkFault.DELAY | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
+    """
 
     def __init__(
         self,
@@ -28,7 +51,15 @@ class RCAEvaluator:
         """Initialize the RCA evaluator with a path to telemetry data.
 
         Args:
-            dataset_path (Path): Path to the directory containing telemetry data.
+            dataset_path (Path): Path to the directory containing experiment data.
+                The directory should contain subdirectories for each experiment,
+                with each experiment directory containing:
+                - experiment_config.yaml: Configuration file for the experiment
+                - Run directories (1, 2, 3, etc.): Each containing metric.csv files
+            rca_methods (list[RCAMethodEnum]): List of RCA methods to evaluate
+            k_values (list[int], optional): K values for Precision@K, Recall@K, and Accuracy@K.
+                Defaults to [1, 3, 5].
+            verbose (bool): Whether to enable verbose logging. Defaults to False.
         """
         self.dataset_path = dataset_path
         self.rca_methods = rca_methods
@@ -45,6 +76,25 @@ class RCAEvaluator:
         self.k_values = k_values
 
     def create_report(self):
+        """Process all experiments in the dataset and generate evaluation reports.
+
+        This method:
+        1. Processes all experiment directories in the dataset path
+        2. For each experiment, runs the configured RCA methods on the telemetry data
+        3. Evaluates the results using multiple metrics
+        4. Displays the results in a table format organized by fault type
+
+        The results table includes:
+        - Precision@K: Proportion of top-K predictions that are correct
+        - Recall@K: Proportion of actual root causes identified in top-K predictions
+        - Accuracy@K: Proportion of cases where at least one correct root cause is in top-K predictions
+        - MRR (Mean Reciprocal Rank): Average of reciprocal ranks of first correct prediction
+
+        Note:
+            For meaningful results, ensure that the `ground_truth` field in your
+            experiment configuration files is set to actual root cause identifiers,
+            not placeholder values.
+        """
         experiment_dirs = [
             self.dataset_path / dir
             for dir in os.listdir(self.dataset_path)
@@ -57,7 +107,17 @@ class RCAEvaluator:
         self.print_results_table()
 
     def print_results_table(self):
-        """Generate and print a table of results organized by fault type."""
+        """Generate and print a table of results organized by fault type.
+
+        This method creates a formatted table showing evaluation metrics for each
+        RCA method, organized by fault type. This allows for easy comparison of
+        method performance across different types of faults.
+
+        The table format is:
+        | Fault Type | Precision@1 | Recall@1 | Accuracy@1 | Precision@3 | Recall@3 | Accuracy@3 | Precision@5 | Recall@5 | Accuracy@5 | MRR |
+
+        For each fault type with no experiments, it shows "-" for all metrics.
+        """
         # Collect all fault types
         fault_types = list(set(self.experiment_fault_types.values()))
 
@@ -103,6 +163,17 @@ class RCAEvaluator:
                     print(f"| {fault_type} | - | - | - | - | - | - | - | - | - | - |")
 
     def process_experiment(self, experiment_dir: Path):
+        """Process a single experiment directory.
+
+        This method:
+        1. Loads the experiment configuration
+        2. Processes all run directories within the experiment
+        3. Stores ground truth and fault type information for result organization
+
+        Args:
+            experiment_dir (Path): Path to the experiment directory containing
+                experiment_config.yaml and run directories
+        """
         with open(experiment_dir / "experiment_config.yaml") as f:
             experiment_config = RCAExperimentConfig.model_validate(yaml.safe_load(f))
 
