@@ -1,0 +1,23 @@
+scyllaImage:
+  repository: scylladb/scylla
+  tag: 4.3.0
+
+agentImage:
+  repository: scylladb/scylla-manager-agent
+  tag: 2.2.1
+
+datacenter: cloud-1
+racks:
+  - name: cloud-1-rack-1
+    members: 1
+    storage:
+      capacity: 5G
+    resources:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 1
+        memory: 1Gi
+serviceMonitor:
+  create: true
