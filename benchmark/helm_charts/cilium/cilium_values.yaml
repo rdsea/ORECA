@@ -1,10 +1,10 @@
 cluster:
   # CHANGE THIS FOR DIFFERENT CLUSTERS
   #NOTE: Don't use cluster-id 0 as it's reserved
-  # name: cloud
-  # id: 1
-  name: edge-1
-  id: 2
+  name: cloud
+  id: 1
+  # name: edge-1
+  # id: 2
 kubeProxyReplacement: true
 
 ipam:
@@ -34,6 +34,7 @@ prometheus:
   enabled: true
 
 operator:
+  replicas: 1
   prometheus:
     enabled: true
 

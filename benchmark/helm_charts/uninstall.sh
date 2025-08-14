@@ -30,6 +30,7 @@ wait_for_namespace_cleanup cert-manager
 
 # Longhorn
 kubectl -n longhorn-system patch -p '{"value": "true"}' --type=merge lhs deleting-confirmation-flag
+kubectl delete pvc -A --all
 helm uninstall -n longhorn-system longhorn
 wait_for_namespace_cleanup longhorn-system
 
