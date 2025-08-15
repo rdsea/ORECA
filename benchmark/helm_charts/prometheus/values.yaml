@@ -52,6 +52,7 @@ prometheus:
             - 'container_blkio_device_usage_total'
             - 'duration_milliseconds_bucket'
             - 'calls_total'
+            - 'container_socket'
 
         static_configs:
           - targets:
@@ -277,6 +278,10 @@ additionalPrometheusRulesMap:
               * on (namespace,pod)
               group_left(workload,workload_type) namespace_workload_pod:kube_pod_owner:relabel{ namespace="default"}) by (workload))
 
+          - record: service:socket
+            expr: |-
+              sum( container_sockets{namespace="default"} * on(namespace,pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{namespace="default"}) by (workload)
+
           - record: service:io
             expr: |-
               (sum(rate(container_blkio_device_usage_total{job="kubelet", metrics_path="/metrics/cadvisor",namespace="default"}[1m])
@@ -285,15 +290,15 @@ additionalPrometheusRulesMap:
 
           - record: service:p95_latency
             expr: |-
-              histogram_quantile(0.95, sum(rate(duration_milliseconds_bucket{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name,le))
+              histogram_quantile( 0.95, sum( rate(duration_milliseconds_bucket[10m])) by (service_name, span_name, span_kind, le))
 
           - record: service:p75_latency
             expr: |-
-              histogram_quantile(0.75, sum(rate(duration_milliseconds_bucket{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name,le))
+              histogram_quantile( 0.75, sum( rate(duration_milliseconds_bucket[10m])) by (service_name, span_name, span_kind, le))
 
           - record: service:p50_latency
             expr: |-
-              histogram_quantile(0.50, sum(rate(duration_milliseconds_bucket{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name,le))
+              histogram_quantile( 0.50, sum( rate(duration_milliseconds_bucket[10m])) by (service_name, span_name, span_kind, le))
 
           - record: service:request_rate_per_second
             expr: |-
