@@ -52,7 +52,7 @@ prometheus:
             - 'container_blkio_device_usage_total'
             - 'duration_milliseconds_bucket'
             - 'calls_total'
-            - 'container_socket'
+            - 'container_sockets'
 
         static_configs:
           - targets:
