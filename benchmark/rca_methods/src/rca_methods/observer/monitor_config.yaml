@@ -1,13 +1,6 @@
-api: <api_path>
-username: elastic
-password: <update with elastic password>
 # Local
 prometheus_url: http://localhost:10001/prometheus
 # K8s
 # prometheus_url: http://prometheus-kube-prometheus-prometheus.redpanda.svc.cluster.local:9090/prometheus
 namespace: observe
-trace_index: .ds-traces-apm-default-*
-logstash_index: logstash-*
 kubernetes_path: "~/.kube/config"
-es_use_cert: "False"
-es_cert_path: <update the path to the cert>

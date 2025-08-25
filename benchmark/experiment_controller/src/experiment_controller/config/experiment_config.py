@@ -6,6 +6,12 @@ from experiment_controller.elastic_controller.elastic_controller import (
 from pydantic import BaseModel
 
 
+class MonitorConfig(BaseModel):
+    metric_url: str
+    namespace: str
+    kubernetes_path: str
+
+
 class RCAExperimentConfig(BaseModel):
     """Configuration for an RCA experiment."""
 
@@ -21,3 +27,4 @@ class RCAExperimentConfig(BaseModel):
     ssh_username: str
     workload: WorkloadConfig
     elastic_controller_config: ElasticControllerConfig | None = None
+    monitor_config: MonitorConfig

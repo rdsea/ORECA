@@ -17,5 +17,5 @@ class DockerWorkloadGenerator(WorkloadController):
 
     def start(self):
         args_str = " ".join([f"--{k} {v}" for k, v in self.docker_args.items()])
-        command_to_run = f"docker run {args_str} {self.docker_image}"
+        command_to_run = f"docker run  {self.docker_image} {args_str}"
         self._run_on_all_hosts(command_to_run)

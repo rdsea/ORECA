@@ -122,4 +122,5 @@ class ChaosNetworkController:
             )
             print("🧹 Chaos experiment deleted successfully.")
         except subprocess.CalledProcessError as e:
+            logger.exception("Chaos Network clean failed")
             raise RuntimeError(f"❌ Failed to delete chaos experiment:\n{e}")

@@ -109,7 +109,8 @@ class RCAExperiment:
             self.workload_generator.start()
             if self.config.clean_up:
                 self.clean_up_after_experiment()
-            time.sleep(parse_time_to_seconds(self.config.time_between_run))
+            if self.config.number_of_run > 1:
+                time.sleep(parse_time_to_seconds(self.config.time_between_run))
 
             self.collect_telemetry(save_path)
 
@@ -133,6 +134,7 @@ class RCAExperiment:
 
         This method calls the fault injector's clean method to remove the fault.
         """
+        logger.info("Cleaning up the anomaly")
         self.fault_controller.clean()
         if self.config.elastic_controller_config:
             self.elastic_controller.deactivate_all()
@@ -150,7 +152,7 @@ class RCAExperiment:
         self.collect_trace()
 
     def collect_metric(self, save_path: Path):
-        prom = PrometheusAPI(monitor_config["prometheus_url"])
+        prom = PrometheusAPI(self.config.monitor_config.metric_url)
 
         # Define time range for exporting metrics
         end_time = datetime.now()
