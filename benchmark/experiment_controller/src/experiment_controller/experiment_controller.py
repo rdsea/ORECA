@@ -127,7 +127,7 @@ class RCAExperiment:
         )
 
         self.fault_controller.inject()
-        Timer(anomaly_duration, self.clean_anomaly)
+        Timer(anomaly_duration, self.clean_anomaly).start()
 
     def clean_anomaly(self):
         """Cleans up the injected anomaly.
