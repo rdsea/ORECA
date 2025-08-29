@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
+from experiment_controller.logger import logger
 from prometheus_api_client import PrometheusConnect
 
 from rca_methods.observer import (
@@ -98,11 +99,10 @@ class PrometheusAPI:
         Returns:
             pd.DataFrame: A DataFrame containing the queried metrics.
         """
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         if experiment_name:
             save_path = os.path.join(save_path, f"{experiment_name}.csv")
         else:
-            save_path = os.path.join(save_path, f"metric_{timestamp}.csv")
+            save_path = os.path.join(save_path, "metric.csv")
         start_time = time_format_transform(start_time)
         end_time = time_format_transform(end_time)
         return_pd = pd.DataFrame()
@@ -183,26 +183,40 @@ class PrometheusAPI:
                 ).reset_index()
             elif metric in SERVICE_METRICS:
                 service_name_list = []
-                for data in data_raw:
-                    for d in data["values"]:
-                        if "workload" in data["metric"]:
-                            service_name_list.append(data["metric"]["workload"])
-                        elif "service_name" in data["metric"]:
-                            service_name_list.append(data["metric"]["service_name"])
-                        timestamp_list.append(int(d[0]))
-                        value_list.append(round(float(d[1]), 3))
-                dt = pd.DataFrame(
-                    {
-                        "timestamp": timestamp_list,
-                        "service_name": service_name_list,
-                        "value": value_list,
-                    }
-                )
-                dt["service_metric"] = dt["service_name"] + f"_{metric}"
+                span_name = ""
+                try:
+                    for data in data_raw:
+                        for d in data["values"]:
+                            if "span_name" in data["metric"]:
+                                if "span_kind" in data["metric"]:
+                                    span_name = f"{data['metric']['span_kind']}_{(data['metric']['span_name']).replace(' ', '_')}"
+                                else:
+                                    span_name = data["metric"]["span_name"]
+                            if "workload" in data["metric"]:
+                                service_name_list.append(
+                                    f"{data['metric']['workload']}_{span_name}"
+                                )
+                            elif "service_name" in data["metric"]:
+                                service_name_list.append(
+                                    f"{data['metric']['service_name']}_{span_name}"
+                                )
+                            timestamp_list.append(int(d[0]))
+                            value_list.append(round(float(d[1]), 3))
+                    dt = pd.DataFrame(
+                        {
+                            "timestamp": timestamp_list,
+                            "service_name": service_name_list,
+                            "value": value_list,
+                        }
+                    )
+                    dt["service_metric"] = dt["service_name"] + f"_{metric}"
 
-                pivoted = dt.pivot(
-                    index="timestamp", columns="service_metric", values="value"
-                ).reset_index()
+                    pivoted = dt.pivot(
+                        index="timestamp", columns="service_metric", values="value"
+                    ).reset_index()
+                except Exception:
+                    logger.exception("Fail when processing SERVICE_METRICS")
+                    logger.debug(data_raw)
             else:
                 raise ValueError(f"Unknown metric category: {metric}")
 

@@ -2,6 +2,7 @@ from enum import Enum
 from typing import NamedTuple
 
 from experiment_controller.config.fault_config import FaultSpecificConfig
+from experiment_controller.config.resource_fault_config import ResourcesChaosConfig
 from experiment_controller.fault_controller.network import NetworkChaosConfig
 from pydantic import BaseModel, field_validator, model_validator
 
@@ -79,6 +80,10 @@ ALL_ANOMALY_ENUMS = {
 FAULT_TYPE_TO_MODEL: dict[AnomalyEnum, type[FaultSpecificConfig]] = {
     NetworkFault.DELAY: NetworkChaosConfig,
     NetworkFault.LOSS: NetworkChaosConfig,
+    ResourceHog.CPU: ResourcesChaosConfig,
+    ResourceHog.MEMORY: ResourcesChaosConfig,
+    ResourceHog.IO: ResourcesChaosConfig,
+    ResourceHog.SOCKET: ResourcesChaosConfig,
 }
 
 

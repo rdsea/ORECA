@@ -6,7 +6,6 @@ import csv
 import os
 
 import numpy as np
-
 from anomaly_detections.spot.bi_spot import BiSPOT
 from anomaly_detections.spot.extreme_value import ExtremeValue
 

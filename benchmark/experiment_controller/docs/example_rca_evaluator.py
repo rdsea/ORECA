@@ -19,7 +19,7 @@ RCA_METHODS_TO_EVALUATE = [RCAMethodEnum.BARO]
 
 # Create the RCA evaluator with the path to experiment data
 rca_evaluator = RCAEvaluator(
-    current_path / "example_experiment",
+    current_path / "example_experiment_result",
     RCA_METHODS_TO_EVALUATE,
 )
 

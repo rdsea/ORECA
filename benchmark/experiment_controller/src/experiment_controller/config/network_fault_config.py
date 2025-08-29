@@ -1,9 +1,8 @@
-from pydantic import BaseModel, model_validator
-
 from experiment_controller.config.fault_config import (
     FaultSpecificConfig,
     TargetSelector,
 )
+from pydantic import BaseModel, model_validator
 
 
 class DelayConfig(BaseModel):
@@ -94,7 +93,7 @@ class NetworkChaosConfig(FaultSpecificConfig):
     bandwidth: BandwidthConfig | None = None
 
     @model_validator(mode="before")
-    def validate_at_least_one_fault(cls, values):  # noqa: N805
+    def validate_at_least_one_fault(cls, values):
         if not any(values.get(key) for key in ["delay", "loss", "bandwidth"]):
             raise ValueError(
                 "You must provide at least one of: 'delay', 'loss', or 'bandwidth'."

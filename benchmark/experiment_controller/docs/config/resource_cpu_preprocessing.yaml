@@ -1,13 +1,14 @@
-experiment_name: resourcehog_cpu_preprocessing
+experiment_name: resource_cpu_preprocessing
 number_of_run: 3
 time_between_run: 60s
-clean_up: false
+clean_up:
+  activate: false
 fault_config:
-  name: resourcehog-cpu-preprocessing
+  name: resource-cpu-preprocessing
   duration: 60s
   fault_type: ResourceHog.CPU
   fault_specific_config:
-    name: resourcehog-cpu-preprocessing
+    name: resource-cpu-preprocessing
     namespace: default
     duration: 60s
     target:

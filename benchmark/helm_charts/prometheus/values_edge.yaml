@@ -2,14 +2,12 @@ prometheus:
   prometheusSpec:
     # logLevel: debug
     # Global scrape interval config
-    scrapeInterval: "5s"
+    scrapeInterval: "1s"
     routePrefix: /prometheus
     externalUrl: /prometheus
     externalLabels:
-      cluster: cloud-1
-      environment: cloud
-      # cluster: "edge-1"
-      # environment: "edge"
+      cluster: "edge-1"
+      environment: "edge"
     # remoteWrite:
     #   - url: "http://prom-kafka-adapter-node.redpanda.svc.cluster.local:80/receive"
     #     name: prom-kafka-adapter-node
@@ -29,36 +27,6 @@ prometheus:
     selector: {}
 
     additionalScrapeConfigs: |
-      #NOTE: don't enable this for edge cluster
-      - job_name: 'federate'
-        honor_timestamps: true
-        track_timestamps_staleness: false
-        honor_labels: false
-        metrics_path: '/prometheus/federate'
-        params:
-          'match[]':
-            - 'node_cpu_seconds_total'
-            - 'node_memory_MemAvailable_bytes'
-            - 'node_memory_MemTotal_bytes'
-            - 'node_disk_read_bytes_total'
-            - 'node_disk_written_bytes_total'
-            - 'node_disk_io_time_seconds_total'
-            - 'node_network_receive_bytes_total'
-            - 'node_network_transmit_bytes_total'
-            - 'node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate5m'
-            - 'container_memory_working_set_bytes'
-            - 'namespace_workload_pod:kube_pod_owner:relabel'
-            - 'container_network_receive_bytes_total'
-            - 'container_network_transmit_bytes_total'
-            - 'container_blkio_device_usage_total'
-            - 'duration_milliseconds_bucket'
-            - 'calls_total'
-            - 'container_sockets'
-
-        static_configs:
-          - targets:
-              - 'gateway.edge-1.svc:80'
-
       - job_name: aggregated-trace-metrics
         static_configs:
         - targets: ['my-opentelemetry-collector.observe:8889']

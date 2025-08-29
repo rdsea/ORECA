@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
 from anomaly_detections.spot.bi_d_spot import BiDSPOT
 from anomaly_detections.spot.spot_base import SPOTBase
 

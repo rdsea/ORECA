@@ -1,6 +1,8 @@
+from experiment_controller.config.fault_config import (
+    FaultSpecificConfig,
+    TargetSelector,
+)
 from pydantic import BaseModel, model_validator
-
-from experiment_controller.config.fault_config import TargetSelector
 
 
 class StressCPUConfig(BaseModel):
@@ -38,7 +40,7 @@ class IOChaosConfig(BaseModel):
     methods: list[str] | None = None
 
 
-class ResourcesChaosConfig(BaseModel):
+class ResourcesChaosConfig(FaultSpecificConfig):
     """
     General Chaos configuration supporting StressChaos and IOChaos.
 
@@ -61,7 +63,7 @@ class ResourcesChaosConfig(BaseModel):
     io_chaos: IOChaosConfig | None = None
 
     @model_validator(mode="before")
-    def validate_at_least_one_fault(cls, values):  # noqa: N805
+    def validate_at_least_one_fault(cls, values):
         if not any(
             values.get(key) for key in ["stress_cpu", "stress_memory", "io_chaos"]
         ):

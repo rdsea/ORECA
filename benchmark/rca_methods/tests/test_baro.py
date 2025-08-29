@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-
 from rca_methods.baro import Baro
 from rca_methods.utility import download_data, read_data
 

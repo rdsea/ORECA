@@ -1,10 +1,13 @@
+import os
 import re
+import subprocess
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from threading import Timer
 
-from rca_methods.observer.metric_api import ALL_METRICS, PrometheusAPI, monitor_config
+import yaml
+from rca_methods.observer.metric_api import ALL_METRICS, PrometheusAPI
 
 from experiment_controller.config.experiment_config import RCAExperimentConfig
 from experiment_controller.config.workload_config import (
@@ -52,15 +55,23 @@ class RCAExperiment:
         config (RCAExperimentConfig): Validated configuration model.
     """
 
-    def __init__(self, config: RCAExperimentConfig):
+    def __init__(self, config: RCAExperimentConfig, output_dir: Path):
         """Initialize the RCAExperiment.
 
         Args:
             config (RCAExperimentConfig): The configuration for the experiment.
+            output_dir (Path | None): The output directory for the experiment.
         """
         self.config = config
+        self.output_dir = output_dir / self.config.experiment_name
         self.fault_controller = FaultController(self.config.fault_config)
         self.workload_generator = self._create_workload_generator()
+        os.makedirs(self.output_dir, exist_ok=True)
+        with open(
+            self.output_dir / "experiment_config.yaml",
+            "w",
+        ) as f:
+            yaml.dump(self.config.model_dump(), f)
         if self.config.elastic_controller_config:
             self.elastic_controller = ElasticController(
                 self.config.elastic_controller_config
@@ -92,10 +103,10 @@ class RCAExperiment:
         schedules delayed fault injection.
         """
 
-        current_path = Path(__file__).parent
         for i in range(self.config.number_of_run):
             inject_delay = parse_time_to_seconds(self.config.anomaly_injection_period)
-            save_path = current_path / self.config.experiment_name / str(i + 1)
+            save_path = self.output_dir / str(i + 1)
+            os.makedirs(save_path, exist_ok=True)
 
             if self.config.elastic_controller_config:
                 self.elastic_controller.activate_all()
@@ -106,13 +117,14 @@ class RCAExperiment:
                 self.inject_anomaly,
             ).start()
 
+            start_time = datetime.now()
             self.workload_generator.start()
-            if self.config.clean_up:
+            end_time = datetime.now()
+            self.collect_telemetry(save_path, start_time, end_time)
+            if self.config.clean_up.activate:
                 self.clean_up_after_experiment()
             if self.config.number_of_run > 1:
                 time.sleep(parse_time_to_seconds(self.config.time_between_run))
-
-            self.collect_telemetry(save_path)
 
     def inject_anomaly(self):
         """Injects the configured anomaly.
@@ -144,28 +156,70 @@ class RCAExperiment:
         )
 
     def clean_up_after_experiment(self):
-        pass
+        if (
+            self.config.clean_up.observability_cleanup_script is None
+            and self.config.clean_up.application_cleanup_script is None
+        ):
+            logger.error(
+                "Observability or application clean up script need to be provided"
+            )
+            raise ValueError(
+                "As clean up is activated, either observability or application script path need to be provided"
+            )
+        if self.config.clean_up.observability_cleanup_script:
+            result = subprocess.run(
+                ["bash", self.config.clean_up.observability_cleanup_script],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                logger.info("stdout: %s", result.stdout.strip())
+                if result.stderr:
+                    logger.warning("stderr (non-fatal): %s", result.stderr.strip())
+            else:
+                logger.error("Script failed with code %s", result.returncode)
+                logger.error("stderr: %s", result.stderr.strip())
+        if self.config.clean_up.application_cleanup_script:
+            result = subprocess.run(
+                ["bash", self.config.clean_up.application_cleanup_script],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                logger.info("stdout: %s", result.stdout.strip())
+                if result.stderr:
+                    logger.warning("stderr (non-fatal): %s", result.stderr.strip())
+            else:
+                logger.error("Script failed with code %s", result.returncode)
+                logger.error("stderr: %s", result.stderr.strip())
+        logger.info("Clean up completed")
 
-    def collect_telemetry(self, save_path: Path):
-        self.collect_metric(save_path)
+    def collect_telemetry(
+        self,
+        save_path: Path,
+        experiment_startime: datetime,
+        experiment_endtime: datetime,
+    ):
+        self.collect_metric(save_path, experiment_startime, experiment_endtime)
         self.collect_log()
         self.collect_trace()
 
-    def collect_metric(self, save_path: Path):
+    def collect_metric(
+        self,
+        save_path: Path,
+        experiment_startime: datetime,
+        experiment_endtime: datetime,
+    ):
         prom = PrometheusAPI(self.config.monitor_config.metric_url)
 
-        # Define time range for exporting metrics
-        end_time = datetime.now()
-        start_time = end_time - timedelta(minutes=17)
-        # injection_time = 1753213321
-
-        logger.info(f"Start querying metrics from {monitor_config['prometheus_url']}")
+        logger.info(
+            f"Start querying metrics from {self.config.monitor_config.metric_url}"
+        )
         prom.query_range(
             ALL_METRICS,
-            start_time,
-            end_time,
+            experiment_startime,
+            experiment_endtime,
             save_path=save_path,
-            experiment_name=self.config.experiment_name,
             step="1s",
         )
         logger.info("Finished querying metrics")
