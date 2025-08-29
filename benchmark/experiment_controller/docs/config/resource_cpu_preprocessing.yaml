@@ -1,12 +1,15 @@
 experiment_name: resourcehog_cpu_preprocessing
+number_of_run: 3
+time_between_run: 60s
+clean_up: false
 fault_config:
   name: resourcehog-cpu-preprocessing
-  duration: 300s
+  duration: 60s
   fault_type: ResourceHog.CPU
   fault_specific_config:
     name: resourcehog-cpu-preprocessing
     namespace: default
-    duration: 300s
+    duration: 60s
     target:
       namespace: default
       label_selectors:
@@ -16,7 +19,7 @@ fault_config:
       load: 100
 ground_truth: "your_ground_truth_here"
 
-anomaly_injection_period: 300s
+anomaly_injection_period: 900s
 list_of_generator:
   - XXX.XXX.XXX.XXX
   - XXX.XXX.XXX.XXX
@@ -28,9 +31,9 @@ workload:
     image: rdsea/object_detection_client:latest
     args:
       host: http://XXX.XXX.XXX.XXX
-      user: "24"
-      run-time: 1020s
-      spawn-rate: "10"
+      user: "5"
+      run-time: 970s
+      spawn-rate: "5"
 elastic_controller_config:
   elastic_used:
     - name: "Horizontal Pod Autoscaler"
@@ -39,7 +42,7 @@ elastic_controller_config:
       # how_to_activate: "user_defined_function_to_activate"
       # how_to_deactivate: "user_defined_function_to_deactivate"
 monitor_config:
-  prometheus_url: http://localhost:10001/prometheus
+  metric_url: http://XXX.XXX.XXX.XXX/prometheus
   # K8s
   # prometheus_url: http://prometheus-kube-prometheus-prometheus.redpanda.svc.cluster.local:9090/prometheus
   namespace: observe

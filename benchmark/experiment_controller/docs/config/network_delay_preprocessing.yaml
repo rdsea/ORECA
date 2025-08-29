@@ -1,6 +1,6 @@
 experiment_name: network_delay_preprocessing
-number_of_run: 1
-time_between_run: 300s
+number_of_run: 3
+time_between_run: 60s
 clean_up: false
 fault_config:
   name: network-delay-preprocessing
@@ -15,12 +15,12 @@ fault_config:
       label_selectors:
         app: preprocessing
     delay:
-      latency: 100ms
+      latency: 50ms
       correlation: "0.5"
-      jitter: 50ms
+      jitter: 20ms
 ground_truth: "your_ground_truth_here"
 
-anomaly_injection_period: 20s
+anomaly_injection_period: 900s
 list_of_generator:
   - XXX.XXX.XXX.XXX
   - XXX.XXX.XXX.XXX
@@ -33,7 +33,7 @@ workload:
     args:
       host: http://XXX.XXX.XXX.XXX
       user: "5"
-      run-time: 150s
+      run-time: 670s
       spawn-rate: "5"
 elastic_controller_config:
   elastic_used:
@@ -43,7 +43,7 @@ elastic_controller_config:
       # how_to_activate: "user_defined_function_to_activate"
       # how_to_deactivate: "user_defined_function_to_deactivate"
 monitor_config:
-  metric_url: http://localhost:10001/prometheus
+  metric_url: http://XXX.XXX.XXX.XXX/prometheus
   # K8s
   # prometheus_url: http://prometheus-kube-prometheus-prometheus.redpanda.svc.cluster.local:9090/prometheus
   namespace: observe
