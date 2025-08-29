@@ -17,6 +17,12 @@ kubectl apply -f "$APPLICATION_DIR/cloud_service/scylladb.yaml"
 kubectl wait --for=condition=Ready pod --all --timeout=300s
 sleep 5
 
+#NOTE: because rabbitmq operator doesn't support setting specific nodePort yet so we have to patch this to get a consistent nodePort
+kubectl patch service rabbitmq \
+  -n default \
+  --type='json' \
+  -p='[{"op": "replace", "path": "/spec/ports/0/nodePort", "value": 30072}]'
+
 kubectl exec -i scylla-0 -- cqlsh <<EOF
 CREATE KEYSPACE IF NOT EXISTS object_detection
 WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
