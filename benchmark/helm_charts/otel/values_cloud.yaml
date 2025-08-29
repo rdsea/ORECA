@@ -2,6 +2,7 @@ image:
   repository: otel/opentelemetry-collector-contrib
   tag: latest
 
+mode: deployment
 config:
   receivers:
     otlp:
