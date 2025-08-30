@@ -1,7 +1,8 @@
 from collections.abc import Callable
 from enum import Enum
+from typing import Any
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_serializer, model_validator
 
 from experiment_controller.logger import logger
 
@@ -18,6 +19,15 @@ class ElasticCategory(BaseModel):
     how_to_activate: Callable | None = None
     how_to_deactivate: Callable | None = None
 
+    @model_serializer
+    def serialize_model(self) -> dict[str, Any]:
+        """Serialize the model to a dictionary."""
+        return {
+            "name": self.name,
+            "type": self.type.value,
+            "active": self.active,
+        }
+
 
 class ElasticApplication(ElasticCategory):
     type: ElasticType = ElasticType.APPLICATION
@@ -29,6 +39,11 @@ class ElasticInfrastructure(ElasticCategory):
 
 class ElasticControllerConfig(BaseModel):
     elastic_used: list[ElasticInfrastructure | ElasticApplication]
+
+    @model_serializer
+    def serialize_model(self) -> dict[str, Any]:
+        """Serialize the model to a dictionary."""
+        return {"elastic_used": [elastic.model_dump() for elastic in self.elastic_used]}
 
     @model_validator(mode="before")
     @classmethod

@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from experiment_controller.config.anomaly_model import FaultConfig
+import yaml
+from experiment_controller.config.anomaly_model import (
+    FaultConfig,
+)
 from experiment_controller.config.workload_config import WorkloadConfig
 from experiment_controller.elastic_controller.elastic_controller import (
     ElasticControllerConfig,
@@ -16,8 +19,8 @@ class MonitorConfig(BaseModel):
 
 class CleanUpConfig(BaseModel):
     activate: bool
-    observability_cleanup_script: Path | None
-    application_cleanup_script: Path | None
+    observability_cleanup_script: Path | None = None
+    application_cleanup_script: Path | None = None
 
 
 class RCAExperimentConfig(BaseModel):
@@ -36,3 +39,17 @@ class RCAExperimentConfig(BaseModel):
     workload: WorkloadConfig
     elastic_controller_config: ElasticControllerConfig | None = None
     monitor_config: MonitorConfig
+
+
+# Custom representer for Path objects
+def path_representer(dumper, data):
+    return dumper.represent_scalar("tag:yaml.org,2002:str", str(data))
+
+
+yaml.add_representer(Path, path_representer)
+
+
+def rca_experiment_config_to_yaml(config: RCAExperimentConfig, path: Path):
+    """Converts an RCAExperimentConfig to a YAML file."""
+    with open(path, "w") as f:
+        yaml.dump(config.model_dump(), f, indent=4)

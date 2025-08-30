@@ -1,10 +1,10 @@
 from enum import Enum
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from experiment_controller.config.fault_config import FaultSpecificConfig
 from experiment_controller.config.resource_fault_config import ResourcesChaosConfig
 from experiment_controller.fault_controller.network import NetworkChaosConfig
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, field_validator, model_serializer, model_validator
 
 
 class AnomalyCategory(Enum):
@@ -94,6 +94,16 @@ class FaultConfig(BaseModel):
     duration: str
     fault_type: AnomalyEnum
     fault_specific_config: BaseModel
+
+    @model_serializer
+    def serialize_model(self) -> dict[str, Any]:
+        """Serialize the model to a dictionary."""
+        return {
+            "name": self.name,
+            "duration": self.duration,
+            "fault_type": f"{type(self.fault_type).__name__}.{self.fault_type.name}",
+            "fault_specific_config": self.fault_specific_config.model_dump(),
+        }
 
     @field_validator("fault_type", mode="before")
     @classmethod
