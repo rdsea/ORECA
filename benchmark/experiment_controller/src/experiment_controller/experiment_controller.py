@@ -1,6 +1,5 @@
 import os
 import re
-import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
@@ -19,6 +18,7 @@ from experiment_controller.elastic_controller.elastic_controller import (
 )
 from experiment_controller.fault_controller.base import FaultController
 from experiment_controller.logger import logger
+from experiment_controller.script_runner import ScriptRunner
 from experiment_controller.workload_controller.base import WorkloadController
 from experiment_controller.workload_controller.docker import DockerWorkloadGenerator
 from experiment_controller.workload_controller.shell import ShellWorkloadGenerator
@@ -66,6 +66,7 @@ class RCAExperiment:
         self.output_dir = output_dir / self.config.experiment_name
         self.fault_controller = FaultController(self.config.fault_config)
         self.workload_generator = self._create_workload_generator()
+        self.script_runner = ScriptRunner()
         os.makedirs(self.output_dir, exist_ok=True)
         with open(
             self.output_dir / "experiment_config.yaml",
@@ -168,31 +169,9 @@ class RCAExperiment:
                 "As clean up is activated, either observability or application script path need to be provided"
             )
         if self.config.clean_up.observability_cleanup_script:
-            result = subprocess.run(
-                ["bash", self.config.clean_up.observability_cleanup_script],
-                capture_output=True,
-                text=True,
-            )
-            if result.returncode == 0:
-                logger.info("stdout: %s", result.stdout.strip())
-                if result.stderr:
-                    logger.warning("stderr (non-fatal): %s", result.stderr.strip())
-            else:
-                logger.error("Script failed with code %s", result.returncode)
-                logger.error("stderr: %s", result.stderr.strip())
+            self.script_runner.run(self.config.clean_up.observability_cleanup_script)
         if self.config.clean_up.application_cleanup_script:
-            result = subprocess.run(
-                ["bash", self.config.clean_up.application_cleanup_script],
-                capture_output=True,
-                text=True,
-            )
-            if result.returncode == 0:
-                logger.info("stdout: %s", result.stdout.strip())
-                if result.stderr:
-                    logger.warning("stderr (non-fatal): %s", result.stderr.strip())
-            else:
-                logger.error("Script failed with code %s", result.returncode)
-                logger.error("stderr: %s", result.stderr.strip())
+            self.script_runner.run(self.config.clean_up.application_cleanup_script)
         logger.info("Clean up completed")
 
     def collect_telemetry(
