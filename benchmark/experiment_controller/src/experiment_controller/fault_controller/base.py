@@ -9,6 +9,10 @@ from experiment_controller.fault_controller.network import (
     ChaosNetworkController,
     NetworkChaosConfig,
 )
+from experiment_controller.fault_controller.resource import (
+    ChaosResourceController,
+    ResourcesChaosConfig,
+)
 from experiment_controller.logger import logger
 
 
@@ -33,12 +37,23 @@ class FaultController:
             microservices (list[str], optional): A list of microservices to target. Defaults to None.
         """
         match self.config.fault_type:
-            case ResourceHog.CPU:
-                pass
-            case ResourceHog.MEMORY:
-                pass
-            case ResourceHog.IO:
-                pass
+            case ResourceHog.CPU | ResourceHog.MEMORY | ResourceHog.IO:
+                if isinstance(self.config.fault_specific_config, ResourcesChaosConfig):
+                    self.resource_fault_controller = ChaosResourceController(
+                        self.config.fault_specific_config
+                    )
+                else:
+                    try:
+                        self.resource_fault_controller = ChaosResourceController(
+                            ResourcesChaosConfig.model_validate(
+                                self.config.fault_specific_config
+                            )
+                        )
+                    except ValidationError:
+                        logger.error(
+                            "Can't validate the fault_specific_config for resource fault controller"
+                        )
+                self.resource_fault_controller.apply()
             case ResourceHog.SOCKET:
                 pass
             case NetworkFault.DELAY | NetworkFault.LOSS:
@@ -62,12 +77,13 @@ class FaultController:
     def clean(self):
         """Cleans up the injected fault."""
         match self.config.fault_type:
-            case ResourceHog.CPU:
-                pass
-            case ResourceHog.MEMORY:
-                pass
-            case ResourceHog.IO:
-                pass
+            case ResourceHog.CPU | ResourceHog.MEMORY | ResourceHog.IO:
+                if hasattr(self, "resource_fault_controller"):
+                    self.resource_fault_controller.delete()
+                else:
+                    logger.error(
+                        "Can't clean Resource fault as resource_fault_controller is not created yet"
+                    )
             case ResourceHog.SOCKET:
                 pass
             case NetworkFault.DELAY | NetworkFault.LOSS:

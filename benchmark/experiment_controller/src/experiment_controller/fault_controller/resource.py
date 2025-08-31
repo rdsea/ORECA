@@ -104,27 +104,31 @@ class ChaosResourceController:
         yaml_content = self.generate_yaml()
         command = f"kubectl apply -f - <<EOF\n{yaml_content}EOF"
         try:
-            print(f"🔥 Applying StressChaos experiment: {self.config.name}")
+            print(f"🔥 Applying resource chaos experiment: {self.config.name}")
             logging.info(command)
             subprocess.run(command, shell=True, check=True, executable="/bin/bash")
-            print("✅ StressChaos applied successfully.")
+            print("✅ Chaos applied successfully.")
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"❌ Failed to apply StressChaos:\n{e}")
+            raise RuntimeError(f"❌ Failed to apply chaos:\n{e}")
 
     def delete(self):
         """Delete the Chaos Mesh experiment."""
+        if self.config.io_chaos is not None:
+            resource_type = "iochaos"
+        else:
+            resource_type = "stresschaos"
         try:
             subprocess.run(
                 [
                     "kubectl",
                     "delete",
-                    "stresschaos",
+                    resource_type,
                     self.config.name,
                     "-n",
                     self.config.namespace,
                 ],
                 check=True,
             )
-            print("🧹 StressChaos experiment deleted successfully.")
+            print(f"🧹 {resource_type} experiment deleted successfully.")
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"❌ Failed to delete StressChaos:\n{e}")
+            raise RuntimeError(f"❌ Failed to delete {resource_type}:\n{e}")
