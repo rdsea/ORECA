@@ -1,12 +1,10 @@
-import subprocess
-
-import yaml
+from kubernetes import client
 
 from experiment_controller.config.network_fault_config import NetworkChaosConfig
 from experiment_controller.logger import logger
 
 
-def chaos_config_to_yaml(config: NetworkChaosConfig) -> str:
+def chaos_config_to_yaml(config: NetworkChaosConfig) -> dict:
     """
     Convert a validated NetworkChaosConfig object into a Chaos Mesh YAML string.
 
@@ -45,7 +43,7 @@ def chaos_config_to_yaml(config: NetworkChaosConfig) -> str:
 
         metadata["spec"]["action"] = "netem"
 
-    return yaml.dump(metadata, sort_keys=False)
+    return metadata
 
 
 class ChaosNetworkController:
@@ -74,8 +72,10 @@ class ChaosNetworkController:
         if not isinstance(config, NetworkChaosConfig):
             raise TypeError("config must be an instance of NetworkChaosConfig")
         self.config = config
+        self.config.load_kube_config()
+        self.api = client.CustomObjectsApi()
 
-    def generate_yaml(self) -> str:
+    def generate_yaml(self) -> dict:
         """
         Generate the YAML string for the configured chaos experiment.
 
@@ -91,14 +91,19 @@ class ChaosNetworkController:
         Raises:
             RuntimeError: If kubectl fails to apply the experiment.
         """
-        yaml_content = self.generate_yaml()
-        command = f"kubectl apply -f - <<EOF\n{yaml_content}EOF"
+        body = self.generate_yaml()
         try:
             print(f"🚀 Applying Chaos Mesh experiment: {self.config.name}")
-            logger.info(command)
-            subprocess.run(command, shell=True, check=True, executable="/bin/bash")
+            logger.info(body)
+            self.api.create_namespaced_custom_object(
+                group="chaos-mesh.org",
+                version="v1alpha1",
+                namespace=self.config.namespace,
+                plural="networkchaos",
+                body=body,
+            )
             print("✅ Chaos experiment applied successfully.")
-        except subprocess.CalledProcessError as e:
+        except client.ApiException as e:
             raise RuntimeError(f"❌ Failed to apply chaos experiment:\n{e}")
 
     def delete(self):
@@ -109,18 +114,14 @@ class ChaosNetworkController:
             RuntimeError: If kubectl fails to delete the experiment.
         """
         try:
-            subprocess.run(
-                [
-                    "kubectl",
-                    "delete",
-                    "networkchaos",
-                    self.config.name,
-                    "-n",
-                    self.config.namespace,
-                ],
-                check=True,
+            self.api.delete_namespaced_custom_object(
+                group="chaos-mesh.org",
+                version="v1alpha1",
+                namespace=self.config.namespace,
+                plural="networkchaos",
+                name=self.config.name,
             )
             print("🧹 Chaos experiment deleted successfully.")
-        except subprocess.CalledProcessError as e:
+        except client.ApiException as e:
             logger.exception("Chaos Network clean failed")
             raise RuntimeError(f"❌ Failed to delete chaos experiment:\n{e}")

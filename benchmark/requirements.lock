@@ -131,6 +131,7 @@ kiwisolver==1.4.8
     # via matplotlib
 kubernetes==33.1.0
     # via deployments
+    # via experiment-controller
 lingam==1.5.5
     # via causalai
 locust==2.37.10

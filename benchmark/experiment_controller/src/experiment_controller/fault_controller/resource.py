@@ -1,12 +1,11 @@
 import logging
-import subprocess
 
-import yaml
+from kubernetes import client
 
 from experiment_controller.config.resource_fault_config import ResourcesChaosConfig
 
 
-def resource_stress_config_to_yaml(config: ResourcesChaosConfig) -> str:
+def resource_stress_config_to_yaml(config: ResourcesChaosConfig) -> dict:
     """
     Convert a ResourcesChaosConfig object to a YAML string for Chaos Mesh.
 
@@ -38,15 +37,12 @@ def resource_stress_config_to_yaml(config: ResourcesChaosConfig) -> str:
         if io_chaos_config.methods is not None:
             spec["methods"] = io_chaos_config.methods
 
-        return yaml.dump(
-            {
-                "apiVersion": "chaos-mesh.org/v1alpha1",
-                "kind": "IOChaos",
-                "metadata": {"name": config.name, "namespace": config.namespace},
-                "spec": spec,
-            },
-            sort_keys=False,
-        )
+        return {
+            "apiVersion": "chaos-mesh.org/v1alpha1",
+            "kind": "IOChaos",
+            "metadata": {"name": config.name, "namespace": config.namespace},
+            "spec": spec,
+        }
     else:
         spec = {
             "selector": {
@@ -67,15 +63,12 @@ def resource_stress_config_to_yaml(config: ResourcesChaosConfig) -> str:
                 exclude_none=True
             )
 
-        return yaml.dump(
-            {
-                "apiVersion": "chaos-mesh.org/v1alpha1",
-                "kind": "StressChaos",
-                "metadata": {"name": config.name, "namespace": config.namespace},
-                "spec": spec,
-            },
-            sort_keys=False,
-        )
+        return {
+            "apiVersion": "chaos-mesh.org/v1alpha1",
+            "kind": "StressChaos",
+            "metadata": {"name": config.name, "namespace": config.namespace},
+            "spec": spec,
+        }
 
 
 class ChaosResourceController:
@@ -90,8 +83,10 @@ class ChaosResourceController:
         if not isinstance(config, ResourcesChaosConfig):
             raise TypeError("config must be an instance of ResourcesChaosConfig")
         self.config = config
+        config.load_kube_config()
+        self.api = client.CustomObjectsApi()
 
-    def generate_yaml(self) -> str:
+    def generate_yaml(self) -> dict:
         """Generate the YAML for the Chaos Mesh experiment.
 
         Returns:
@@ -101,14 +96,19 @@ class ChaosResourceController:
 
     def apply(self):
         """Apply the Chaos Mesh experiment."""
-        yaml_content = self.generate_yaml()
-        command = f"kubectl apply -f - <<EOF\n{yaml_content}EOF"
+        body = self.generate_yaml()
         try:
             print(f"🔥 Applying resource chaos experiment: {self.config.name}")
-            logging.info(command)
-            subprocess.run(command, shell=True, check=True, executable="/bin/bash")
+            logging.info(body)
+            self.api.create_namespaced_custom_object(
+                group="chaos-mesh.org",
+                version="v1alpha1",
+                namespace=self.config.namespace,
+                plural=f"{body['kind'].lower()}s",
+                body=body,
+            )
             print("✅ Chaos applied successfully.")
-        except subprocess.CalledProcessError as e:
+        except client.ApiException as e:
             raise RuntimeError(f"❌ Failed to apply chaos:\n{e}")
 
     def delete(self):
@@ -118,17 +118,13 @@ class ChaosResourceController:
         else:
             resource_type = "stresschaos"
         try:
-            subprocess.run(
-                [
-                    "kubectl",
-                    "delete",
-                    resource_type,
-                    self.config.name,
-                    "-n",
-                    self.config.namespace,
-                ],
-                check=True,
+            self.api.delete_namespaced_custom_object(
+                group="chaos-mesh.org",
+                version="v1alpha1",
+                namespace=self.config.namespace,
+                plural=resource_type,
+                name=self.config.name,
             )
             print(f"🧹 {resource_type} experiment deleted successfully.")
-        except subprocess.CalledProcessError as e:
+        except client.ApiException as e:
             raise RuntimeError(f"❌ Failed to delete {resource_type}:\n{e}")
