@@ -1,7 +1,7 @@
 import os
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from threading import Timer
 
@@ -122,7 +122,14 @@ class RCAExperiment:
             start_time = datetime.now()
             self.workload_generator.start()
             end_time = datetime.now()
-            self.collect_telemetry(save_path, start_time, end_time)
+            warm_up_interval_in_sec = parse_time_to_seconds(
+                self.config.warm_up_interval
+            )
+            self.collect_telemetry(
+                save_path,
+                start_time + timedelta(seconds=warm_up_interval_in_sec),
+                end_time,
+            )
             if self.config.clean_up.activate:
                 self.clean_up_after_experiment()
             if self.config.number_of_run > 1:

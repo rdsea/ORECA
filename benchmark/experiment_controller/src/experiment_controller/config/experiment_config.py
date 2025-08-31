@@ -29,6 +29,7 @@ class RCAExperimentConfig(BaseModel):
     experiment_name: str
     number_of_run: int
     time_between_run: str
+    warm_up_interval: str = "60s"
     clean_up: CleanUpConfig
     fault_config: FaultConfig
     ground_truth: str
