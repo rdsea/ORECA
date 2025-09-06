@@ -3,8 +3,6 @@ cluster:
   #NOTE: Don't use cluster-id 0 as it's reserved
   name: cloud
   id: 1
-  # name: edge-1
-  # id: 2
 kubeProxyReplacement: true
 
 ipam:
