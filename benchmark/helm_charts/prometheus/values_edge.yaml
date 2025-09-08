@@ -3,7 +3,8 @@ prometheus:
     # logLevel: debug
     # Global scrape interval config
     scrapeInterval: "1s"
-    retention: 3d
+    retention: 1d
+    retentionSize: "19GiB"
     routePrefix: /prometheus
     externalUrl: /prometheus
     externalLabels:
