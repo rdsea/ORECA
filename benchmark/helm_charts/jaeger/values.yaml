@@ -7,6 +7,8 @@ storage:
 collector:
   enabled: true
   service:
+    annotations:
+      io.cilium/global-service: "true"
     otlp:
       grpc:
         name: otlp-grpc

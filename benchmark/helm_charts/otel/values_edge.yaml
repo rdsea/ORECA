@@ -20,7 +20,7 @@ config:
     prometheus:
       endpoint: "XXX.XXX.XXX.XXX:8889"
     otlp:
-      endpoint: http://gateway.cloud-1.svc:5678
+      endpoint: http://jaeger-collector.observe.svc.cluster.local:4317
 
       tls:
         insecure: true

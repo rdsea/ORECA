@@ -4,7 +4,7 @@ prometheus:
     # Global scrape interval config
     scrapeInterval: "1s"
     retention: 1d
-    retentionSize: "19GiB"
+    retentionSize: "18GiB"
     routePrefix: /prometheus
     externalUrl: /prometheus
     externalLabels:

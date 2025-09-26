@@ -1,20 +1,21 @@
-experiment_name: resourcehog_memory_preprocessing
+experiment_name: resource_memory_preprocessing
 number_of_run: 3
 time_between_run: 60s
-clean_up: false
+clean_up:
+  activate: false
 fault_config:
-  name: resourcehog-memory-preprocessing
+  name: resource-memory-preprocessing
   duration: 60s
   fault_type: ResourceHog.MEMORY
   fault_specific_config:
-    name: resourcehog-memory-preprocessing
+    name: resource-memory-preprocessing
     namespace: default
     duration: 60s
     target:
       namespace: default
       label_selectors:
         app: preprocessing
-    stress_mem:
+    stress_memory:
       workers: 1
       size: 150MB
 ground_truth: "your_ground_truth_here"

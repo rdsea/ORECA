@@ -4,7 +4,7 @@ prometheus:
     # Global scrape interval config
     scrapeInterval: "1s"
     retention: 1d
-    retentionSize: "19GiB"
+    retentionSize: "18GiB"
     routePrefix: /prometheus
     externalUrl: /prometheus
     externalLabels:
@@ -278,31 +278,31 @@ additionalPrometheusRulesMap:
           - record: service:error_rate
             expr: |-
               sum(rate(calls_total{status_code = "STATUS_CODE_ERROR", span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name) / sum(rate(calls_total{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name)
-grafana:
-  enabled: true
-  namespaceOverride: "dashboard"
-
-  persistence:
-    type: pvc
-    storageClassName: "longhorn"
-    enabled: true
-    size: 5Gi
-
-  adminUser: admin
-  adminPassword: adminadminadmin
-
-  additionalDataSources:
-    - name: Loki
-      type: loki
-      url: http://loki-gateway.observe.svc.cluster.local:80
-      access: proxy
-      isDefault: false
-      orgId: ""
-
-  grafana.ini:
-    server:
-      root_url: "%(protocol)s://%(domain)s/grafana/"
-      serve_from_sub_path: true
+# grafana:
+#   enabled: true
+#   namespaceOverride: "dashboard"
+#
+#   persistence:
+#     type: pvc
+#     storageClassName: "longhorn"
+#     enabled: true
+#     size: 5Gi
+#
+#   adminUser: admin
+#   adminPassword: adminadminadmin
+#
+#   additionalDataSources:
+#     - name: Loki
+#       type: loki
+#       url: http://loki-gateway.observe.svc.cluster.local:80
+#       access: proxy
+#       isDefault: false
+#       orgId: ""
+#
+#   grafana.ini:
+#     server:
+#       root_url: "%(protocol)s://%(domain)s/grafana/"
+#       serve_from_sub_path: true
 
 prometheus-node-exporter:
   prometheus:

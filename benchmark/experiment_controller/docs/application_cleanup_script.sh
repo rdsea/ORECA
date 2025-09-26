@@ -5,15 +5,15 @@ APPLICATION_DIR="$SCRIPT_DIR/../../../applications/sesa/search_and_rescue/object
 
 # Cloud part
 kubectl config use-context cloud
-kubectl delete -f "$APPLICATION_DIR/cloud_service/rabbitmq_k8s.yaml" --wait --ignore-not-found
-kubectl delete -f "$APPLICATION_DIR/cloud_service/scylladb.yaml" --wait --ignore-not-found
-kubectl delete -f "$APPLICATION_DIR/cloud_service/ml_consumer.yaml" --wait --ignore-not-found
+kubectl delete -f "$APPLICATION_DIR/cloud/rabbitmq_k8s.yaml" --wait --ignore-not-found
+kubectl delete -f "$APPLICATION_DIR/cloud/scylladb.yaml" --wait --ignore-not-found
+kubectl delete -f "$APPLICATION_DIR/cloud/ml_consumer.yaml" --wait --ignore-not-found
 
 kubectl delete pvc persistence-rabbitmq-server-0 --wait --ignore-not-found
 kubectl delete pvc scylla-data-scylla-0 --wait --ignore-not-found
 
-kubectl apply -f "$APPLICATION_DIR/cloud_service/rabbitmq_k8s.yaml"
-kubectl apply -f "$APPLICATION_DIR/cloud_service/scylladb.yaml"
+kubectl apply -f "$APPLICATION_DIR/cloud/rabbitmq_k8s.yaml"
+kubectl apply -f "$APPLICATION_DIR/cloud/scylladb.yaml"
 kubectl wait --for=condition=Ready pod --all --timeout=300s
 sleep 5
 
@@ -35,7 +35,7 @@ CREATE TABLE object_detection.results (
 );
 EOF
 
-kubectl apply -f "$APPLICATION_DIR/cloud_service/ml_consumer.yaml"
+kubectl apply -f "$APPLICATION_DIR/cloud/ml_consumer.yaml"
 
 # Edge part
 kubectl config use-context edge

@@ -1,4 +1,5 @@
 import subprocess
+from pathlib import Path
 
 from experiment_controller.logger import logger
 
@@ -6,7 +7,7 @@ from experiment_controller.logger import logger
 class ScriptRunner:
     """Executes local shell scripts."""
 
-    def run(self, script_path: str):
+    def run(self, script_path: Path):
         """Runs a shell script and logs its output.
 
         Args:

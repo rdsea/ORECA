@@ -11,7 +11,7 @@ helm repo update
 
 # Cilium
 helm install cilium cilium/cilium --version 1.17.5 \
-  --namespace kube-system --values cilium_values.yaml
+  --namespace kube-system --values values.yaml
 kubectl wait --namespace kube-system --for=condition=Available deploy --all --timeout=300s
 
 # Prometheus
