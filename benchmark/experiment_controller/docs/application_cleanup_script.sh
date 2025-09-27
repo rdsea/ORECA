@@ -19,9 +19,20 @@ sleep 5
 
 #NOTE: because rabbitmq operator doesn't support setting specific nodePort yet so we have to patch this to get a consistent nodePort
 kubectl patch service rabbitmq \
-  -n default \
-  --type='json' \
-  -p='[{"op": "replace", "path": "/spec/ports/0/nodePort", "value": 30072}]'
+  --type='merge' \
+  -p '{
+    "spec": {
+      "ports": [
+        {
+          "name": "amqp",
+          "port": 5672,
+          "nodePort": 32000,
+          "targetPort": 5672,
+          "protocol": "TCP"
+        }
+      ]
+    }
+  }'
 
 kubectl exec -i scylla-0 -- cqlsh <<EOF
 CREATE KEYSPACE IF NOT EXISTS object_detection
@@ -51,5 +62,5 @@ while true; do
     sleep 5
   fi
 done
-bash "$APPLICATION_DIR/edge/apply.sh"
+bash "$APPLICATION_DIR/edge/apply_gpu.sh"
 kubectl wait --for=condition=Ready pod --all --timeout=300s
