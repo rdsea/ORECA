@@ -72,8 +72,8 @@ class RCAExperiment:
             self.output_dir / "experiment_config.yaml",
             "w",
         ) as f:
-            print(self.config.model_dump(mode="json"))
-            yaml.dump(self.config.model_dump(), f)
+            logger.debug(self.config.model_dump())
+            yaml.dump(self.config.model_dump(exclude_none=True), f)
         if self.config.elastic_controller_config:
             self.elastic_controller = ElasticController(
                 self.config.elastic_controller_config

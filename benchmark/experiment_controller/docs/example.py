@@ -42,10 +42,10 @@ def how_to_deactivate(namespace="default"):
 if __name__ == "__main__":
     current_path = pathlib.Path(__file__).parent
     EXPERIMENT_CONFIG = [
-        # "network_delay_preprocessing.yaml",
+        "network_delay_preprocessing.yaml",
         # "network_loss_preprocessing.yaml",
         # "resource_cpu_preprocessing.yaml",
-        "resource_memory_preprocessing.yaml",
+        # "resource_memory_preprocessing.yaml",
     ]
     for experiment_name in EXPERIMENT_CONFIG:
         config_path = current_path / "config" / experiment_name
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         )
         logger.info(f"Starting experiment: {experiment_config.experiment_name}")
         # Uncomment to run
-        # experiment.run()
+        experiment.run()
         logger.info(f"Finished experiment: {experiment_config.experiment_name}")
 
     current_path = pathlib.Path(__file__).parent

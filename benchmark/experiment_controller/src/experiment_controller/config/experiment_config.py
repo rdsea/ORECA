@@ -19,8 +19,8 @@ class MonitorConfig(BaseModel):
 
 class CleanUpConfig(BaseModel):
     activate: bool
-    observability_cleanup_script: Path | None = None
-    application_cleanup_script: Path | None = None
+    observability_cleanup_script: str | None = None
+    application_cleanup_script: str | None = None
 
 
 class RCAExperimentConfig(BaseModel):

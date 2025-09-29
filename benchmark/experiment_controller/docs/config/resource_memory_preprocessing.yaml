@@ -22,9 +22,9 @@ ground_truth: "your_ground_truth_here"
 
 anomaly_injection_period: 900s
 list_of_generator:
-  - XXX.XXX.XXX.XXX
-  - XXX.XXX.XXX.XXX
-  - XXX.XXX.XXX.XXX
+  - edge-raspi3.cs.aalto.fi
+  - edge-raspi4.cs.aalto.fi
+  - edge-raspi5.cs.aalto.fi
 ssh_username: aaltosea
 workload:
   type: docker
@@ -35,13 +35,13 @@ workload:
       user: "5"
       run-time: 970s
       spawn-rate: "5"
-elastic_controller_config:
-  elastic_used:
-    - name: "Horizontal Pod Autoscaler"
-      type: infrastructure
-      active: false
-      # how_to_activate: "user_defined_function_to_activate"
-      # how_to_deactivate: "user_defined_function_to_deactivate"
+# elastic_controller_config:
+#   elastic_used:
+#     - name: "Horizontal Pod Autoscaler"
+#       type: infrastructure
+#       active: false
+#       how_to_activate: "user_defined_function_to_activate"
+#       how_to_deactivate: "user_defined_function_to_deactivate"
 monitor_config:
   metric_url: http://XXX.XXX.XXX.XXX/prometheus
   # K8s

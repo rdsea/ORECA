@@ -61,11 +61,10 @@ kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
 
 # Edge part
 kubectl config use-context edge
+helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
+  -f "$HELM_PATH/otel/values_edge.yaml" -n observe --version 0.129.0
+
 kubectl create namespace dashboard || true
 helm install prometheus prometheus-community/kube-prometheus-stack \
   -n observe --values "$HELM_PATH/prometheus/values_edge.yaml" --create-namespace --version 75.12.0
-kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
-
-helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
-  -f "$HELM_PATH/otel/values_edge.yaml" -n observe --version 0.129.0
 kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
