@@ -49,23 +49,23 @@ kubectl config use-context cloud
 kubectl create namespace dashboard || true
 helm install prometheus prometheus-community/kube-prometheus-stack \
   -n observe --values "$HELM_PATH/prometheus/values_cloud.yaml" --create-namespace --version 75.12.0
-kubectl wait --namespace observe --for=condition=Available deploy --all --timeout=300s
+kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
 
 helm install jaeger jaegertracing/jaeger \
   -n observe --create-namespace -f "$HELM_PATH/jaeger/values.yaml" --version 3.4.1
-kubectl wait --namespace observe --for=condition=Available deploy --all --timeout=300s
+kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
 
 helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
   -f "$HELM_PATH/otel/values_cloud.yaml" -n observe --version 0.129.0
-kubectl wait --namespace observe --for=condition=Available deploy --all --timeout=300s
+kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
 
 # Edge part
 kubectl config use-context edge
 kubectl create namespace dashboard || true
 helm install prometheus prometheus-community/kube-prometheus-stack \
   -n observe --values "$HELM_PATH/prometheus/values_edge.yaml" --create-namespace --version 75.12.0
-kubectl wait --namespace observe --for=condition=Available deploy --all --timeout=300s
+kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
 
 helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
   -f "$HELM_PATH/otel/values_edge.yaml" -n observe --version 0.129.0
-kubectl wait --namespace observe --for=condition=Available deploy --all --timeout=300s
+kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s

@@ -5,6 +5,7 @@ APPLICATION_DIR="$SCRIPT_DIR/../../../applications/sesa/search_and_rescue/object
 
 # Cloud part
 kubectl config use-context cloud
+kubectl delete -f "$APPLICATION_DIR/cloud/coredns_custom.yaml"
 kubectl delete -f "$APPLICATION_DIR/cloud/rabbitmq_k8s.yaml" --wait --ignore-not-found
 kubectl delete -f "$APPLICATION_DIR/cloud/scylladb.yaml" --wait --ignore-not-found
 kubectl delete -f "$APPLICATION_DIR/cloud/ml_consumer.yaml" --wait --ignore-not-found
@@ -12,6 +13,9 @@ kubectl delete -f "$APPLICATION_DIR/cloud/ml_consumer.yaml" --wait --ignore-not-
 kubectl delete pvc persistence-rabbitmq-server-0 --wait --ignore-not-found
 kubectl delete pvc scylla-data-scylla-0 --wait --ignore-not-found
 
+kubectl apply -f "$APPLICATION_DIR/cloud/coredns_custom.yaml"
+kubectl rollout restart -n kube-system deployment coredns
+sleep 3
 kubectl apply -f "$APPLICATION_DIR/cloud/rabbitmq_k8s.yaml"
 kubectl apply -f "$APPLICATION_DIR/cloud/scylladb.yaml"
 kubectl wait --for=condition=Ready pod --all --timeout=300s
@@ -26,7 +30,7 @@ kubectl patch service rabbitmq \
         {
           "name": "amqp",
           "port": 5672,
-          "nodePort": 32000,
+          "nodePort": 30072,
           "targetPort": 5672,
           "protocol": "TCP"
         }
@@ -50,17 +54,25 @@ kubectl apply -f "$APPLICATION_DIR/cloud/ml_consumer.yaml"
 
 # Edge part
 kubectl config use-context edge
+kubectl delete -f "$APPLICATION_DIR/edge/coredns_custom.yaml"
 bash "$APPLICATION_DIR/edge/remove.sh"
 echo "Waiting for all terminating pods to be deleted..."
 while true; do
-  terminating=$(kubectl get pods --field-selector=status.phase=Terminating --no-headers 2>/dev/null)
+  terminating=$(kubectl get pods --all-namespaces -o json |
+    jq -r '.items[] | select(.metadata.deletionTimestamp != null) | .metadata.namespace + "/" + .metadata.name')
+
   if [[ -z "$terminating" ]]; then
     echo "✅ All terminating pods deleted."
     break
   else
     echo "⏳ Waiting for pods to terminate..."
+    echo "$terminating"
     sleep 5
   fi
 done
+
+kubectl apply -f "$APPLICATION_DIR/edge/coredns_custom.yaml"
+kubectl rollout restart -n kube-system deployment coredns
+sleep 3
 bash "$APPLICATION_DIR/edge/apply_gpu.sh"
 kubectl wait --for=condition=Ready pod --all --timeout=300s
