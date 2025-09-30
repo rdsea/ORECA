@@ -1,9 +1,9 @@
-cpu -> service:cpu_usage
-diskio -> service:io
+cpu -> service:cpu_usage - container-cpu-usage-seconds-total
+diskio -> service:io - container-blkio-device-usage-total
 error ->
 latency-50 -> service:p50_latency
 latency-90 -> service:p90_latency
 mem -> service:memory_usage
-socket -> service:socket
+socket -> service:socket - container-sockets
 time
-workload 
+workload  -> istio-request-total
