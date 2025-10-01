@@ -1,30 +1,30 @@
-experiment_name: resource_cpu_preprocessing
+experiment_name: network_loss_inference-mobilenet
 number_of_run: 3
 time_between_run: 60s
 clean_up:
   activate: false
 fault_config:
-  name: resource-cpu-preprocessing
+  name: network-loss-inference-mobilenet
   duration: 60s
-  fault_type: ResourceHog.CPU
+  fault_type: NetworkFault.LOSS
   fault_specific_config:
-    name: resource-cpu-preprocessing
+    name: network-loss-inference-mobilenet
     namespace: default
     duration: 60s
     target:
       namespace: default
       label_selectors:
-        app: preprocessing
-    stress_cpu:
-      workers: 1
-      load: 100
+        app: inference-mobilenet
+    loss:
+      loss: "50"
+      correlation: "0.5"
 ground_truth: "your_ground_truth_here"
 
-anomaly_injection_period: 900s
+anomaly_injection_period: 600s
 list_of_generator:
   - edge-raspi3.cs.aalto.fi
-  - edge-raspi4.cs.aalto.fi
-  - edge-raspi5.cs.aalto.fi
+  # - edge-raspi4.cs.aalto.fi
+  # - edge-raspi5.cs.aalto.fi
 ssh_username: aaltosea
 workload:
   type: docker
@@ -33,8 +33,8 @@ workload:
     args:
       host: http://XXX.XXX.XXX.XXX
       user: "5"
-      run-time: 970s
-      spawn-rate: "5"
+      run-time: 670s
+      spawn-rate: "0.1"
 # elastic_controller_config:
 #   elastic_used:
 #     - name: "Horizontal Pod Autoscaler"
