@@ -29,6 +29,29 @@ prometheus:
     selector: {}
 
     additionalScrapeConfigs: |
+      - job_name: 'blackbox'
+        metrics_path: /probe
+        params:
+          module: [icmp]
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names: ['default']
+        relabel_configs:
+          - source_labels: [__address__]
+            regex: (.+):\d+
+            replacement: $1
+            target_label: __param_target
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: instance
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            target_label: app
+          - target_label: __address__
+            replacement: blackbox-exporter-prometheus-blackbox-exporter.observe:9115
+
+      - job_name: 'blackbox_exporter'
+        static_configs:
+          - targets: ['blackbox-exporter-prometheus-blackbox-exporter.observe:9115']
       - job_name: 'federate'
         honor_timestamps: true
         track_timestamps_staleness: false
