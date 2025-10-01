@@ -220,7 +220,7 @@ additionalPrometheusRulesMap:
   anomaly-detection:
     groups:
       - name: spanmetrics_alias
-        interval: 2s
+        interval: 1s
         rules:
           - record: latency_bucket
             expr: latency_milliseconds_bucket
@@ -230,6 +230,7 @@ additionalPrometheusRulesMap:
             expr: traces_span_metrics_duration_milliseconds_bucket
 
       - name: AnomalyNodeExporter
+        interval: 1s
         rules:
           - record: node:cpu_usage
             expr: |-
