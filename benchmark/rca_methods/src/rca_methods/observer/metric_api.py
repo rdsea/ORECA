@@ -36,6 +36,7 @@ SERVICE_METRICS = [
     "service:network_receive",
     "service:network_transmit",
     "service:io",
+    "service:rtt",
     "service:p95_latency",
     "service:p75_latency",
     "service:p50_latency",
@@ -107,11 +108,14 @@ class PrometheusAPI:
         end_time = time_format_transform(end_time)
         return_pd = pd.DataFrame()
         for metric in metric_list:
+            logger.debug(f"Querying metric {metric}")
             query = f"{metric}"
             data_raw = self.client.custom_query_range(
                 query, start_time, end_time, step=step
             )
+            logger.debug(data_raw)
             if len(data_raw) == 0:
+                logger.debug(f"No data for metric {metric}")
                 continue
             timestamp_list = []
             value_list = []
@@ -193,15 +197,17 @@ class PrometheusAPI:
                                 else:
                                     span_name = data["metric"]["span_name"]
                             if "workload" in data["metric"]:
-                                service_name_list.append(
-                                    f"{data['metric']['workload']}_{span_name}"
-                                )
+                                service_name_list.append(data["metric"]["workload"])
                             elif "service_name" in data["metric"]:
                                 service_name_list.append(
                                     f"{data['metric']['service_name']}_{span_name}"
+                                    if span_name
+                                    else data["metric"]["service_name"]
                                 )
+                            elif "service" in data["metric"]:
+                                service_name_list.append(data["metric"]["service"])
                             timestamp_list.append(int(d[0]))
-                            value_list.append(round(float(d[1]), 3))
+                            value_list.append(float(d[1]))
                     dt = pd.DataFrame(
                         {
                             "timestamp": timestamp_list,
@@ -209,6 +215,7 @@ class PrometheusAPI:
                             "value": value_list,
                         }
                     )
+                    logger.debug(service_name_list)
                     dt["service_metric"] = dt["service_name"] + f"_{metric}"
 
                     pivoted = dt.pivot(
