@@ -76,6 +76,7 @@ prometheus:
             - 'duration_milliseconds_bucket'
             - 'calls_total'
             - 'container_sockets'
+            - 'probe_icmp_duration_seconds'
 
         static_configs:
           - targets:
