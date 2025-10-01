@@ -273,6 +273,12 @@ additionalPrometheusRulesMap:
               * on (namespace,pod)
               group_left(workload,workload_type) namespace_workload_pod:kube_pod_owner:relabel{ namespace="default"}) by (workload))
 
+          - record: service:rtt
+            expr: |-
+              avg by (app) (
+                quantile_over_time(0.95, probe_icmp_duration_seconds{phase="rtt"}[5m])
+              )
+
           - record: service:socket
             expr: |-
               sum( container_sockets{namespace="default"} * on(namespace,pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{namespace="default"}) by (workload)
