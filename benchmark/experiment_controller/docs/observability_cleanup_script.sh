@@ -31,13 +31,13 @@ uninstall_helm_releases() {
 
 # Clean up
 # Cloud part
-uninstall_helm_releases cloud observe prometheus jaeger my-opentelemetry-collector
+uninstall_helm_releases cloud observe prometheus jaeger my-opentelemetry-collector blackbox-exporter
 kubectl delete -n observe pvc prometheus-prometheus-kube-prometheus-prometheus-db-prometheus-prometheus-kube-prometheus-prometheus-0 --ignore-not-found
 kubectl delete -n observe pvc data-jaeger-elasticsearch-master-0 --ignore-not-found
 kubectl delete -n observe pvc data-jaeger-elasticsearch-data-0 --ignore-not-found
 
 # Edge part
-uninstall_helm_releases edge observe prometheus my-opentelemetry-collector
+uninstall_helm_releases edge observe prometheus my-opentelemetry-collector blackbox-exporter
 kubectl delete -n observe pvc prometheus-prometheus-kube-prometheus-prometheus-db-prometheus-prometheus-kube-prometheus-prometheus-0 --ignore-not-found
 
 # Redeploy
@@ -49,6 +49,10 @@ kubectl config use-context cloud
 kubectl create namespace dashboard || true
 helm install prometheus prometheus-community/kube-prometheus-stack \
   -n observe --values "$HELM_PATH/prometheus/values_cloud.yaml" --create-namespace --version 75.12.0
+
+helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
+  -n observe --values "$HELM_PATH/prometheus/blackbox_exporter.yaml" --version 11.3.1
+
 kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
 
 helm install jaeger jaegertracing/jaeger \
@@ -67,4 +71,8 @@ helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
 kubectl create namespace dashboard || true
 helm install prometheus prometheus-community/kube-prometheus-stack \
   -n observe --values "$HELM_PATH/prometheus/values_edge.yaml" --create-namespace --version 75.12.0
+
+helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
+  -n observe --values "$HELM_PATH/prometheus/blackbox_exporter.yaml" --version 11.3.1
+
 kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
