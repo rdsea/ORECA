@@ -45,7 +45,7 @@ prometheus:
           - source_labels: [__meta_kubernetes_pod_name]
             target_label: instance
           - source_labels: [__meta_kubernetes_pod_label_app]
-            target_label: app
+            target_label: service
           - target_label: __address__
             replacement: blackbox-exporter-prometheus-blackbox-exporter.observe:9115
 
@@ -304,7 +304,7 @@ additionalPrometheusRulesMap:
 
           - record: service:rtt
             expr: |-
-              avg by (app) (
+              avg by (service) (
                 quantile_over_time(0.95, probe_icmp_duration_seconds{phase="rtt"}[5m])
               )
 
