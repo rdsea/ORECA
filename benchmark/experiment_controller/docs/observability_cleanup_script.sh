@@ -53,11 +53,11 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
 helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
   -n observe --values "$HELM_PATH/prometheus/blackbox_exporter.yaml" --version 11.3.1
 
-kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
+kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=400s
 
 helm install jaeger jaegertracing/jaeger \
   -n observe --create-namespace -f "$HELM_PATH/jaeger/values.yaml" --version 3.4.1
-kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
+kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=400s
 
 helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
   -f "$HELM_PATH/otel/values_cloud.yaml" -n observe --version 0.129.0
@@ -75,4 +75,4 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
 helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
   -n observe --values "$HELM_PATH/prometheus/blackbox_exporter.yaml" --version 11.3.1
 
-kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
+kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=400s

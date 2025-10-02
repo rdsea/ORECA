@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import traceback
 from datetime import datetime, timedelta
 from pathlib import Path
 from threading import Timer
@@ -110,30 +111,35 @@ class RCAExperiment:
             save_path = self.output_dir / str(i + 1)
             os.makedirs(save_path, exist_ok=True)
 
-            if self.config.elastic_controller_config:
-                self.elastic_controller.activate_all()
+            try:
+                if self.config.elastic_controller_config:
+                    self.elastic_controller.activate_all()
 
-            # Schedule anomaly injection using a timer
-            Timer(
-                inject_delay,
-                self.inject_anomaly,
-            ).start()
+                # Schedule anomaly injection using a timer
+                Timer(
+                    inject_delay,
+                    self.inject_anomaly,
+                ).start()
 
-            start_time = datetime.now()
-            self.workload_generator.start()
-            end_time = datetime.now()
-            warm_up_interval_in_sec = parse_time_to_seconds(
-                self.config.warm_up_interval
-            )
-            self.collect_telemetry(
-                save_path,
-                start_time + timedelta(seconds=warm_up_interval_in_sec),
-                end_time,
-            )
-            if self.config.clean_up.activate:
-                self.clean_up_after_experiment()
-            if self.config.number_of_run > 1:
-                time.sleep(parse_time_to_seconds(self.config.time_between_run))
+                start_time = datetime.now()
+                self.workload_generator.start()
+                end_time = datetime.now()
+                warm_up_interval_in_sec = parse_time_to_seconds(
+                    self.config.warm_up_interval
+                )
+                self.collect_telemetry(
+                    save_path,
+                    start_time + timedelta(seconds=warm_up_interval_in_sec),
+                    end_time,
+                )
+                if self.config.clean_up.activate:
+                    self.clean_up_after_experiment()
+                if self.config.number_of_run > 1:
+                    time.sleep(parse_time_to_seconds(self.config.time_between_run))
+            except Exception as e:
+                logger.exception(f"Experiment failed: {e}")
+                with open(save_path / "status.txt", "w") as f:
+                    traceback.print_exc(file=f)
 
     def inject_anomaly(self):
         """Injects the configured anomaly.
@@ -177,10 +183,14 @@ class RCAExperiment:
             )
         if self.config.clean_up.observability_cleanup_script:
             logger.info("Cleaning up observability")
-            self.script_runner.run(self.config.clean_up.observability_cleanup_script)
+            self.script_runner.run_retry(
+                self.config.clean_up.observability_cleanup_script
+            )
         if self.config.clean_up.application_cleanup_script:
             logger.info("Cleaning up application")
-            self.script_runner.run(self.config.clean_up.application_cleanup_script)
+            self.script_runner.run_retry(
+                self.config.clean_up.application_cleanup_script
+            )
         logger.info("Clean up completed")
 
     def collect_telemetry(

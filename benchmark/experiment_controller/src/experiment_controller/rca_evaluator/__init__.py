@@ -6,6 +6,7 @@ import pandas as pd
 import yaml
 from rca_methods.rca_factory import RCAFactory, RCAMethodEnum
 from rca_methods.utility import read_data
+from tabulate import tabulate
 from tqdm import tqdm
 
 from experiment_controller.config.experiment_config import RCAExperimentConfig
@@ -107,33 +108,28 @@ class RCAEvaluator:
         self.print_results_table()
 
     def print_results_table(self):
-        """Generate and print a table of results organized by fault type.
-
-        This method creates a formatted table showing evaluation metrics for each
-        RCA method, organized by fault type. This allows for easy comparison of
-        method performance across different types of faults.
-
-        The table format is:
-        | Fault Type | Precision@1 | Recall@1 | Accuracy@1 | Precision@3 | Recall@3 | Accuracy@3 | Precision@5 | Recall@5 | Accuracy@5 | MRR |
-
-        For each fault type with no experiments, it shows "-" for all metrics.
-        """
-        # Collect all fault types
+        """Generate and print a table of results organized by fault type using tabulate."""
         fault_types = list(set(self.experiment_fault_types.values()))
 
-        # For each RCA method, organize results by fault type
         for rca_method in self.rca_methods:
             print(f"\n# RCA Evaluation Results for {rca_method.name}")
-            print(
-                "\n| Fault Type | Precision@1 | Recall@1 | Accuracy@1 | Precision@3 | Recall@3 | Accuracy@3 | Precision@5 | Recall@5 | Accuracy@5 | MRR |"
-            )
-            print(
-                "|------------|-------------|----------|------------|-------------|----------|------------|-------------|----------|------------|-----|"
-            )
 
-            # Evaluate results for each fault type
+            headers = [
+                "Fault Type",
+                "Precision@1",
+                "Recall@1",
+                "Accuracy@1",
+                "Precision@3",
+                "Recall@3",
+                "Accuracy@3",
+                "Precision@5",
+                "Recall@5",
+                "Accuracy@5",
+                "MRR",
+            ]
+
+            table = []
             for fault_type in fault_types:
-                # Filter experiments by fault type
                 filtered_predictions = {}
                 filtered_ground_truth = {}
 
@@ -150,17 +146,27 @@ class RCAEvaluator:
                                 experiment_id
                             ]
 
-                # Only evaluate if we have experiments for this fault type
                 if filtered_predictions:
                     results = self.evaluate(filtered_predictions, filtered_ground_truth)
-                    print(
-                        f"| {fault_type} | {results['precision_at_1']:.3f} | {results['recall_at_1']:.3f} | {results['accuracy_at_1']:.3f} | "
-                        f"{results['precision_at_3']:.3f} | {results['recall_at_3']:.3f} | {results['accuracy_at_3']:.3f} | "
-                        f"{results['precision_at_5']:.3f} | {results['recall_at_5']:.3f} | {results['accuracy_at_5']:.3f} | "
-                        f"{results['mean_reciprocal_rank']:.3f} |"
-                    )
+                    row = [
+                        fault_type,
+                        f"{results['precision_at_1']:.3f}",
+                        f"{results['recall_at_1']:.3f}",
+                        f"{results['accuracy_at_1']:.3f}",
+                        f"{results['precision_at_3']:.3f}",
+                        f"{results['recall_at_3']:.3f}",
+                        f"{results['accuracy_at_3']:.3f}",
+                        f"{results['precision_at_5']:.3f}",
+                        f"{results['recall_at_5']:.3f}",
+                        f"{results['accuracy_at_5']:.3f}",
+                        f"{results['mean_reciprocal_rank']:.3f}",
+                    ]
                 else:
-                    print(f"| {fault_type} | - | - | - | - | - | - | - | - | - | - |")
+                    row = [fault_type] + ["-"] * (len(headers) - 1)
+
+                table.append(row)
+
+            print(tabulate(table, headers=headers, tablefmt="github"))
 
     def process_experiment(self, experiment_dir: Path):
         """Process a single experiment directory.
