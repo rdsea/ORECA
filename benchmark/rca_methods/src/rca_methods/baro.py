@@ -4,9 +4,7 @@ import pandas as pd
 from sklearn.preprocessing import RobustScaler
 
 from rca_methods.base_rca import BaseRCA
-from rca_methods.io.time_series import (
-    preprocess,
-)
+from rca_methods.io.time_series import drop_kpi, preprocess
 
 warnings.filterwarnings("ignore")
 
@@ -19,6 +17,8 @@ class Baro(BaseRCA):
         self, dataset: pd.DataFrame, injection_time: int | None, top_k=5, **kwargs
     ) -> list[tuple[str, float]]:
         dataset.fillna(0, inplace=True)
+        # NOTE: DROP KPI HERE
+        dataset = drop_kpi(dataset)
         if "anomalies" not in kwargs:
             normal_df = dataset[dataset["timestamp"] < injection_time]
             anomal_df = dataset[dataset["timestamp"] >= injection_time]

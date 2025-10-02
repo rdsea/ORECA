@@ -8,9 +8,7 @@ from causallearn.search.ConstraintBased.PC import pc
 
 from rca_methods.base_rca import BaseRCA
 from rca_methods.graph_heads import finalize_directed_adj
-from rca_methods.io.time_series import (
-    preprocess,
-)
+from rca_methods.io.time_series import drop_kpi, preprocess
 
 
 class CloudRanger(BaseRCA):
@@ -36,6 +34,8 @@ class CloudRanger(BaseRCA):
             list[tuple[str, float]]: A list of tuples containing root causes and their scores.
         """
         sli = kwargs.get("sli", None)
+
+        dataset = drop_kpi(dataset)
         data = preprocess(
             data=dataset,
             dataset=kwargs.get("dataset", None),

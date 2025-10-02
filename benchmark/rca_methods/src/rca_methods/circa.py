@@ -3,6 +3,7 @@ import pandas as pd
 from rca_methods.base_rca import BaseRCA
 from rca_methods.graph_construction.pc import pc_default
 from rca_methods.graph_heads.rht import rht
+from rca_methods.io.time_series import drop_kpi
 
 
 class Circa(BaseRCA):
@@ -32,7 +33,9 @@ class Circa(BaseRCA):
         #     dk_select_useful=kwargs.get("dk_select_useful", False),
         # )
 
+        dataset = drop_kpi(dataset)
         pc_input = dataset.drop(columns=["timestamp"])
+
         pc_input.columns.to_list()
 
         adj = pc_default(pc_input)

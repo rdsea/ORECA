@@ -13,7 +13,7 @@ from torch.autograd import Variable
 from torch.optim import lr_scheduler
 
 from rca_methods.base_rca import BaseRCA
-from rca_methods.io.time_series import drop_constant, preprocess
+from rca_methods.io.time_series import drop_constant, drop_kpi, preprocess
 
 warnings.filterwarnings("ignore")
 _EPS = 1e-10
@@ -149,6 +149,8 @@ class CausalRCA(BaseRCA):  # NOTE
         Returns:
             list[tuple[str, float]]: A list of tuples containing root causes and their scores.
         """
+
+        dataset = drop_kpi(dataset)
         data = dataset
         dataset_name = kwargs.get("dataset", None)
         # with_bg = kwargs.get("with_bg", False)

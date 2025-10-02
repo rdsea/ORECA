@@ -6,7 +6,7 @@ from pathlib import Path
 from threading import Timer
 
 import yaml
-from rca_methods.observer.metric_api import ALL_METRICS, PrometheusAPI
+from rca_methods.observer.metric_api import SERVICE_METRICS, PrometheusAPI
 
 from experiment_controller.config.experiment_config import RCAExperimentConfig
 from experiment_controller.config.workload_config import (
@@ -176,8 +176,10 @@ class RCAExperiment:
                 "As clean up is activated, either observability or application script path need to be provided"
             )
         if self.config.clean_up.observability_cleanup_script:
+            logger.info("Cleaning up observability")
             self.script_runner.run(self.config.clean_up.observability_cleanup_script)
         if self.config.clean_up.application_cleanup_script:
+            logger.info("Cleaning up application")
             self.script_runner.run(self.config.clean_up.application_cleanup_script)
         logger.info("Clean up completed")
 
@@ -203,7 +205,7 @@ class RCAExperiment:
             f"Start querying metrics from {self.config.monitor_config.metric_url}"
         )
         prom.query_range(
-            ALL_METRICS,
+            SERVICE_METRICS,
             experiment_startime,
             experiment_endtime,
             save_path=save_path,

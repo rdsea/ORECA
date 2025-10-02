@@ -3,6 +3,7 @@ from causalai.application import RootCauseDetector
 from causalai.application.common import rca_preprocess
 
 from rca_methods.base_rca import BaseRCA
+from rca_methods.io.time_series import drop_kpi
 
 
 def drop_constant_column(df: pd.DataFrame) -> pd.DataFrame:
@@ -38,6 +39,7 @@ class CausalAI(BaseRCA):
             list[tuple[str, float]]: A list of tuples, where each tuple contains
                                      the name of a potential root cause (str) and its score (float).
         """
+        dataset = drop_kpi(dataset)
         data = drop_constant_column(dataset)
 
         # if "timestamp" not in data.columns:

@@ -28,4 +28,3 @@ class ScriptRunner:
         except subprocess.CalledProcessError as e:
             logger.error("Script failed with code %s", e.returncode)
             logger.error("stderr: %s", e.stderr.strip())
-            raise RuntimeError(f"Failed to execute script: {script_path}") from e

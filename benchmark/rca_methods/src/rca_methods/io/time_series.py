@@ -1,5 +1,7 @@
 import pandas as pd
 
+KPI_COLUMN = ["latency"]
+
 
 def drop_constant(df: pd.DataFrame) -> pd.DataFrame:
     """Drops columns from a DataFrame that have only one unique value (constant columns).
@@ -196,3 +198,8 @@ def preprocess(
     len(data.columns)
     # print(f"Drop {before_cols_num - after_cols_num} cols. Left {after_cols_num} cols.")
     return data
+
+
+def drop_kpi(dataset: pd.DataFrame) -> pd.DataFrame:
+    dataset = dataset.drop(columns=[col for col in dataset.columns if "latency" in col])
+    return dataset
