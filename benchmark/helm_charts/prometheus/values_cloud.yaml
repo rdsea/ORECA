@@ -29,6 +29,10 @@ prometheus:
     selector: {}
 
     additionalScrapeConfigs: |
+      - job_name: 'tempo_metrics'
+        static_configs:
+          - targets: ['tempo-metrics-generator.observe:3200']
+
       - job_name: 'blackbox'
         metrics_path: /probe
         params:
@@ -358,6 +362,10 @@ grafana:
       access: proxy
       isDefault: false
       orgId: ""
+    - name: Tempo
+      type: tempo
+      url: http://tempo-query-frontend.observe:3200
+      isDefault: false
 
   grafana.ini:
     server:

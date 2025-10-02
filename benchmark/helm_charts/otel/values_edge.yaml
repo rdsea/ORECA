@@ -20,7 +20,7 @@ config:
     prometheus:
       endpoint: "XXX.XXX.XXX.XXX:8889"
     otlp:
-      endpoint: http://jaeger-collector.observe.svc.cluster.local:4317
+      endpoint: http://tempo-distributor.observe:4317
 
       tls:
         insecure: true
