@@ -9,3 +9,4 @@ c_format = logging.Formatter(
 )
 c_handler.setFormatter(c_format)
 logger.addHandler(c_handler)
+logger.setLevel(logging.INFO)

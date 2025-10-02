@@ -35,10 +35,13 @@ uninstall_helm_releases cloud observe prometheus jaeger my-opentelemetry-collect
 kubectl delete -n observe pvc prometheus-prometheus-kube-prometheus-prometheus-db-prometheus-prometheus-kube-prometheus-prometheus-0 --ignore-not-found
 kubectl delete -n observe pvc data-jaeger-elasticsearch-master-0 --ignore-not-found
 kubectl delete -n observe pvc data-jaeger-elasticsearch-data-0 --ignore-not-found
+kubectl delete namespace observe --ignore-not-found
+kubectl delete namespace dashboard --ignore-not-found
 
 # Edge part
 uninstall_helm_releases edge observe prometheus my-opentelemetry-collector blackbox-exporter
 kubectl delete -n observe pvc prometheus-prometheus-kube-prometheus-prometheus-db-prometheus-prometheus-kube-prometheus-prometheus-0 --ignore-not-found
+kubectl delete namespace observe --ignore-not-found
 
 # Redeploy
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

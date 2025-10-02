@@ -112,6 +112,8 @@ class RCAExperiment:
             os.makedirs(save_path, exist_ok=True)
 
             try:
+                if self.config.clean_up.activate:
+                    self.clean_up_after_experiment()
                 if self.config.elastic_controller_config:
                     self.elastic_controller.activate_all()
 
@@ -132,8 +134,6 @@ class RCAExperiment:
                     start_time + timedelta(seconds=warm_up_interval_in_sec),
                     end_time,
                 )
-                if self.config.clean_up.activate:
-                    self.clean_up_after_experiment()
                 if self.config.number_of_run > 1:
                     time.sleep(parse_time_to_seconds(self.config.time_between_run))
             except Exception as e:

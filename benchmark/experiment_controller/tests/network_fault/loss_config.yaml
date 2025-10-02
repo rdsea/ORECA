@@ -1,4 +1,4 @@
-name: network-delay-preprocessing
+name: network-loss-preprocessing
 namespace: default
 duration: 30s
 target:

@@ -6,10 +6,8 @@ from experiment_controller.config.experiment_config import (
 )
 from experiment_controller.experiment_controller import RCAExperiment
 from experiment_controller.logger import logger
-from experiment_controller.rca_evaluator import RCAEvaluator
 from kubernetes import config, utils
 from kubernetes.client import AutoscalingV2Api
-from rca_methods.rca_factory import RCAMethodEnum
 
 
 def how_to_activate(namespace="default"):
@@ -42,13 +40,13 @@ def how_to_deactivate(namespace="default"):
 if __name__ == "__main__":
     current_path = pathlib.Path(__file__).parent
     EXPERIMENT_CONFIG = [
-        "network_delay_preprocessing.yaml",
+        # "network_delay_preprocessing.yaml",
         # "network_loss_preprocessing.yaml",
-        # "resource_cpu_preprocessing.yaml",
-        # "resource_memory_preprocessing.yaml",
+        "resource_cpu_preprocessing.yaml",
+        "resource_memory_preprocessing.yaml",
     ]
     for experiment_name in EXPERIMENT_CONFIG:
-        config_path = current_path / "config" / experiment_name
+        config_path = current_path / "config" / "preprocessing" / experiment_name
         with open(config_path) as f:
             config_data = yaml.safe_load(f)
 
@@ -64,11 +62,19 @@ if __name__ == "__main__":
 
     current_path = pathlib.Path(__file__).parent
 
-    RCA_METHODS_TO_EVALUATE = [RCAMethodEnum.BARO]
-
-    rca_evaluator = RCAEvaluator(
-        current_path / "example_experiment_result",
-        RCA_METHODS_TO_EVALUATE,
-    )
-
-    rca_evaluator.create_report()
+    # RCA_METHODS_TO_EVALUATE = [
+    #     RCAMethodEnum.BARO,
+    #     RCAMethodEnum.DUMMY,
+    #     RCAMethodEnum.CAUSALAI,
+    #     # RCAMethodEnum.CAUSALRCA,
+    #     RCAMethodEnum.CIRCA,
+    #     RCAMethodEnum.CLOUDRANGER,
+    # ]
+    # # RCA_METHODS_TO_EVALUATE = [RCAMethodEnum.BARO]
+    #
+    # rca_evaluator = RCAEvaluator(
+    #     current_path / "example_experiment_result",
+    #     RCA_METHODS_TO_EVALUATE,
+    # )
+    #
+    # rca_evaluator.create_report()

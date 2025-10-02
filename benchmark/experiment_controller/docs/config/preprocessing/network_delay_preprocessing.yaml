@@ -7,12 +7,12 @@ clean_up:
   application_cleanup_script: "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/application_cleanup_script.sh"
 fault_config:
   name: network-delay-preprocessing
-  duration: 60s
+  duration: 300s
   fault_type: NetworkFault.DELAY
   fault_specific_config:
     name: network-delay-preprocessing
     namespace: default
-    duration: 60s
+    duration: 300s
     target:
       namespace: default
       label_selectors:
@@ -21,8 +21,9 @@ fault_config:
       latency: 50ms
       correlation: "0.5"
       jitter: 20ms
-ground_truth: "preprocessing_rtt"
+ground_truth: "preprocessing_service:rtt"
 anomaly_injection_period: 900s
+warm_up_interval: 300s
 list_of_generator:
   - edge-raspi3.cs.aalto.fi
   # - edge-raspi4.cs.aalto.fi
@@ -35,8 +36,8 @@ workload:
     args:
       host: http://XXX.XXX.XXX.XXX
       user: "5"
-      run-time: 670s
-      spawn-rate: "5"
+      run-time: 1200s
+      spawn-rate: "0.1"
 # elastic_controller_config:
 #   elastic_used:
 #     - name: "Horizontal Pod Autoscaler"

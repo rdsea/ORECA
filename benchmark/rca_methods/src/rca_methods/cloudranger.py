@@ -54,8 +54,7 @@ class CloudRanger(BaseRCA):
         rho = 0.2
 
         # graph construction, pc
-        cg = pc(np_data.astype(float), show_progress=True, alpha=pc_alpha)
-        print("Finish creatring causal graph")
+        cg = pc(np_data.astype(float), show_progress=False, alpha=pc_alpha)
         adj = cg.G.graph
 
         # scoring
