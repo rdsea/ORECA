@@ -1,8 +1,7 @@
-import logging
-
 from kubernetes import client
 
 from experiment_controller.config.resource_fault_config import ResourcesChaosConfig
+from experiment_controller.logger import logger
 
 
 def resource_stress_config_to_yaml(config: ResourcesChaosConfig) -> dict:
@@ -99,12 +98,12 @@ class ChaosResourceController:
         body = self.generate_yaml()
         try:
             print(f"🔥 Applying resource chaos experiment: {self.config.name}")
-            logging.info(body)
+            logger.info(body)
             self.api.create_namespaced_custom_object(
                 group="chaos-mesh.org",
                 version="v1alpha1",
                 namespace=self.config.namespace,
-                plural=f"{body['kind'].lower()}s",
+                plural="stresschaos",
                 body=body,
             )
             print("✅ Chaos applied successfully.")
