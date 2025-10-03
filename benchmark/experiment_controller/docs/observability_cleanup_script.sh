@@ -31,10 +31,10 @@ uninstall_helm_releases() {
 
 # Clean up
 # Cloud part
-uninstall_helm_releases cloud observe prometheus jaeger my-opentelemetry-collector blackbox-exporter
+uninstall_helm_releases cloud observe prometheus tempo my-opentelemetry-collector blackbox-exporter
 kubectl delete -n observe pvc prometheus-prometheus-kube-prometheus-prometheus-db-prometheus-prometheus-kube-prometheus-prometheus-0 --ignore-not-found
-kubectl delete -n observe pvc data-jaeger-elasticsearch-master-0 --ignore-not-found
-kubectl delete -n observe pvc data-jaeger-elasticsearch-data-0 --ignore-not-found
+# kubectl delete -n observe pvc data-jaeger-elasticsearch-master-0 --ignore-not-found
+# kubectl delete -n observe pvc data-jaeger-elasticsearch-data-0 --ignore-not-found
 kubectl delete namespace observe --ignore-not-found
 kubectl delete namespace dashboard --ignore-not-found
 
@@ -58,8 +58,8 @@ helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter
 
 kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=400s
 
-helm install jaeger jaegertracing/jaeger \
-  -n observe --create-namespace -f "$HELM_PATH/jaeger/values.yaml" --version 3.4.1
+helm install tempo -n observe grafana/tempo-distributed \
+  --values "$HELM_PATH/tempo/values.yaml" --create-namespace --version 1.48.0
 kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=400s
 
 helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \

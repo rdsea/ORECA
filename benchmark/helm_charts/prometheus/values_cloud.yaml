@@ -79,8 +79,6 @@ prometheus:
             - 'container_network_receive_bytes_total'
             - 'container_network_transmit_bytes_total'
             - 'container_blkio_device_usage_total'
-            - 'duration_milliseconds_bucket'
-            - 'calls_total'
             - 'container_sockets'
             - 'probe_icmp_duration_seconds'
 
@@ -88,9 +86,6 @@ prometheus:
           - targets:
               - 'gateway.edge-1.svc:80'
 
-      - job_name: aggregated-trace-metrics
-        static_configs:
-        - targets: ['my-opentelemetry-collector.observe:8889']
       - job_name: 'cilium-metrics'
         kubernetes_sd_configs:
         - role: pod

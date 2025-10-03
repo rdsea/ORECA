@@ -3,6 +3,7 @@ image:
   tag: latest
 
 mode: deployment
+
 config:
   receivers:
     otlp:
@@ -12,20 +13,14 @@ config:
         http:
           endpoint: XXX.XXX.XXX.XXX:4318
 
-  # processors:
-  # batch:
+  processors:
+    batch:
 
   exporters:
-    prometheus:
-      endpoint: "XXX.XXX.XXX.XXX:8889"
     otlp:
       endpoint: http://tempo-distributor.observe:4317
-
       tls:
         insecure: true
-
-  connectors:
-    spanmetrics:
 
   service:
     # extensions: [health_check, pprof, zpages]
@@ -33,17 +28,8 @@ config:
       traces:
         receivers: [otlp]
         processors: [batch]
-        exporters: [spanmetrics, otlp]
-
-      metrics/spanmetrics:
-        receivers: [spanmetrics]
-        exporters: [prometheus]
+        exporters: [otlp]
 
 ports:
   metrics:
-    # The metrics port is disabled by default. However you need to enable the port
-    # in order to use the ServiceMonitor (serviceMonitor.enabled) or PodMonitor (podMonitor.enabled).
-    enabled: true
-    containerPort: 8889
-    servicePort: 8889
-    protocol: TCP
+    enabled: false
