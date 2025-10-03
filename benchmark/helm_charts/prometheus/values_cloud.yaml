@@ -327,23 +327,26 @@ additionalPrometheusRulesMap:
 
           - record: service:p95_latency
             expr: |-
-              histogram_quantile( 0.95, sum( rate(duration_milliseconds_bucket[10m])) by (service_name, span_name, span_kind, le))
+              histogram_quantile( 0.95, sum by (service,span_name, le) ( rate(traces_spanmetrics_latency_bucket[5m])))
 
           - record: service:p75_latency
             expr: |-
-              histogram_quantile( 0.75, sum( rate(duration_milliseconds_bucket[10m])) by (service_name, span_name, span_kind, le))
+              histogram_quantile( 0.75, sum by (service,span_name, le) ( rate(traces_spanmetrics_latency_bucket[5m])))
 
           - record: service:p50_latency
             expr: |-
-              histogram_quantile( 0.50, sum( rate(duration_milliseconds_bucket[10m])) by (service_name, span_name, span_kind, le))
+              histogram_quantile( 0.50, sum by (service,span_name, le) ( rate(traces_spanmetrics_latency_bucket[5m])))
 
           - record: service:request_rate_per_second
             expr: |-
-              sum(rate(calls_total{span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name)
+              sum by (service,span_name) (
+                rate(traces_spanmetrics_calls_total[5m])
+              )
 
           - record: service:error_rate
             expr: |-
-              sum(rate(calls_total{status_code = "STATUS_CODE_ERROR", span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name) / sum(rate(calls_total{ span_kind =~ "SPAN_KIND_SERVER"}[10m])) by (service_name,span_name)
+              sum by (service,span_name) ( rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[5m])) / sum by (service,span_name) ( rate(traces_spanmetrics_calls_total[5m]))
+
 grafana:
   enabled: true
   namespaceOverride: "dashboard"
