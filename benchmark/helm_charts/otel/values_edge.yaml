@@ -13,8 +13,8 @@ config:
         http:
           endpoint: XXX.XXX.XXX.XXX:4318
 
-  processors:
-    batch:
+  # processors:
+  #   batch:
 
   exporters:
     otlp:
