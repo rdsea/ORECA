@@ -12,7 +12,7 @@ wait_for_namespace_cleanup() {
 
 # Observe
 helm uninstall -n observe prometheus
-helm uninstall -n observe jaeger
+helm uninstall -n observe tempo
 helm uninstall -n observe my-opentelemetry-collector
 wait_for_namespace_cleanup observe
 
