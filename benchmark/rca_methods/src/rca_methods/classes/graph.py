@@ -1,12 +1,30 @@
 from collections.abc import Callable
 from itertools import chain
+from pathlib import Path
 from typing import Union
 
 import networkx as nx
 import numpy as np
+import yaml
 
 from rca_methods.graph_heads import finalize_directed_adj
 from rca_methods.utility import dump_json, load_json
+
+
+def parse_dependency_graph(file_path: Path) -> nx.DiGraph:
+    if file_path.suffix not in (".yaml", ".yml"):
+        raise ValueError(f"File {file_path} is not a YAML file.")
+
+    with open(file_path) as f:
+        data = yaml.safe_load(f)
+    g = nx.DiGraph()
+    for item in data:
+        node = item["name"]
+        g.add_node(node)
+        for dep in item["depends_on"]:
+            g.add_edge(node, dep)
+
+    return g
 
 
 def topological_sort(

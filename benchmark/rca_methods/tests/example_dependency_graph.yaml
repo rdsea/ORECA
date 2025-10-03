@@ -1,0 +1,6 @@
+- name: A
+  depends_on: [B, C]
+- name: B
+  depends_on: [C]
+- name: C
+  depends_on: []
