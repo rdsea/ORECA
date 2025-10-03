@@ -20,6 +20,12 @@ minio:
     - name: tempo-traces
       policy: none
       purge: false
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    accessModes: ["ReadWriteOnce"]
+    size: 10Gi
+
 # Specifies which trace protocols to accept by the gateway.
 traces:
   otlp:
@@ -37,8 +43,30 @@ traces:
 
 metricsGenerator:
   enabled: true
+  extraEnv:
+    - name: MY_POD_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+  extraArgs:
+    - -config.expand-env=true
 
 overrides:
   defaults:
     metrics_generator:
       processors: [service-graphs, span-metrics]
+
+ingester:
+  replicas: 1
+
+memberlist:
+  bind_addr:
+    - ${MY_POD_IP}
+global:
+  extraArgs:
+    - -config.expand-env=true
+  extraEnv:
+    - name: MY_POD_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
