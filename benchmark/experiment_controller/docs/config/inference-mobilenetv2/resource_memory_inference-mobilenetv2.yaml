@@ -1,30 +1,32 @@
-experiment_name: resource_memory_inference-mobilenet
+experiment_name: resource_memory_inference-mobilenetv2
 number_of_run: 3
 time_between_run: 60s
 clean_up:
-  activate: false
+  activate: true
+  observability_cleanup_script: "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/observability_cleanup_script.sh"
+  application_cleanup_script: "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/application_cleanup_script.sh"
 fault_config:
-  name: resource-memory-inference-mobilenet
-  duration: 60s
+  name: resource-memory-inference-mobilenetv2
+  duration: 300s
   fault_type: ResourceHog.MEMORY
   fault_specific_config:
-    name: resource-memory-inference-mobilenet
+    name: resource-memory-inference-mobilenetv2
     namespace: default
-    duration: 60s
+    duration: 300s
     target:
       namespace: default
       label_selectors:
-        app: inference-mobilenet
+        app: inference-mobilenetv2
     stress_memory:
       workers: 1
       size: 150MB
-ground_truth: "inference-mobilenet_service:memory_usage"
-
+ground_truth: "inference-mobilenetv2_service:memory_usage"
 anomaly_injection_period: 900s
+warm_up_interval: 300s
 list_of_generator:
   - edge-raspi3.cs.aalto.fi
-  - edge-raspi4.cs.aalto.fi
-  - edge-raspi5.cs.aalto.fi
+  # - edge-raspi4.cs.aalto.fi
+  # - edge-raspi5.cs.aalto.fi
 ssh_username: aaltosea
 workload:
   type: docker
@@ -33,8 +35,8 @@ workload:
     args:
       host: http://XXX.XXX.XXX.XXX
       user: "5"
-      run-time: 970s
-      spawn-rate: "5"
+      run-time: 1200s
+      spawn-rate: "0.1"
 # elastic_controller_config:
 #   elastic_used:
 #     - name: "Horizontal Pod Autoscaler"

@@ -1,26 +1,29 @@
-experiment_name: network_loss_scylladb
+experiment_name: network_delay_inference-mobilenetv2
 number_of_run: 3
 time_between_run: 60s
 clean_up:
-  activate: false
+  activate: true
+  observability_cleanup_script: "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/observability_cleanup_script.sh"
+  application_cleanup_script: "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/application_cleanup_script.sh"
 fault_config:
-  name: network-loss-scylladb
-  duration: 60s
-  fault_type: NetworkFault.LOSS
+  name: network-delay-inference-mobilenetv2
+  duration: 300s
+  fault_type: NetworkFault.DELAY
   fault_specific_config:
-    name: network-loss-scylladb
+    name: network-delay-inference-mobilenetv2
     namespace: default
-    duration: 60s
+    duration: 300s
     target:
       namespace: default
       label_selectors:
-        app: scylladb
-    loss:
-      loss: "50"
+        app: inference-mobilenetv2
+    delay:
+      latency: 50ms
       correlation: "0.5"
-ground_truth: "your_ground_truth_here"
-
-anomaly_injection_period: 600s
+      jitter: 20ms
+ground_truth: "inference-mobilenetv2_service:rtt"
+anomaly_injection_period: 900s
+warm_up_interval: 300s
 list_of_generator:
   - edge-raspi3.cs.aalto.fi
   # - edge-raspi4.cs.aalto.fi
@@ -33,7 +36,7 @@ workload:
     args:
       host: http://XXX.XXX.XXX.XXX
       user: "5"
-      run-time: 670s
+      run-time: 1200s
       spawn-rate: "0.1"
 # elastic_controller_config:
 #   elastic_used:

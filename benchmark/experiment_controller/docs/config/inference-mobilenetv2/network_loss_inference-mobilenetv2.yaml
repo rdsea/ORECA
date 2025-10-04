@@ -1,20 +1,20 @@
-experiment_name: network_loss_inference-mobilenet
+experiment_name: network_loss_inference-mobilenetv2
 number_of_run: 3
 time_between_run: 60s
 clean_up:
   activate: false
 fault_config:
-  name: network-loss-inference-mobilenet
+  name: network-loss-inference-mobilenetv2
   duration: 60s
   fault_type: NetworkFault.LOSS
   fault_specific_config:
-    name: network-loss-inference-mobilenet
+    name: network-loss-inference-mobilenetv2
     namespace: default
     duration: 60s
     target:
       namespace: default
       label_selectors:
-        app: inference-mobilenet
+        app: inference-mobilenetv2
     loss:
       loss: "50"
       correlation: "0.5"
