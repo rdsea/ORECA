@@ -198,14 +198,13 @@ class PrometheusAPI:
                                     span_name = data["metric"]["span_name"]
                             if "workload" in data["metric"]:
                                 service_name_list.append(data["metric"]["workload"])
-                            elif "service_name" in data["metric"]:
-                                service_name_list.append(
-                                    f"{data['metric']['service_name']}_{span_name}"
-                                    if span_name
-                                    else data["metric"]["service_name"]
-                                )
                             elif "service" in data["metric"]:
-                                service_name_list.append(data["metric"]["service"])
+                                # service_name_list.append(data["metric"]["service"])
+                                service_name_list.append(
+                                    f"{data['metric']['service']}_{span_name}"
+                                    if span_name
+                                    else data["metric"]["service"]
+                                )
                             timestamp_list.append(int(d[0]))
                             value_list.append(float(d[1]))
                     dt = pd.DataFrame(
@@ -215,7 +214,6 @@ class PrometheusAPI:
                             "value": value_list,
                         }
                     )
-                    logger.debug(service_name_list)
                     dt["service_metric"] = dt["service_name"] + f"_{metric}"
 
                     pivoted = dt.pivot(
@@ -223,13 +221,14 @@ class PrometheusAPI:
                     ).reset_index()
                 except Exception:
                     logger.exception("Fail when processing SERVICE_METRICS")
-                    logger.debug(data_raw)
             else:
                 raise ValueError(f"Unknown metric category: {metric}")
 
             if return_pd.empty:
                 return_pd = pivoted  # First metric
             else:
+                logger.debug(pivoted.columns)
+                logger.debug(return_pd.columns)
                 return_pd = pd.merge(return_pd, pivoted, on="timestamp", how="outer")
 
         if save_to_file:
