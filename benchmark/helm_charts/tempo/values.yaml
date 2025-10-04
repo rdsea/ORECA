@@ -64,6 +64,11 @@ overrides:
 ingester:
   replicas: 3
 
+distributor:
+  service:
+    annotations:
+      io.cilium/global-service: "true"
+
 memberlist:
   bind_addr:
     - ${MY_POD_IP}
