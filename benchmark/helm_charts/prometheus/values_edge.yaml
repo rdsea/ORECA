@@ -53,9 +53,6 @@ prometheus:
         static_configs:
           - targets: ['blackbox-exporter-prometheus-blackbox-exporter.observe:9115']
 
-      - job_name: aggregated-trace-metrics
-        static_configs:
-        - targets: ['my-opentelemetry-collector.observe:8889']
       - job_name: 'cilium-metrics'
         kubernetes_sd_configs:
         - role: pod
