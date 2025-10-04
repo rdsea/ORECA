@@ -38,6 +38,9 @@ done
 #
 # Cloud part
 kubectl config use-context cloud
+
+kubectl apply -f "$APPLICATION_DIR/cloud/cloud_gateway.yaml"
+sleep 5
 kubectl apply -f "$APPLICATION_DIR/cloud/coredns_custom.yaml"
 kubectl rollout restart -n kube-system deployment coredns
 kubectl wait --for=condition=Ready pod --all --timeout=300s --namespace kube-system
@@ -80,6 +83,8 @@ kubectl apply -f "$APPLICATION_DIR/cloud/ml_consumer.yaml"
 # Edge part
 
 kubectl config use-context edge
+kubectl apply -f "$APPLICATION_DIR/edge/gateway.yaml"
+sleep 5
 kubectl apply -f "$APPLICATION_DIR/edge/tempo_distributor.yaml"
 kubectl apply -f "$APPLICATION_DIR/edge/coredns_custom.yaml"
 kubectl rollout restart -n kube-system deployment coredns
