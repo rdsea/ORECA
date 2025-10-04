@@ -5,6 +5,10 @@ kubectl config use-context edge
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HELM_CHART_DIR="$SCRIPT_DIR/../benchmark/helm_charts/"
 
+ADDR_POOL="
+   - <ip>-<ip 
+"
+
 helm repo add cilium https://helm.cilium.io/
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo add longhorn https://charts.longhorn.io
@@ -23,6 +27,23 @@ helm install cilium cilium/cilium --version 1.17.5 \
   --namespace kube-system --values "$HELM_CHART_DIR/cilium/values_edge.yaml"
 kubectl wait --namespace kube-system --for=condition=Ready pod --all --timeout=300s
 
+kubectl apply -f - <<EOF
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: default-ipaddresspool
+  namespace: metallb-system
+spec:
+  addresses:
+${ADDR_POOL}
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: default-advertisement
+  namespace: metallb-system
+EOF
+
 # Prometheus
 kubectl create namespace dashboard || true
 helm install prometheus prometheus-community/kube-prometheus-stack \
@@ -32,6 +53,10 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
 helm install longhorn longhorn/longhorn \
   --namespace longhorn-system --create-namespace --version 1.9.0 --values "$HELM_CHART_DIR/longhorn/values.yaml"
 kubectl wait --namespace longhorn-system --for=condition=Ready pod --all --timeout=300s
+
+# Blackbox exporter
+helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
+  -n observe --values "$HELM_PATH/prometheus/blackbox_exporter.yaml" --version 11.3.1
 
 # Otel collector
 helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \

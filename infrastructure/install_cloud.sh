@@ -5,7 +5,7 @@ kubectl config use-context cloud
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HELM_CHART_DIR="$SCRIPT_DIR/../benchmark/helm_charts/"
 ADDR_POOL="
-    - <ip>-<ip>
+   - <ip>-<ip 
 "
 
 helm repo add cilium https://helm.cilium.io/
@@ -53,7 +53,14 @@ helm install longhorn longhorn/longhorn \
   --namespace longhorn-system --create-namespace --version 1.9.0 --values "$HELM_CHART_DIR/longhorn/values.yaml"
 kubectl wait --namespace longhorn-system --for=condition=Ready pod --all --timeout=300s
 
+# Blackbox exporter
+helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
+  -n observe --values "$HELM_PATH/prometheus/blackbox_exporter.yaml" --version 11.3.1
+
 # Otel collector
 helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
   -f "$HELM_CHART_DIR/otel/values_cloud.yaml" -n observe --version 0.129.0
 kubectl wait --namespace observe --for=condition=Available deploy --all --timeout=300s
+
+# Rabbitmq operator
+kubectl apply -f "https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml"
