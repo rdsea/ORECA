@@ -1,0 +1,13 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: cpu-stress-example
+spec:
+  mode: all
+  selector:
+    labelSelectors:
+      app: "preprocessing"
+  stressors:
+    cpu:
+      workers: 1
+      load: 100
