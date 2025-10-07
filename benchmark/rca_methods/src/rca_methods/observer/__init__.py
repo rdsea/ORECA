@@ -5,7 +5,7 @@ import pathlib
 
 # from datetime import datetime, timedelta
 # import pytz
-from kubernetes import client, config
+from kubernetes import client
 from yaml import full_load
 
 root_path = pathlib.Path(__file__).parent
@@ -52,8 +52,8 @@ def get_services_list(v1: client.CoreV1Api, namespace: str = "default") -> list[
     return services_names
 
 
-config.kube_config.load_kube_config(config_file=monitor_config["kubernetes_path"])
-v1 = client.CoreV1Api()
+# config.kube_config.load_kube_config(config_file=monitor_config["kubernetes_path"])
+# v1 = client.CoreV1Api()
 
 # pod_list = [
 #     pod
