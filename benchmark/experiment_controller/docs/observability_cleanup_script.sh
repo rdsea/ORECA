@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HELM_PATH=$SCRIPT_DIR/../../helm_charts
+
 uninstall_helm_releases() {
   local context="$1"
   shift
@@ -42,10 +45,9 @@ kubectl delete namespace dashboard --ignore-not-found
 uninstall_helm_releases edge observe prometheus my-opentelemetry-collector blackbox-exporter
 kubectl delete -n observe pvc prometheus-prometheus-kube-prometheus-prometheus-db-prometheus-prometheus-kube-prometheus-prometheus-0 --ignore-not-found
 kubectl delete namespace observe --ignore-not-found
+kubectl delete -f "$HELM_PATH/tempo/tempo_distributor.yaml" --wait --ignore-not-found
 
 # Redeploy
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-HELM_PATH=$SCRIPT_DIR/../../helm_charts
 
 # Cloud part
 kubectl config use-context cloud
@@ -70,6 +72,8 @@ kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
 kubectl config use-context edge
 helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
   -f "$HELM_PATH/otel/values_edge.yaml" -n observe --version 0.129.0 --create-namespace
+
+kubectl apply -f "$HELM_PATH/tempo/tempo_distributor.yaml"
 
 kubectl create namespace dashboard || true
 helm install prometheus prometheus-community/kube-prometheus-stack \
