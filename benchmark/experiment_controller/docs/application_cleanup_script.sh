@@ -17,7 +17,6 @@ kubectl delete pvc scylla-data-scylla-0 --wait --ignore-not-found
 # Edge part
 kubectl config use-context edge
 kubectl delete -f "$APPLICATION_DIR/edge/coredns_custom.yaml"
-kubectl delete -f "$APPLICATION_DIR/edge/tempo_distributor.yaml"
 bash "$APPLICATION_DIR/edge/remove.sh"
 echo "Waiting for all terminating pods to be deleted..."
 while true; do
@@ -85,7 +84,6 @@ kubectl apply -f "$APPLICATION_DIR/cloud/ml_consumer.yaml"
 kubectl config use-context edge
 kubectl apply -f "$APPLICATION_DIR/edge/gateway.yaml"
 sleep 5
-kubectl apply -f "$APPLICATION_DIR/edge/tempo_distributor.yaml"
 kubectl apply -f "$APPLICATION_DIR/edge/coredns_custom.yaml"
 kubectl rollout restart -n kube-system deployment coredns
 kubectl wait --for=condition=Ready pod --all --timeout=300s --namespace kube-system
