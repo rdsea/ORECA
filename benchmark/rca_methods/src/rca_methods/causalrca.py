@@ -1,21 +1,22 @@
 import math
-import time
 import warnings
 
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-import torch.nn.functional as f
+import torch.nn.functional as functional
 import torch.optim as optim
 from sknetwork.ranking import PageRank
 from torch.autograd import Variable
 from torch.optim import lr_scheduler
 
 from rca_methods.base_rca import BaseRCA
-from rca_methods.io.time_series import drop_constant, drop_kpi, preprocess
+from rca_methods.io.time_series import drop_constant, preprocess
 
 warnings.filterwarnings("ignore")
+
+
 _EPS = 1e-10
 
 MAX_LR = 1e-2
@@ -44,7 +45,7 @@ class MLPEncoder(nn.Module):  # NOTE
         )
         self.factor = factor
 
-        self.Wa = nn.Parameter(torch.zeros(n_out), requires_grad=True)
+        self.w_a = nn.Parameter(torch.zeros(n_out), requires_grad=True)
         self.fc1 = nn.Linear(n_xdims, n_hid, bias=True)
         self.fc2 = nn.Linear(n_hid, n_out, bias=True)
         self.dropout_prob = do_prob
@@ -71,14 +72,14 @@ class MLPEncoder(nn.Module):  # NOTE
         adj_a1 = torch.sinh(3.0 * self.adj_A)
 
         # adj_Aforz = I-A^T
-        adj_a_for_z = self.preprocess_adj_new(adj_a1)
+        adj_a_forz = preprocess_adj_new(adj_a1)
 
         adj_a = torch.eye(adj_a1.size()[0]).double()
-        h1 = f.relu(self.fc1(inputs))
+        h1 = functional.relu(self.fc1(inputs))
         x = self.fc2(h1)
-        logits = torch.matmul(adj_a_for_z, x + self.Wa) - self.Wa
+        logits = torch.matmul(adj_a_forz, x + self.w_a) - self.w_a
 
-        return x, logits, adj_a1, adj_a, self.z, self.z_positive, self.adj_A, self.Wa
+        return x, logits, adj_a1, adj_a, self.z, self.z_positive, self.adj_A, self.w_a
 
 
 class MLPDecoder(nn.Module):  # NOTE
@@ -118,43 +119,197 @@ class MLPDecoder(nn.Module):  # NOTE
 
     def forward(self, inputs, input_z, n_in_node, origin_a, adj_a_tilt, w_a):
         # adj_A_new1 = (I-A^T)^(-1)
-        adj_a_new1 = self.preprocess_adj_new1(origin_a)
+        adj_a_new1 = preprocess_adj_new1(origin_a)
         mat_z = torch.matmul(adj_a_new1, input_z + w_a) - w_a
 
-        h3 = f.relu(self.out_fc1(mat_z))
+        h3 = functional.relu(self.out_fc1(mat_z))
         out = self.out_fc2(h3)
 
         return mat_z, out, adj_a_tilt
 
 
-class CausalRCA(BaseRCA):  # NOTE
-    """CausalRCA RCA method."""
+# ========================================
+# VAE utility functions
+# ========================================
+def get_triu_indices(num_nodes):  # NOTE
+    """Linear triu (upper triangular) indices."""
+    ones = torch.ones(num_nodes, num_nodes)
+    eye = torch.eye(num_nodes, num_nodes)
+    triu_indices = (ones.triu() - eye).nonzero().t()
+    triu_indices = triu_indices[0] * num_nodes + triu_indices[1]
+    return triu_indices
 
+
+def get_tril_indices(num_nodes):  # NOTE
+    """Linear tril (lower triangular) indices."""
+    ones = torch.ones(num_nodes, num_nodes)
+    eye = torch.eye(num_nodes, num_nodes)
+    tril_indices = (ones.tril() - eye).nonzero().t()
+    tril_indices = tril_indices[0] * num_nodes + tril_indices[1]
+    return tril_indices
+
+
+def get_offdiag_indices(num_nodes):  # NOTE
+    """Linear off-diagonal indices."""
+    ones = torch.ones(num_nodes, num_nodes)
+    eye = torch.eye(num_nodes, num_nodes)
+    offdiag_indices = (ones - eye).nonzero().t()
+    offdiag_indices = offdiag_indices[0] * num_nodes + offdiag_indices[1]
+    return offdiag_indices
+
+
+def get_triu_offdiag_indices(num_nodes):  # NOTE
+    """Linear triu (upper) indices w.r.t. vector of off-diagonal elements."""
+    triu_idx = torch.zeros(num_nodes * num_nodes)
+    triu_idx[get_triu_indices(num_nodes)] = 1.0
+    triu_idx = triu_idx[get_offdiag_indices(num_nodes)]
+    return triu_idx.nonzero()
+
+
+def get_tril_offdiag_indices(num_nodes):  # NOTE
+    """Linear tril (lower) indices w.r.t. vector of off-diagonal elements."""
+    tril_idx = torch.zeros(num_nodes * num_nodes)
+    tril_idx[get_tril_indices(num_nodes)] = 1.0
+    tril_idx = tril_idx[get_offdiag_indices(num_nodes)]
+    return tril_idx.nonzero()
+
+
+def kl_gaussian_sem(preds):  # NOTE
+    mu = preds
+    kl_div = mu * mu
+    kl_sum = kl_div.sum()
+    return (kl_sum / (preds.size(0))) * 0.5
+
+
+def nll_gaussian(preds, target, variance, add_const=False):  # NOTE
+    mean1 = preds
+    mean2 = target
+    neg_log_p = variance + torch.div(
+        torch.pow(mean1 - mean2, 2), 2.0 * np.exp(2.0 * variance)
+    )
+    if add_const:
+        const = 0.5 * torch.log(2 * torch.from_numpy(np.pi) * variance)
+        neg_log_p += const
+    return neg_log_p.sum() / (target.size(0))
+
+
+def preprocess_adj_new(adj):  # NOTE
+    if CONFIG.cuda:
+        adj_normalized = torch.eye(adj.shape[0]).double().cuda() - (adj.transpose(0, 1))
+    else:
+        adj_normalized = torch.eye(adj.shape[0]).double() - (adj.transpose(0, 1))
+    return adj_normalized
+
+
+def preprocess_adj_new1(adj):  # NOTE
+    if CONFIG.cuda:
+        adj_normalized = torch.inverse(
+            torch.eye(adj.shape[0]).double().cuda() - adj.transpose(0, 1)
+        )
+    else:
+        adj_normalized = torch.inverse(
+            torch.eye(adj.shape[0]).double() - adj.transpose(0, 1)
+        )
+    return adj_normalized
+
+
+def isnan(x):  # NOTE
+    return x != x
+
+
+def matrix_poly(matrix, d):  # NOTE
+    if CONFIG.cuda:
+        x = torch.eye(d).double().cuda() + torch.div(matrix, d)
+    else:
+        x = torch.eye(d).double() + torch.div(matrix, d)
+    return torch.matrix_power(x, d)
+
+
+# matrix loss: makes sure at least A connected to another parents for child
+def a_connect_loss(a, tol, z):  # NOTE
+    d = a.size()[0]
+    loss = 0
+    for i in range(d):
+        loss += (
+            2 * tol
+            - torch.sum(torch.abs(a[:, i]))
+            - torch.sum(torch.abs(a[i, :]))
+            + z * z
+        )
+    return loss
+
+
+# element loss: make sure each A_ij > 0
+def a_positive_loss(a, z_positive):  # NOTE
+    result = -a + z_positive * z_positive
+    loss = torch.sum(result)
+
+    return loss
+
+
+class CONFIG:  # NOTE
+    """Dataclass with app parameters"""
+
+    def __init__(self):
+        pass
+
+    # You must change this to the filename you wish to use as input data!
+    # data_filename = "alarm.csv"
+
+    # Epochs
+    epochs = 500
+
+    # Batch size (note: should be divisible by sample size, otherwise throw an error)
+    batch_size = 50
+
+    # Learning rate (baseline rate = 1e-3)
+    lr = 1e-3
+
+    x_dims = 1
+    z_dims = 1
+    # data_variable_size = 12
+    optimizer = "Adam"
+    graph_threshold = 0.3
+    tau_a = 0.0
+    lambda_a = 0.0
+    c_a = 1
+    use_a_connect_loss = 0
+    use_a_positiver_loss = 0
+    # no_cuda = True
+    seed = 42
+    encoder_hidden = 64
+    decoder_hidden = 64
+    temp = 0.5
+    k_max_iter = 1e2
+    encoder = "mlp"
+    decoder = "mlp"
+    no_factor = False
+    encoder_dropout = 0.0
+    decoder_dropout = (0.0,)
+    h_tol = 1e-8
+    lr_decay = 200
+    gamma = 1.0
+    prior = False
+
+
+CONFIG.cuda = torch.cuda.is_available()
+CONFIG.factor = not CONFIG.no_factor
+
+
+class CausalRCA(BaseRCA):  # NOTE
     def __init__(self, profile: bool = False):
         """Initialize the CausalRCA RCA method."""
         super().__init__(profile)
-        self.CONFIG = self._create_config()
 
     def _run(
         self, dataset: pd.DataFrame, injection_time: int | None, top_k=5, **kwargs
     ) -> list[tuple[str, float]]:
-        """Run the CausalRCA RCA method.
+        return self.causalrca(
+            dataset,
+            injection_time,
+        )
 
-        Args:
-            dataset (pd.DataFrame): The input dataset containing time series data.
-            injection_time (int | None): The timestamp when the fault was injected.
-            top_k (int, optional): The number of top root causes to return. Defaults to 5.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            list[tuple[str, float]]: A list of tuples containing root causes and their scores.
-        """
-
-        dataset = drop_kpi(dataset)
-        data = dataset
-        dataset_name = kwargs.get("dataset", None)
-        # with_bg = kwargs.get("with_bg", False)
-
+    def causalrca(self, data, inject_time=None, dataset=None, with_bg=False, **kwargs):
         if isinstance(data, dict):  # multimodal
             metric = data["metric"]
             logts = data["logts"]
@@ -165,16 +320,16 @@ class CausalRCA(BaseRCA):  # NOTE
             metric = metric.iloc[::15, :]
 
             # == metric ==
-            normal_metric = metric[metric["time"] < injection_time]
-            anomal_metric = metric[metric["time"] >= injection_time]
+            normal_metric = metric[metric["time"] < inject_time]
+            anomal_metric = metric[metric["time"] >= inject_time]
             normal_metric = preprocess(
                 data=normal_metric,
-                dataset=dataset_name,
+                dataset=dataset,
                 dk_select_useful=kwargs.get("dk_select_useful", False),
             )
             anomal_metric = preprocess(
                 data=anomal_metric,
-                dataset=dataset_name,
+                dataset=dataset,
                 dk_select_useful=kwargs.get("dk_select_useful", False),
             )
             intersect = [x for x in normal_metric.columns if x in anomal_metric.columns]
@@ -191,8 +346,8 @@ class CausalRCA(BaseRCA):  # NOTE
 
             # == logts ==
             logts = drop_constant(logts)
-            normal_logts = logts[logts["time"] < injection_time].drop(columns=["time"])
-            anomal_logts = logts[logts["time"] >= injection_time].drop(columns=["time"])
+            normal_logts = logts[logts["time"] < inject_time].drop(columns=["time"])
+            anomal_logts = logts[logts["time"] >= inject_time].drop(columns=["time"])
             log = pd.concat([normal_logts, anomal_logts], axis=0, ignore_index=True)
             data = pd.concat([data, log], axis=1)
             print(f"{normal_logts.shape=}")
@@ -204,13 +359,13 @@ class CausalRCA(BaseRCA):  # NOTE
             # print(f"{normalize=} {addup=}")
 
             # # == traces_err ==
-            # if dataset_name == "mm-tt" or dataset_name == "mm-ob":
+            # if dataset == "mm-tt" or dataset == "mm-ob":
             #     traces_err = traces_err.fillna(method='ffill')
             #     traces_err = traces_err.fillna(0)
             #     traces_err = drop_constant(traces_err)
 
-            #     normal_traces_err = traces_err[traces_err["time"] < injection_time].drop(columns=["time"])
-            #     anomal_traces_err = traces_err[traces_err["time"] >= injection_time].drop(columns=["time"])
+            #     normal_traces_err = traces_err[traces_err["time"] < inject_time].drop(columns=["time"])
+            #     anomal_traces_err = traces_err[traces_err["time"] >= inject_time].drop(columns=["time"])
             #     trace = pd.concat([normal_traces_err, anomal_traces_err], axis=0, ignore_index=True)
             #     data = pd.concat([data, trace], axis=1)
             #     print(f"{normal_traces_err.shape=}")
@@ -219,12 +374,12 @@ class CausalRCA(BaseRCA):  # NOTE
             #     print("with traces_err", data.shape)
             #
             #  # == traces_lat ==
-            # if dataset_name == "mm-tt" or dataset_name == "mm-ob":
+            # if dataset == "mm-tt" or dataset == "mm-ob":
             #     traces_lat = traces_lat.fillna(method='ffill')
             #     traces_lat = traces_lat.fillna(0)
             #     traces_lat = drop_constant(traces_lat)
-            #     normal_traces_lat = traces_lat[traces_lat["time"] < injection_time].drop(columns=["time"])
-            #     anomal_traces_lat = traces_lat[traces_lat["time"] >= injection_time].drop(columns=["time"])
+            #     normal_traces_lat = traces_lat[traces_lat["time"] < inject_time].drop(columns=["time"])
+            #     anomal_traces_lat = traces_lat[traces_lat["time"] >= inject_time].drop(columns=["time"])
             #     trace = pd.concat([normal_traces_lat, anomal_traces_lat], axis=0, ignore_index=True)
             #     data = pd.concat([data, trace], axis=1)
             #     print(f"{normal_traces_lat.shape=}")
@@ -241,7 +396,7 @@ class CausalRCA(BaseRCA):  # NOTE
         else:
             data = preprocess(
                 data=data,
-                dataset=dataset_name,
+                dataset=dataset,
                 dk_select_useful=kwargs.get("dk_select_useful", False),
             )
 
@@ -256,50 +411,50 @@ class CausalRCA(BaseRCA):  # NOTE
         train_data = data
 
         # Generate off-diagonal interaction graph
-        np.ones([data_variable_size, data_variable_size]) - np.eye(data_variable_size)
+        # off_diag = np.ones([data_variable_size, data_variable_size]) - np.eye(data_variable_size)
 
         # add adjacency matrix A
         num_nodes = data_variable_size
         adj_a = np.zeros((num_nodes, num_nodes))
 
         encoder = MLPEncoder(
-            data_variable_size * self.CONFIG.x_dims,
-            self.CONFIG.x_dims,
-            self.CONFIG.encoder_hidden,
-            int(self.CONFIG.z_dims),
+            data_variable_size * CONFIG.x_dims,
+            CONFIG.x_dims,
+            CONFIG.encoder_hidden,
+            int(CONFIG.z_dims),
             adj_a,
-            batch_size=self.CONFIG.batch_size,
-            do_prob=self.CONFIG.encoder_dropout,
-            factor=self.CONFIG.factor,
+            batch_size=CONFIG.batch_size,
+            do_prob=CONFIG.encoder_dropout,
+            factor=CONFIG.factor,
         ).double()
 
         decoder = MLPDecoder(
-            data_variable_size * self.CONFIG.x_dims,
-            self.CONFIG.z_dims,
-            self.CONFIG.x_dims,
+            data_variable_size * CONFIG.x_dims,
+            CONFIG.z_dims,
+            CONFIG.x_dims,
             encoder,
             data_variable_size=data_variable_size,
-            batch_size=self.CONFIG.batch_size,
-            n_hid=self.CONFIG.decoder_hidden,
-            do_prob=self.CONFIG.decoder_dropout,
+            batch_size=CONFIG.batch_size,
+            n_hid=CONFIG.decoder_hidden,
+            do_prob=CONFIG.decoder_dropout,
         ).double()
 
         # ===================================
         # set up training parameters
         # ===================================
         optimizer = optim.Adam(
-            list(encoder.parameters()) + list(decoder.parameters()), lr=self.CONFIG.lr
+            list(encoder.parameters()) + list(decoder.parameters()), lr=CONFIG.lr
         )
 
         scheduler = lr_scheduler.StepLR(
-            optimizer, step_size=self.CONFIG.lr_decay, gamma=self.CONFIG.gamma
+            optimizer, step_size=CONFIG.lr_decay, gamma=CONFIG.gamma
         )
 
         # Linear indices of an upper triangular mx, used for acc calculation
-        triu_indices = self.get_triu_offdiag_indices(data_variable_size)
-        tril_indices = self.get_tril_offdiag_indices(data_variable_size)
+        triu_indices = get_triu_offdiag_indices(data_variable_size)
+        tril_indices = get_tril_offdiag_indices(data_variable_size)
 
-        if self.CONFIG.cuda:
+        if CONFIG.cuda:
             encoder.cuda()
             decoder.cuda()
             triu_indices = triu_indices.cuda()
@@ -307,7 +462,7 @@ class CausalRCA(BaseRCA):  # NOTE
 
         # compute constraint h(A) value
         def _h_a(a, m):
-            expm_a = self.matrix_poly(a * a, m)
+            expm_a = matrix_poly(a * a, m)
             h_a = torch.trace(expm_a) - m
             return h_a
 
@@ -338,30 +493,27 @@ class CausalRCA(BaseRCA):  # NOTE
         # training:
         # ===================================
         def train(epoch, best_val_loss, lambda_a, c_a, optimizer):
-            time.time()
+            # t = time.time()
             nll_train = []
             kl_train = []
             mse_train = []
+            # shd_trian = []
 
             encoder.train()
             decoder.train()
             scheduler.step()
 
             # update optimizer
-            optimizer, lr = update_optimizer(optimizer, self.CONFIG.lr, c_a)
+            optimizer, lr = update_optimizer(optimizer, CONFIG.lr, c_a)
 
             for i in range(1):
-                data_batch = train_data[
-                    i * data_sample_size : (i + 1) * data_sample_size
-                ]
-                data_batch = torch.tensor(
-                    data_batch.to_numpy().reshape(
-                        data_sample_size, data_variable_size, 1
-                    )
+                data = train_data[i * data_sample_size : (i + 1) * data_sample_size]
+                data = torch.tensor(
+                    data.to_numpy().reshape(data_sample_size, data_variable_size, 1)
                 )
-                if self.CONFIG.cuda:
-                    data_batch = data_batch.cuda()
-                data_batch = Variable(data_batch).double()
+                if CONFIG.cuda:
+                    data = data.cuda()
+                data = Variable(data).double()
 
                 optimizer.zero_grad()
 
@@ -374,13 +526,13 @@ class CausalRCA(BaseRCA):  # NOTE
                     z_positive,
                     my_a,
                     w_a,
-                ) = encoder(data_batch)  # logits is of size: [num_sims, z_dims]
+                ) = encoder(data)  # logits is of size: [num_sims, z_dims]
                 edges = logits
-                # print(origin_a)
+                # print(origin_A)
                 dec_x, output, adj_a_tilt_decoder = decoder(
-                    data_batch,
+                    data,
                     edges,
-                    data_variable_size * self.CONFIG.x_dims,
+                    data_variable_size * CONFIG.x_dims,
                     origin_a,
                     adj_a_tilt_encoder,
                     w_a,
@@ -389,33 +541,33 @@ class CausalRCA(BaseRCA):  # NOTE
                 if torch.sum(output != output):
                     print("nan error\n")
 
-                target = data_batch
+                target = data
                 preds = output
                 variance = 0.0
 
                 # reconstruction accuracy loss
-                loss_nll = self.nll_gaussian(preds, target, variance)
+                loss_nll = nll_gaussian(preds, target, variance)
 
                 # KL loss
-                loss_kl = self.kl_gaussian_sem(logits)
+                loss_kl = kl_gaussian_sem(logits)
 
                 # ELBO loss:
                 loss = loss_kl + loss_nll
                 # add A loss
                 one_adj_a = origin_a  # torch.mean(adj_A_tilt_decoder, dim =0)
-                sparse_loss = self.CONFIG.tau_a * torch.sum(torch.abs(one_adj_a))
+                sparse_loss = CONFIG.tau_a * torch.sum(torch.abs(one_adj_a))
 
                 # other loss term
-                if self.CONFIG.use_a_connect_loss:
-                    connect_gap = self.a_connect_loss(
-                        one_adj_a, self.CONFIG.graph_threshold, z_gap
+                if CONFIG.use_a_connect_loss:
+                    connect_gap = a_connect_loss(
+                        one_adj_a, CONFIG.graph_threshold, z_gap
                     )
                     loss += (
                         lambda_a * connect_gap + 0.5 * c_a * connect_gap * connect_gap
                     )
 
-                if self.CONFIG.use_a_positiver_loss:
-                    positive_gap = self.a_positive_loss(one_adj_a, z_positive)
+                if CONFIG.use_a_positiver_loss:
+                    positive_gap = a_positive_loss(one_adj_a, z_positive)
                     loss += 0.1 * (
                         lambda_a * positive_gap
                         + 0.5 * c_a * positive_gap * positive_gap
@@ -434,16 +586,16 @@ class CausalRCA(BaseRCA):  # NOTE
                 loss.backward()
                 loss = optimizer.step()
 
-                my_a.data = stau(my_a.data, self.CONFIG.tau_a * lr)
+                my_a.data = stau(my_a.data, CONFIG.tau_a * lr)
 
                 if torch.sum(origin_a != origin_a):
                     print("nan error\n")
 
                 # compute metrics
                 graph = origin_a.data.clone().cpu().numpy()
-                graph[np.abs(graph) < self.CONFIG.graph_threshold] = 0
+                graph[np.abs(graph) < CONFIG.graph_threshold] = 0
 
-                mse_train.append(f.mse_loss(preds, target).item())
+                mse_train.append(functional.mse_loss(preds, target).item())
                 nll_train.append(loss_nll.item())
                 kl_train.append(loss_kl.item())
 
@@ -466,39 +618,49 @@ class CausalRCA(BaseRCA):  # NOTE
         best_elbo_loss = np.inf
         best_nll_loss = np.inf
         best_mse_loss = np.inf
+        # best_epoch = 0
+        # best_elbo_graph = []
+        # best_nll_graph = []
+        # best_mse_graph = []
         # optimizer step on hyparameters
-        c_a = self.CONFIG.c_a
-        lambda_a = self.CONFIG.lambda_a
+        c_a = CONFIG.c_a
+        lambda_a = CONFIG.lambda_a
         h_a_new = torch.tensor(1.0)
-        h_tol = self.CONFIG.h_tol
-        k_max_iter = int(self.CONFIG.k_max_iter)
+        h_tol = CONFIG.h_tol
+        k_max_iter = int(CONFIG.k_max_iter)
         h_a_old = np.inf
 
         e_loss = []
         n_loss = []
         m_loss = []
-        time.time()
+        # start_time = time.time()
         try:
-            for _step_k in range(k_max_iter):
+            for _ in range(k_max_iter):
                 # print(step_k)
                 while c_a < 1e20:
-                    for epoch in range(self.CONFIG.epochs):
+                    for epoch in range(CONFIG.epochs):
                         # print(epoch)
                         elbo_loss, nll_loss, mse_loss, graph, origin_a = train(
                             epoch, best_elbo_loss, lambda_a, c_a, optimizer
                         )
-                        # print(f"{elbo_loss=} {NLL_loss=} {MSE_loss=}")
+                        # print(f"{ELBO_loss=} {NLL_loss=} {MSE_loss=}")
                         e_loss.append(elbo_loss)
                         n_loss.append(nll_loss)
                         m_loss.append(mse_loss)
                         if elbo_loss < best_elbo_loss:
                             best_elbo_loss = elbo_loss
+                            # best_epoch = epoch
+                            # best_elbo_graph = graph
 
                         if nll_loss < best_nll_loss:
                             best_nll_loss = nll_loss
+                            # best_epoch = epoch
+                            # best_nll_graph = graph
 
                         if mse_loss < best_mse_loss:
                             best_mse_loss = mse_loss
+                            # best_epoch = epoch
+                            # best_mse_graph = graph
 
                     # print("Optimization Finished!")
                     # print("Best Epoch: {:04d}".format(best_epoch))
@@ -540,172 +702,21 @@ class CausalRCA(BaseRCA):  # NOTE
             scores = pagerank.fit_transform(np.abs(adj.T))
         except Exception:  # empty graph
             # print("empty graph")
-            # Return all nodes with equal scores if graph is empty
-            equal_score = 1.0 / len(node_names) if node_names else 0.0
-            return [(node, equal_score) for node in node_names[:top_k]]
+            return {"adj": adj, "node_names": node_names, "ranks": node_names}
 
         # merge scores and node names, sort by scores
         ranks = list(zip(node_names, scores, strict=False))
         ranks.sort(key=lambda x: x[1], reverse=True)
+        # for n, s in ranks:
+        #     print(n, s)
 
-        # Convert to the expected return format (list of tuples with scores)
-        result = []
-        for _, (node, score) in enumerate(ranks[:top_k]):
-            result.append((node, score))
+        ranks = [x[0] for x in ranks]
 
-        return result
+        # postprocess adj, if adj[i,j] != 0 -> adj[i,j] = 1
+        adj[adj != 0] = 1
 
-    def _create_config(self):
-        """Create and return a CONFIG-like object with app parameters."""
-
-        class Config:
-            def __init__(self):
-                pass
-
-            # Epochs
-            epochs = 500
-
-            # Batch size (note: should be divisible by sample size, otherwise throw an error)
-            batch_size = 50
-
-            # Learning rate (baseline rate = 1e-3)
-            lr = 1e-3
-
-            x_dims = 1
-            z_dims = 1
-            # data_variable_size = 12
-            optimizer = "Adam"
-            graph_threshold = 0.3
-            tau_a = 0.0
-            lambda_a = 0.0
-            c_a = 1
-            use_a_connect_loss = 0
-            use_a_positiver_loss = 0
-            # no_cuda = True
-            seed = 42
-            encoder_hidden = 64
-            decoder_hidden = 64
-            temp = 0.5
-            k_max_iter = 1e2
-            encoder = "mlp"
-            decoder = "mlp"
-            no_factor = False
-            encoder_dropout = 0.0
-            decoder_dropout = (0.0,)
-            h_tol = 1e-8
-            lr_decay = 200
-            gamma = 1.0
-            prior = False
-
-        config = Config()
-        config.cuda = torch.cuda.is_available()
-        config.factor = not config.no_factor
-        return config
-
-    # ========================================
-    # VAE utility functions (as methods)
-    # ========================================
-    def get_triu_indices(self, num_nodes):  # NOTE
-        """Linear triu (upper triangular) indices."""
-        ones = torch.ones(num_nodes, num_nodes)
-        eye = torch.eye(num_nodes, num_nodes)
-        triu_indices = (ones.triu() - eye).nonzero().t()
-        triu_indices = triu_indices[0] * num_nodes + triu_indices[1]
-        return triu_indices
-
-    def get_tril_indices(self, num_nodes):  # NOTE
-        """Linear tril (lower triangular) indices."""
-        ones = torch.ones(num_nodes, num_nodes)
-        eye = torch.eye(num_nodes, num_nodes)
-        tril_indices = (ones.tril() - eye).nonzero().t()
-        tril_indices = tril_indices[0] * num_nodes + tril_indices[1]
-        return tril_indices
-
-    def get_offdiag_indices(self, num_nodes):  # NOTE
-        """Linear off-diagonal indices."""
-        ones = torch.ones(num_nodes, num_nodes)
-        eye = torch.eye(num_nodes, num_nodes)
-        offdiag_indices = (ones - eye).nonzero().t()
-        offdiag_indices = offdiag_indices[0] * num_nodes + offdiag_indices[1]
-        return offdiag_indices
-
-    def get_triu_offdiag_indices(self, num_nodes):  # NOTE
-        """Linear triu (upper) indices w.r.t. vector of off-diagonal elements."""
-        triu_idx = torch.zeros(num_nodes * num_nodes)
-        triu_idx[self.get_triu_indices(num_nodes)] = 1.0
-        triu_idx = triu_idx[self.get_offdiag_indices(num_nodes)]
-        return triu_idx.nonzero()
-
-    def get_tril_offdiag_indices(self, num_nodes):  # NOTE
-        """Linear tril (lower) indices w.r.t. vector of off-diagonal elements."""
-        tril_idx = torch.zeros(num_nodes * num_nodes)
-        tril_idx[self.get_tril_indices(num_nodes)] = 1.0
-        tril_idx = tril_idx[self.get_offdiag_indices(num_nodes)]
-        return tril_idx.nonzero()
-
-    def kl_gaussian_sem(self, preds):  # NOTE
-        mu = preds
-        kl_div = mu * mu
-        kl_sum = kl_div.sum()
-        return (kl_sum / (preds.size(0))) * 0.5
-
-    def nll_gaussian(self, preds, target, variance, add_const=False):  # NOTE
-        mean1 = preds
-        mean2 = target
-        neg_log_p = variance + torch.div(
-            torch.pow(mean1 - mean2, 2), 2.0 * np.exp(2.0 * variance)
-        )
-        if add_const:
-            const = 0.5 * torch.log(2 * torch.from_numpy(np.pi) * variance)
-            neg_log_p += const
-        return neg_log_p.sum() / (target.size(0))
-
-    def preprocess_adj_new(self, adj):  # NOTE
-        if self.CONFIG.cuda:
-            adj_normalized = torch.eye(adj.shape[0]).double().cuda() - (
-                adj.transpose(0, 1)
-            )
-        else:
-            adj_normalized = torch.eye(adj.shape[0]).double() - (adj.transpose(0, 1))
-        return adj_normalized
-
-    def preprocess_adj_new1(self, adj):  # NOTE
-        if self.CONFIG.cuda:
-            adj_normalized = torch.inverse(
-                torch.eye(adj.shape[0]).double().cuda() - adj.transpose(0, 1)
-            )
-        else:
-            adj_normalized = torch.inverse(
-                torch.eye(adj.shape[0]).double() - adj.transpose(0, 1)
-            )
-        return adj_normalized
-
-    def isnan(self, x):  # NOTE
-        return x != x
-
-    def matrix_poly(self, matrix, d):  # NOTE
-        if self.CONFIG.cuda:
-            x = torch.eye(d).double().cuda() + torch.div(matrix, d)
-        else:
-            x = torch.eye(d).double() + torch.div(matrix, d)
-        return torch.matrix_power(x, d)
-
-    # matrix loss: makes sure at least A connected to another parents for child
-    def a_connect_loss(self, a, tol, z):  # NOTE
-        d = a.size()[0]
-        loss = 0
-        for i in range(d):
-            loss += (
-                2 * tol
-                - torch.sum(torch.abs(a[:, i]))
-                - torch.sum(torch.abs(a[i, :]))
-                + z * z
-            )
-        return loss
-
-    # element loss: make sure each A_ij > 0
-    def a_positive_loss(self, a, z_positive):  # NOTE
-        result = -a + z_positive * z_positive
-        loss = torch.sum(result)
-
-        return loss
+        return {
+            "adj": adj,
+            "node_names": node_names,
+            "ranks": ranks,
+        }
