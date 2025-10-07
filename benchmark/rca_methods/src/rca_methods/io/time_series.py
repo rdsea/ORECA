@@ -1,6 +1,6 @@
 import pandas as pd
 
-KPI_COLUMN = ["latency"]
+KPI_COLUMN = ["latency", "request_rate_per_second"]
 
 
 def drop_constant(df: pd.DataFrame) -> pd.DataFrame:
@@ -201,5 +201,9 @@ def preprocess(
 
 
 def drop_kpi(dataset: pd.DataFrame) -> pd.DataFrame:
-    dataset = dataset.drop(columns=[col for col in dataset.columns if "latency" in col])
+    dataset = dataset.drop(
+        columns=[
+            col for col in dataset.columns if any(word in col for word in KPI_COLUMN)
+        ]
+    )
     return dataset
