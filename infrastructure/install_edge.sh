@@ -42,6 +42,9 @@ kind: L2Advertisement
 metadata:
   name: default-advertisement
   namespace: metallb-system
+spec:
+  ipAddressPools:
+    - default-ipaddresspool
 EOF
 
 # Prometheus
