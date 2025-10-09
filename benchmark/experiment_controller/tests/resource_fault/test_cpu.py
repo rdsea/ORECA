@@ -21,7 +21,7 @@ def test_load_config_from_yaml(get_chaos_resource_cpu_config):
     assert isinstance(config, ResourcesChaosConfig)
     assert config.stress_cpu and config.stress_cpu.workers == 1
     assert config.stress_cpu and config.stress_cpu.load == 100
-    assert config.target.label_selectors == {"app": "preprocessing"}
+    assert config.target and config.target.label_selectors == {"app": "preprocessing"}
 
 
 def test_controller_apply_and_delete(get_chaos_resource_cpu_config):

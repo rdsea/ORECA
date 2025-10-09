@@ -21,5 +21,6 @@ class TargetSelector(BaseModel):
             Label selectors to match target pods.
     """
 
+    environment: list[str]
     namespace: str
     label_selectors: dict[str, str]

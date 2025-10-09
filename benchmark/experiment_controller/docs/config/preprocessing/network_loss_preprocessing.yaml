@@ -7,14 +7,15 @@ fault_config:
   name: network-loss-preprocessing
   duration: 60s
   fault_type: NetworkFault.LOSS
+  target:
+    namespace: default
+    environment:
+      - edge
+    label_selectors:
+      app: preprocessing
   fault_specific_config:
-    name: network-loss-preprocessing
     namespace: default
     duration: 60s
-    target:
-      namespace: default
-      label_selectors:
-        app: preprocessing
     loss:
       loss: "50"
       correlation: "0.5"

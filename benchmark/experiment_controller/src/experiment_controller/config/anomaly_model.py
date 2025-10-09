@@ -1,7 +1,10 @@
 from enum import Enum
 from typing import Any, NamedTuple
 
-from experiment_controller.config.fault_config import FaultSpecificConfig
+from experiment_controller.config.fault_config import (
+    FaultSpecificConfig,
+    TargetSelector,
+)
 from experiment_controller.config.resource_fault_config import ResourcesChaosConfig
 from experiment_controller.fault_controller.network import NetworkChaosConfig
 from pydantic import BaseModel, field_validator, model_serializer, model_validator
@@ -93,6 +96,7 @@ class FaultConfig(BaseModel):
     name: str
     duration: str
     fault_type: AnomalyEnum
+    target: TargetSelector
     fault_specific_config: BaseModel
 
     @model_serializer
@@ -102,6 +106,7 @@ class FaultConfig(BaseModel):
             "name": self.name,
             "duration": self.duration,
             "fault_type": f"{type(self.fault_type).__name__}.{self.fault_type.name}",
+            "target": self.target.model_dump(),
             "fault_specific_config": self.fault_specific_config.model_dump(),
         }
 
@@ -134,7 +139,11 @@ class FaultConfig(BaseModel):
             raise ValueError(f"Unsupported fault_type: {fault_type}")
 
         if isinstance(config_data, dict):
+            # Copy common field like name, target to fault_specific_config so that it can be used in fault controller
+            config_data["name"] = values["name"]
+            config_data["target"] = values["target"]
             values["fault_specific_config"] = model_cls.model_validate(config_data)
+
         elif not isinstance(config_data, model_cls):
             raise TypeError(f"Expected config of type {model_cls.__name__}")
 

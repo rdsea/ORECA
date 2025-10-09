@@ -9,14 +9,15 @@ fault_config:
   name: resource-cpu-preprocessing
   duration: 300s
   fault_type: ResourceHog.CPU
+  target:
+    namespace: default
+    environment:
+      - edge
+    label_selectors:
+      app: preprocessing
   fault_specific_config:
-    name: resource-cpu-preprocessing
     namespace: default
     duration: 300s
-    target:
-      namespace: default
-      label_selectors:
-        app: preprocessing
     stress_cpu:
       workers: 1
       load: 100

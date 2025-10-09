@@ -9,14 +9,15 @@ fault_config:
   name: network-delay-ensemble
   duration: 300s
   fault_type: NetworkFault.DELAY
+  target:
+    namespace: default
+    environment:
+      - edge
+    label_selectors:
+      app: ensemble
   fault_specific_config:
-    name: network-delay-ensemble
     namespace: default
     duration: 300s
-    target:
-      namespace: default
-      label_selectors:
-        app: ensemble
     delay:
       latency: 50ms
       correlation: "0.5"

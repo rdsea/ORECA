@@ -9,14 +9,15 @@ fault_config:
   name: resource-memory-preprocessing
   duration: 300s
   fault_type: ResourceHog.MEMORY
+  target:
+    namespace: default
+    environment:
+      - edge
+    label_selectors:
+      app: preprocessing
   fault_specific_config:
-    name: resource-memory-preprocessing
     namespace: default
     duration: 300s
-    target:
-      namespace: default
-      label_selectors:
-        app: preprocessing
     stress_memory:
       workers: 1
       size: 100MB

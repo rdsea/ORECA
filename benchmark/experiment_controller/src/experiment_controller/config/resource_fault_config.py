@@ -54,9 +54,9 @@ class ResourcesChaosConfig(FaultSpecificConfig):
         io_chaos (IOChaosConfig | None): I/O chaos config.
     """
 
-    name: str
+    name: str | None = None
     namespace: str = "default"
-    target: TargetSelector
+    target: TargetSelector | None = None
     duration: str
     stress_cpu: StressCPUConfig | None = None
     stress_memory: StressMemoryConfig | None = None

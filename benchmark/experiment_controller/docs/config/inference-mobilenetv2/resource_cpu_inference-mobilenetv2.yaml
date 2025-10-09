@@ -9,14 +9,15 @@ fault_config:
   name: resource-cpu-inference-mobilenetv2
   duration: 300s
   fault_type: ResourceHog.CPU
+  target:
+    namespace: default
+    environment:
+      - edge
+    label_selectors:
+      app: inference-mobilenetv2
   fault_specific_config:
-    name: resource-cpu-inference-mobilenetv2
     namespace: default
     duration: 300s
-    target:
-      namespace: default
-      label_selectors:
-        app: inference-mobilenetv2
     stress_cpu:
       workers: 1
       load: 100

@@ -9,14 +9,15 @@ fault_config:
   name: network-delay-inference-efficientnetb0
   duration: 300s
   fault_type: NetworkFault.DELAY
+  target:
+    namespace: default
+    environment:
+      - edge
+    label_selectors:
+      app: inference-efficientnetb0
   fault_specific_config:
-    name: network-delay-inference-efficientnetb0
     namespace: default
     duration: 300s
-    target:
-      namespace: default
-      label_selectors:
-        app: inference-efficientnetb0
     delay:
       latency: 50ms
       correlation: "0.5"
