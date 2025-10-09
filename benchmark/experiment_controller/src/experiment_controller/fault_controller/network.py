@@ -1,4 +1,5 @@
 from kubernetes import client
+from kubernetes import config as kube_config
 
 from experiment_controller.config.network_fault_config import NetworkChaosConfig
 from experiment_controller.logger import logger
@@ -72,8 +73,6 @@ class ChaosNetworkController:
         if not isinstance(config, NetworkChaosConfig):
             raise TypeError("config must be an instance of NetworkChaosConfig")
         self.config = config
-        self.config.load_kube_config()
-        self.api = client.CustomObjectsApi()
 
     def generate_yaml(self) -> dict:
         """
@@ -95,14 +94,23 @@ class ChaosNetworkController:
         try:
             print(f"🚀 Applying Chaos Mesh experiment: {self.config.name}")
             logger.info(body)
-            self.api.create_namespaced_custom_object(
-                group="chaos-mesh.org",
-                version="v1alpha1",
-                namespace=self.config.namespace,
-                plural="networkchaos",
-                body=body,
-            )
-            print("✅ Chaos experiment applied successfully.")
+            for environment in self.config.target.environment:
+                try:
+                    kube_config.load_kube_config(context=environment)
+                except kube_config.ConfigException:
+                    logger.exception(f"Failed to load kubeconfig for {environment}")
+                self.api = client.CustomObjectsApi()
+                logger.debug(f"Applying chaos experiment to {environment}")
+                self.api.create_namespaced_custom_object(
+                    group="chaos-mesh.org",
+                    version="v1alpha1",
+                    namespace=self.config.namespace,
+                    plural="networkchaos",
+                    body=body,
+                )
+                print(
+                    f"✅ Chaos experiment applied successfully for environment {environment}"
+                )
         except client.ApiException as e:
             raise RuntimeError(f"❌ Failed to apply chaos experiment:\n{e}")
 
@@ -114,14 +122,22 @@ class ChaosNetworkController:
             RuntimeError: If kubectl fails to delete the experiment.
         """
         try:
-            self.api.delete_namespaced_custom_object(
-                group="chaos-mesh.org",
-                version="v1alpha1",
-                namespace=self.config.namespace,
-                plural="networkchaos",
-                name=self.config.name,
-            )
-            print("🧹 Chaos experiment deleted successfully.")
+            for environment in self.config.target.environment:
+                try:
+                    kube_config.load_kube_config(context=environment)
+                except kube_config.ConfigException:
+                    logger.exception(f"Failed to load kubeconfig for {environment}")
+                    raise
+                self.api = client.CustomObjectsApi()
+                logger.debug(f"Applying chaos experiment to {environment}")
+                self.api.delete_namespaced_custom_object(
+                    group="chaos-mesh.org",
+                    version="v1alpha1",
+                    namespace=self.config.namespace,
+                    plural="networkchaos",
+                    name=self.config.name,
+                )
+                logger.info("🧹 Chaos experiment deleted successfully.")
         except client.ApiException as e:
             logger.exception("Chaos Network clean failed")
             raise RuntimeError(f"❌ Failed to delete chaos experiment:\n{e}")
