@@ -92,15 +92,15 @@ class RCAExperiment:
         workload_config = self.config.workload
         if isinstance(workload_config.config, DockerWorkloadConfig):
             return DockerWorkloadGenerator(
-                hosts=self.config.list_of_generator,
-                ssh_username=self.config.ssh_username,
+                hosts=workload_config.list_of_generator,
+                ssh_username=workload_config.ssh_username,
                 docker_image=workload_config.config.image,
                 docker_args=workload_config.config.args,
             )
         elif isinstance(workload_config.config, ShellWorkloadConfig):
             return ShellWorkloadGenerator(
-                hosts=self.config.list_of_generator,
-                ssh_username=self.config.ssh_username,
+                hosts=workload_config.list_of_generator,
+                ssh_username=workload_config.ssh_username,
                 script_path=workload_config.config.script_path,
                 script_args=workload_config.config.script_args,
             )

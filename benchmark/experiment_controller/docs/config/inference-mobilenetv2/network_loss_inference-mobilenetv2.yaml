@@ -22,11 +22,6 @@ fault_config:
 ground_truth: "your_ground_truth_here"
 
 anomaly_injection_period: 600s
-list_of_generator:
-  - edge-raspi3.cs.aalto.fi
-  # - edge-raspi4.cs.aalto.fi
-  # - edge-raspi5.cs.aalto.fi
-ssh_username: aaltosea
 workload:
   type: docker
   config:
@@ -36,6 +31,11 @@ workload:
       user: "5"
       run-time: 670s
       spawn-rate: "0.1"
+  list_of_generator:
+    - edge-raspi3.cs.aalto.fi
+    # - edge-raspi4.cs.aalto.fi
+    # - edge-raspi5.cs.aalto.fi
+  ssh_username: aaltosea
 # elastic_controller_config:
 #   elastic_used:
 #     - name: "Horizontal Pod Autoscaler"

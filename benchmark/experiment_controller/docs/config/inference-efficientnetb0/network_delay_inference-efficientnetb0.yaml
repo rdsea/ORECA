@@ -25,11 +25,6 @@ fault_config:
 ground_truth: "inference-efficientnetb0_service:rtt"
 anomaly_injection_period: 900s
 warm_up_interval: 300s
-list_of_generator:
-  - edge-raspi3.cs.aalto.fi
-  # - edge-raspi4.cs.aalto.fi
-  # - edge-raspi5.cs.aalto.fi
-ssh_username: aaltosea
 workload:
   type: docker
   config:
@@ -39,6 +34,11 @@ workload:
       user: "5"
       run-time: 1200s
       spawn-rate: "0.1"
+  list_of_generator:
+    - edge-raspi3.cs.aalto.fi
+    # - edge-raspi4.cs.aalto.fi
+    # - edge-raspi5.cs.aalto.fi
+  ssh_username: aaltosea
 # elastic_controller_config:
 #   elastic_used:
 #     - name: "Horizontal Pod Autoscaler"

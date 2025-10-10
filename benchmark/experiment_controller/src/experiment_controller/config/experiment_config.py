@@ -48,8 +48,6 @@ class RCAExperimentConfig(BaseModel):
     ground_truth: str
     # When to inject the anomaly, for example, 5, 10 minutes after starting load generation
     anomaly_injection_period: str
-    list_of_generator: list[str]
-    ssh_username: str
     workload: WorkloadConfig
     elastic_controller_config: ElasticControllerConfig | None = None
     observability_cadence_config: ObservabilityCadenceConfig | None = None

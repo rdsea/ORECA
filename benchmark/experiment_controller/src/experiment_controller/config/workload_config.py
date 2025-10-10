@@ -14,6 +14,8 @@ class ShellWorkloadConfig(BaseModel):
 class WorkloadConfig(BaseModel):
     type: str
     config: DockerWorkloadConfig | ShellWorkloadConfig
+    list_of_generator: list[str]
+    ssh_username: str
 
     @model_validator(mode="before")
     @classmethod
