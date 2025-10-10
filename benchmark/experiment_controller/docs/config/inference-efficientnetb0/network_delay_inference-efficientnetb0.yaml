@@ -46,9 +46,5 @@ workload:
 #       active: false
 #       how_to_activate: "user_defined_function_to_activate"
 #       how_to_deactivate: "user_defined_function_to_deactivate"
-monitor_config:
+data_collector_config:
   metric_url: http://XXX.XXX.XXX.XXX/prometheus
-  # K8s
-  # prometheus_url: http://prometheus-kube-prometheus-prometheus.redpanda.svc.cluster.local:9090/prometheus
-  namespace: observe
-  kubernetes_path: "~/.kube/config"
