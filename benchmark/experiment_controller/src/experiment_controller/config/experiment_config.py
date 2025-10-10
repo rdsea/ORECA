@@ -8,6 +8,15 @@ from experiment_controller.config.workload_config import WorkloadConfig
 from experiment_controller.elastic_controller.elastic_controller import (
     ElasticControllerConfig,
 )
+from experiment_controller.observability_controller.log_controller import (
+    LogControllerConfig,
+)
+from experiment_controller.observability_controller.metric_controller import (
+    MetricControllerConfig,
+)
+from experiment_controller.observability_controller.trace_controller import (
+    TraceControllerConfig,
+)
 from pydantic import BaseModel
 
 
@@ -21,6 +30,12 @@ class CleanUpConfig(BaseModel):
     activate: bool
     observability_cleanup_script: str | None = None
     application_cleanup_script: str | None = None
+
+
+class ObservabilityCadenceConfig(BaseModel):
+    metric_config: MetricControllerConfig | None = None
+    trace_config: TraceControllerConfig | None = None
+    log_config: LogControllerConfig | None = None
 
 
 class RCAExperimentConfig(BaseModel):
@@ -39,6 +54,7 @@ class RCAExperimentConfig(BaseModel):
     ssh_username: str
     workload: WorkloadConfig
     elastic_controller_config: ElasticControllerConfig | None = None
+    observability_cadence_config: ObservabilityCadenceConfig | None = None
     monitor_config: MonitorConfig
 
 

@@ -19,6 +19,13 @@ from experiment_controller.elastic_controller.elastic_controller import (
 )
 from experiment_controller.fault_controller.base import FaultController
 from experiment_controller.logger import logger
+from experiment_controller.observability_controller.log_controller import LogController
+from experiment_controller.observability_controller.metric_controller import (
+    MetricController,
+)
+from experiment_controller.observability_controller.trace_controller import (
+    TraceController,
+)
 from experiment_controller.script_runner import ScriptRunner
 from experiment_controller.workload_controller.base import WorkloadController
 from experiment_controller.workload_controller.docker import DockerWorkloadGenerator
@@ -114,8 +121,28 @@ class RCAExperiment:
             try:
                 if self.config.clean_up.activate:
                     self.clean_up_after_experiment()
+
+                # Apply elastic  config
                 if self.config.elastic_controller_config:
                     self.elastic_controller.activate_all()
+
+                # Apply observability cadence config
+                if self.config.observability_cadence_config:
+                    if self.config.observability_cadence_config.metric_config:
+                        self.metric_controller = MetricController(
+                            self.config.observability_cadence_config.metric_config
+                        )
+                        self.metric_controller.apply()
+                    if self.config.observability_cadence_config.trace_config:
+                        self.trace_controller = TraceController(
+                            self.config.observability_cadence_config.trace_config
+                        )
+                        self.trace_controller.apply()
+                    if self.config.observability_cadence_config.log_config:
+                        self.log_controller = LogController(
+                            self.config.observability_cadence_config.log_config
+                        )
+                        self.log_controller.apply()
 
                 # Schedule anomaly injection using a timer
                 Timer(
