@@ -7,23 +7,24 @@ from pathlib import Path
 from threading import Timer
 
 import yaml
-from rca_methods.observer.metric_api import SERVICE_METRICS, PrometheusAPI
 
 from experiment_controller.config.experiment_config import RCAExperimentConfig
 from experiment_controller.config.workload_config import (
     DockerWorkloadConfig,
     ShellWorkloadConfig,
 )
+from experiment_controller.data_collector.metric_collector import (
+    SERVICE_METRICS,
+    MetricCollector,
+)
 from experiment_controller.elastic_controller.elastic_controller import (
     ElasticController,
 )
 from experiment_controller.fault_controller.base import FaultController
 from experiment_controller.logger import logger
-from experiment_controller.observability_controller.log_controller import LogController
-from experiment_controller.observability_controller.metric_controller import (
+from experiment_controller.observability_controller import (
+    LogController,
     MetricController,
-)
-from experiment_controller.observability_controller.trace_controller import (
     TraceController,
 )
 from experiment_controller.script_runner import ScriptRunner
@@ -236,10 +237,10 @@ class RCAExperiment:
         experiment_startime: datetime,
         experiment_endtime: datetime,
     ):
-        prom = PrometheusAPI(self.config.monitor_config.metric_url)
+        prom = MetricCollector(self.config.data_collector_config.metric_url)
 
         logger.info(
-            f"Start querying metrics from {self.config.monitor_config.metric_url}"
+            f"Start querying metrics from {self.config.data_collector_config.metric_url}"
         )
         prom.query_range(
             SERVICE_METRICS,

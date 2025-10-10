@@ -20,10 +20,8 @@ from experiment_controller.observability_controller.trace_controller import (
 from pydantic import BaseModel
 
 
-class MonitorConfig(BaseModel):
+class DataCollectorConfig(BaseModel):
     metric_url: str
-    namespace: str
-    kubernetes_path: str
 
 
 class CleanUpConfig(BaseModel):
@@ -55,7 +53,7 @@ class RCAExperimentConfig(BaseModel):
     workload: WorkloadConfig
     elastic_controller_config: ElasticControllerConfig | None = None
     observability_cadence_config: ObservabilityCadenceConfig | None = None
-    monitor_config: MonitorConfig
+    data_collector_config: DataCollectorConfig
 
 
 # Custom representer for Path objects

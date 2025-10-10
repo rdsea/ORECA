@@ -1,16 +1,12 @@
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
-from experiment_controller.logger import logger
 from prometheus_api_client import PrometheusConnect
 
-from rca_methods.observer import (
-    monitor_config,
-    root_path,
-)
+from experiment_controller.logger import logger
 
 # Node-level metrics
 NODE_METRICS = [
@@ -66,7 +62,7 @@ def time_format_transform(time_to_transform):
     return time_to_transform
 
 
-class PrometheusAPI:
+class MetricCollector:
     """A wrapper for the Prometheus API client."""
 
     def __init__(self, url: str):
@@ -260,17 +256,3 @@ class PrometheusAPI:
         return self.query_range(
             ALL_METRICS, start_time, end_time, step, save_to_file=False
         )
-
-
-if __name__ == "__main__":
-    prom = PrometheusAPI(monitor_config["prometheus_url"])
-
-    # Define time range for exporting metrics
-    end_time = datetime.now()
-    start_time = end_time - timedelta(minutes=20)
-    # injection_time = 1753213321
-
-    # Define the save path for metrics
-    save_path = root_path / "metrics_output"
-
-    prom.query_range(ALL_METRICS, start_time, end_time, step="1s")
