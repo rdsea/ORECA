@@ -45,3 +45,10 @@ workload:
 #       how_to_deactivate: "user_defined_function_to_deactivate"
 data_collector_config:
   metric_url: http://XXX.XXX.XXX.XXX/prometheus
+observability_cadence_config:
+  metric_config:
+    environment:
+      - edge
+      - cloud
+    scrape_interval: 1s
+    evaluation_interval: 1s
