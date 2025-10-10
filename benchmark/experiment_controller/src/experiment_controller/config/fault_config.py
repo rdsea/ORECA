@@ -1,13 +1,8 @@
-from kubernetes import config
 from pydantic import BaseModel
 
 
 class FaultSpecificConfig(BaseModel):
-    def load_kube_config(self):
-        try:
-            config.load_kube_config()
-        except config.ConfigException:
-            config.load_incluster_config()
+    pass
 
 
 class TargetSelector(BaseModel):

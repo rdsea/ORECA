@@ -1,4 +1,5 @@
 from kubernetes import client
+from kubernetes import config as kube_config
 
 from experiment_controller.config.resource_fault_config import ResourcesChaosConfig
 from experiment_controller.logger import logger
@@ -82,8 +83,6 @@ class ChaosResourceController:
         if not isinstance(config, ResourcesChaosConfig):
             raise TypeError("config must be an instance of ResourcesChaosConfig")
         self.config = config
-        config.load_kube_config()
-        self.api = client.CustomObjectsApi()
 
     def generate_yaml(self) -> dict:
         """Generate the YAML for the Chaos Mesh experiment.
@@ -97,16 +96,25 @@ class ChaosResourceController:
         """Apply the Chaos Mesh experiment."""
         body = self.generate_yaml()
         try:
-            print(f"🔥 Applying resource chaos experiment: {self.config.name}")
-            logger.info(body)
-            self.api.create_namespaced_custom_object(
-                group="chaos-mesh.org",
-                version="v1alpha1",
-                namespace=self.config.namespace,
-                plural="stresschaos",
-                body=body,
-            )
-            print("✅ Chaos applied successfully.")
+            logger.info(f"🔥 Applying resource chaos experiment: {self.config.name}")
+            logger.debug(body)
+            for environment in self.config.target.environment:
+                try:
+                    kube_config.load_kube_config(context=environment)
+                except kube_config.ConfigException:
+                    logger.exception(f"Failed to load kubeconfig for {environment}")
+                    raise
+                self.api = client.CustomObjectsApi()
+                self.api.create_namespaced_custom_object(
+                    group="chaos-mesh.org",
+                    version="v1alpha1",
+                    namespace=self.config.namespace,
+                    plural="stresschaos",
+                    body=body,
+                )
+                logger.info(
+                    f"✅ Chaos experiment applied successfully for environment {environment}"
+                )
         except client.ApiException as e:
             raise RuntimeError(f"❌ Failed to apply chaos:\n{e}")
 
@@ -117,13 +125,21 @@ class ChaosResourceController:
         else:
             resource_type = "stresschaos"
         try:
-            self.api.delete_namespaced_custom_object(
-                group="chaos-mesh.org",
-                version="v1alpha1",
-                namespace=self.config.namespace,
-                plural=resource_type,
-                name=self.config.name,
-            )
-            print(f"🧹 {resource_type} experiment deleted successfully.")
+            for environment in self.config.target.environment:
+                try:
+                    kube_config.load_kube_config(context=environment)
+                except kube_config.ConfigException:
+                    logger.exception(f"Failed to load kubeconfig for {environment}")
+                    raise
+                self.api.delete_namespaced_custom_object(
+                    group="chaos-mesh.org",
+                    version="v1alpha1",
+                    namespace=self.config.namespace,
+                    plural=resource_type,
+                    name=self.config.name,
+                )
+                logger.info(
+                    f"🧹 Chaos experiment deleted successfully for environment {environment}"
+                )
         except client.ApiException as e:
             raise RuntimeError(f"❌ Failed to delete {resource_type}:\n{e}")

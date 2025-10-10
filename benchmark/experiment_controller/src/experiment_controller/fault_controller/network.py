@@ -92,13 +92,14 @@ class ChaosNetworkController:
         """
         body = self.generate_yaml()
         try:
-            print(f"🚀 Applying Chaos Mesh experiment: {self.config.name}")
-            logger.info(body)
+            logger.info(f"🚀 Applying Chaos Mesh experiment: {self.config.name}")
+            logger.debug(body)
             for environment in self.config.target.environment:
                 try:
                     kube_config.load_kube_config(context=environment)
                 except kube_config.ConfigException:
                     logger.exception(f"Failed to load kubeconfig for {environment}")
+                    raise
                 self.api = client.CustomObjectsApi()
                 logger.debug(f"Applying chaos experiment to {environment}")
                 self.api.create_namespaced_custom_object(
@@ -108,7 +109,7 @@ class ChaosNetworkController:
                     plural="networkchaos",
                     body=body,
                 )
-                print(
+                logger.info(
                     f"✅ Chaos experiment applied successfully for environment {environment}"
                 )
         except client.ApiException as e:
@@ -137,7 +138,9 @@ class ChaosNetworkController:
                     plural="networkchaos",
                     name=self.config.name,
                 )
-                logger.info("🧹 Chaos experiment deleted successfully.")
+                logger.info(
+                    f"🧹 Chaos experiment deleted successfully for environment {environment}"
+                )
         except client.ApiException as e:
             logger.exception("Chaos Network clean failed")
             raise RuntimeError(f"❌ Failed to delete chaos experiment:\n{e}")
