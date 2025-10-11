@@ -57,5 +57,7 @@ class MetricController:
                 logger.error(
                     f"❌ Helm upgrade failed for environment '{environment}': {e}"
                 )
+                raise
             except Exception as e:
                 logger.exception(f"Unexpected error during Metric upgrade: {e}")
+                raise
