@@ -4,81 +4,105 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HELM_PATH=$SCRIPT_DIR/../../helm_charts
 
+# ------------------------------
+# Helpers
+# ------------------------------
+
 uninstall_helm_releases() {
   local context="$1"
-  shift
-  local namespace="$1"
-  shift
+  local namespace="$2"
+  shift 2
   local releases=("$@")
 
   echo "Switching to context: $context"
   kubectl config use-context "$context"
 
   for release in "${releases[@]}"; do
-    echo "Uninstalling Helm release: $release (namespace: $namespace)"
-    helm uninstall -n "$namespace" "$release" || true
+    (
+      echo "Uninstalling Helm release: $release (namespace: $namespace)"
+      helm uninstall -n "$namespace" "$release" || true
 
-    echo "Waiting for resources of $release to be deleted..."
-    while true; do
-      resources=$(kubectl get all -n "$namespace" -l "app.kubernetes.io/instance=$release" --ignore-not-found)
-      if [[ -z "$resources" ]]; then
-        echo "✅ $release fully deleted."
-        break
-      else
-        echo "⏳ $release still terminating..."
-        sleep 5
-      fi
-    done
+      echo "Waiting for resources of $release to be deleted..."
+      while kubectl get all -n "$namespace" -l "app.kubernetes.io/instance=$release" --ignore-not-found | grep -q .; do
+        sleep 3
+      done
+      echo "✅ $release fully deleted."
+    ) &
+  done
+  wait
+}
+
+delete_pvcs() {
+  local namespace="$1"
+  echo "Deleting PVCs in namespace: $namespace"
+  kubectl get pvc -n "$namespace" -o name | xargs -n1 -P4 kubectl delete --wait --ignore-not-found || true
+}
+
+wait_for_critical_pods() {
+  local namespace="$1"
+  shift
+  local labels=("$@")
+  for label in "${labels[@]}"; do
+    echo "Waiting for critical pods with label: $label"
+    kubectl wait -n "$namespace" --for=condition=Ready pod -l "$label" --timeout=300s || true
   done
 }
 
-# Clean up
-# Cloud part
+helm_install_parallel() {
+  local installs=("$@")
+  for cmd in "${installs[@]}"; do
+    (
+      eval "$cmd"
+    ) &
+  done
+  wait
+}
+
+# ------------------------------
+# CLEANUP
+# ------------------------------
+
+# Cloud
 uninstall_helm_releases cloud observe prometheus tempo my-opentelemetry-collector blackbox-exporter
-kubectl delete -n observe pvc prometheus-prometheus-kube-prometheus-prometheus-db-prometheus-prometheus-kube-prometheus-prometheus-0 --ignore-not-found
-# kubectl delete -n observe pvc data-jaeger-elasticsearch-master-0 --ignore-not-found
-# kubectl delete -n observe pvc data-jaeger-elasticsearch-data-0 --ignore-not-found
+delete_pvcs observe
 kubectl delete namespace observe --ignore-not-found
 kubectl delete namespace dashboard --ignore-not-found
 
-# Edge part
+# Edge
 uninstall_helm_releases edge observe prometheus my-opentelemetry-collector blackbox-exporter
-kubectl delete -n observe pvc prometheus-prometheus-kube-prometheus-prometheus-db-prometheus-prometheus-kube-prometheus-prometheus-0 --ignore-not-found
+delete_pvcs observe
 kubectl delete namespace observe --ignore-not-found
 kubectl delete -f "$HELM_PATH/tempo/tempo_distributor.yaml" --wait --ignore-not-found
 
-# Redeploy
+# ------------------------------
+# REDEPLOY
+# ------------------------------
 
-# Cloud part
+# ---- Cloud ----
 kubectl config use-context cloud
 kubectl create namespace dashboard || true
-helm install prometheus prometheus-community/kube-prometheus-stack \
-  -n observe --values "$HELM_PATH/prometheus/values_cloud.yaml" --create-namespace --version 75.12.0
+kubectl create namespace observe || true
 
-helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
-  -n observe --values "$HELM_PATH/prometheus/blackbox_exporter.yaml" --version 11.3.1
+helm_install_parallel \
+  "helm install prometheus prometheus-community/kube-prometheus-stack -n observe --values $HELM_PATH/prometheus/values_cloud.yaml --create-namespace --version 75.12.0" \
+  "helm install tempo -n observe grafana/tempo-distributed --values $HELM_PATH/tempo/values.yaml --create-namespace --version 1.48.0"
 
-kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=400s
+# Wait only for critical pods
+wait_for_critical_pods observe \
+  "app.kubernetes.io/name=prometheus" \
+  "app.kubernetes.io/name=tempo-distributor"
 
-helm install tempo -n observe grafana/tempo-distributed \
-  --values "$HELM_PATH/tempo/values.yaml" --create-namespace --version 1.48.0
-kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=400s
+helm_install_parallel \
+  "helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector -f $HELM_PATH/otel/values_cloud.yaml -n observe --version 0.129.0" \
+  "helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter -n observe --values $HELM_PATH/prometheus/blackbox_exporter.yaml --version 11.3.1"
 
-helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
-  -f "$HELM_PATH/otel/values_cloud.yaml" -n observe --version 0.129.0
-kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=300s
-
-# Edge part
+# ---- Edge ----
 kubectl config use-context edge
-helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
-  -f "$HELM_PATH/otel/values_edge.yaml" -n observe --version 0.129.0 --create-namespace
+kubectl create namespace observe || true
+
+helm_install_parallel \
+  "helm install prometheus prometheus-community/kube-prometheus-stack -n observe --values $HELM_PATH/prometheus/values_edge.yaml --create-namespace --version 75.12.0" \
+  "helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector -f $HELM_PATH/otel/values_edge.yaml -n observe --version 0.129.0 --create-namespace" \
+  "helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter -n observe --values $HELM_PATH/prometheus/blackbox_exporter.yaml --version 11.3.1 --create-namespace"
 
 kubectl apply -f "$HELM_PATH/tempo/tempo_distributor.yaml"
-
-kubectl create namespace dashboard || true
-helm install prometheus prometheus-community/kube-prometheus-stack \
-  -n observe --values "$HELM_PATH/prometheus/values_edge.yaml" --create-namespace --version 75.12.0
-
-helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
-  -n observe --values "$HELM_PATH/prometheus/blackbox_exporter.yaml" --version 11.3.1 --create-namespace
-kubectl wait --namespace=observe --for=condition=Ready pod --all --timeout=400s
