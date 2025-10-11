@@ -22,6 +22,7 @@ from pydantic import BaseModel
 
 class DataCollectorConfig(BaseModel):
     metric_url: str
+    trace_url: str | None = None
 
 
 class CleanUpConfig(BaseModel):

@@ -14,17 +14,21 @@ from experiment_controller.config.workload_config import (
     ShellWorkloadConfig,
 )
 from experiment_controller.data_collector.metric_collector import (
+    RAW_METRICS,
     SERVICE_METRICS,
     MetricCollector,
 )
+from experiment_controller.data_collector.trace_collector import TraceCollector
 from experiment_controller.elastic_controller.elastic_controller import (
     ElasticController,
 )
 from experiment_controller.fault_controller.base import FaultController
 from experiment_controller.logger import logger
-from experiment_controller.observability_controller import (
-    LogController,
+from experiment_controller.observability_controller.log_controller import LogController
+from experiment_controller.observability_controller.metric_controller import (
     MetricController,
+)
+from experiment_controller.observability_controller.trace_controller import (
     TraceController,
 )
 from experiment_controller.script_runner import ScriptRunner
@@ -229,7 +233,7 @@ class RCAExperiment:
     ):
         self.collect_metric(save_path, experiment_startime, experiment_endtime)
         self.collect_log()
-        self.collect_trace()
+        self.collect_trace(save_path, experiment_startime, experiment_endtime)
 
     def collect_metric(
         self,
@@ -242,6 +246,8 @@ class RCAExperiment:
         logger.info(
             f"Start querying metrics from {self.config.data_collector_config.metric_url}"
         )
+
+        # Query and save SERVICE_METRICS
         prom.query_range(
             SERVICE_METRICS,
             experiment_startime,
@@ -249,10 +255,46 @@ class RCAExperiment:
             save_path=save_path,
             step="1s",
         )
+
+        # Query and save RAW_METRICS to a separate file
+        prom.query_range(
+            RAW_METRICS,
+            experiment_startime,
+            experiment_endtime,
+            save_path=save_path,
+            step="1s",
+            metric_type="raw",  # Specify raw metric type to save to separate file
+        )
+
         logger.info("Finished querying metrics")
 
     def collect_log(self):
         pass
 
-    def collect_trace(self):
-        pass
+    def collect_trace(
+        self,
+        save_path: Path,
+        experiment_startime: datetime,
+        experiment_endtime: datetime,
+    ):
+        if (
+            self.config.data_collector_config
+            and self.config.data_collector_config.trace_url
+        ):
+            tempo = TraceCollector(self.config.data_collector_config.trace_url)
+
+            logger.info(
+                f"Start querying traces from {self.config.data_collector_config.trace_url}"
+            )
+
+            # Collect traces for the experiment duration
+            tempo.query_range(
+                experiment_startime,
+                experiment_endtime,
+                save_path=save_path,
+                experiment_name=self.config.experiment_name,
+                limit=1000,  # Collect up to 1000 traces
+            )
+            logger.info("Finished querying traces")
+        else:
+            logger.warning("Trace URL not configured, skipping trace collection")

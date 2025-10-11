@@ -9,6 +9,24 @@ from prometheus_api_client import PrometheusConnect
 from experiment_controller.logger import logger
 
 # Node-level metrics
+RAW_METRICS = [
+    'node_cpu_seconds_total{job="node-exporter", mode=~"idle|iowait|steal"}',
+    'node_memory_MemAvailable_bytes{job="node-exporter"}',
+    'node_memory_MemTotal_bytes{job="node-exporter"}',
+    'node_disk_read_bytes_total{job="node-exporter", device=~"(/dev/)?(mmcblk.p.+|nvme.+|rbd.+|sd.+|vd.+|xvd.+|dm-.+|md.+|dasd.+)"}',
+    'node_disk_written_bytes_total{job="node-exporter", device=~"(/dev/)?(mmcblk.p.+|nvme.+|rbd.+|sd.+|vd.+|xvd.+|dm-.+|md.+|dasd.+)"}',
+    'node_disk_io_time_seconds_total{job="node-exporter", device=~"(/dev/)?(mmcblk.p.+|nvme.+|rbd.+|sd.+|vd.+|xvd.+|dm-.+|md.+|dasd.+)"}',
+    'node_network_receive_bytes_total{job="node-exporter", device!="lo"}',
+    'node_network_transmit_bytes_total{job="node-exporter", device!="lo"}',
+    'node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate5m{container!="",namespace="default",pod!=""}',
+    'container_memory_working_set_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="default", container!="", image!=""}',
+    'namespace_workload_pod:kube_pod_owner:relabel{namespace="default"}',
+    'container_network_receive_bytes_total{job="kubelet", metrics_path="/metrics/cadvisor",namespace="default"}',
+    'container_network_transmit_bytes_total{job="kubelet", metrics_path="/metrics/cadvisor",namespace="default"}',
+    'probe_icmp_duration_seconds{phase="rtt"}',
+    'container_sockets{namespace="default"}',
+    'container_blkio_device_usage_total{job="kubelet", metrics_path="/metrics/cadvisor",namespace="default"}',
+]
 NODE_METRICS = [
     "node:cpu_usage",
     "node:memory_usage_percentage",
@@ -41,7 +59,7 @@ SERVICE_METRICS = [
 ]
 
 # All metrics combined
-ALL_METRICS = NODE_METRICS + POD_METRICS + SERVICE_METRICS
+ALL_METRICS = NODE_METRICS + POD_METRICS + SERVICE_METRICS + RAW_METRICS
 
 
 def time_format_transform(time_to_transform):
@@ -82,6 +100,7 @@ class MetricCollector:
         save_path: str | Path = ".",
         experiment_name: str | None = None,
         save_to_file: bool = True,
+        metric_type: str = "processed",  # Added metric_type parameter to differentiate handling
     ):
         """Query a range of metrics from Prometheus.
 
@@ -92,17 +111,28 @@ class MetricCollector:
             step (str, optional): The step size for the query. Defaults to "10s".
             save_path (str, optional): The path to save the metrics to. Defaults to ".".
             save_to_file (bool, optional): Whether to save the metrics to a file. Defaults to True.
+            metric_type (str, optional): The type of metrics to process ("processed" for NODE/POD/SERVICE, "raw" for raw metrics). Defaults to "processed".
 
         Returns:
             pd.DataFrame: A DataFrame containing the queried metrics.
         """
         if experiment_name:
-            save_path = os.path.join(save_path, f"{experiment_name}.csv")
+            if metric_type == "raw":
+                save_path = os.path.join(
+                    save_path, f"{experiment_name}_raw_metrics.csv"
+                )
+            else:
+                save_path = os.path.join(save_path, f"{experiment_name}.csv")
         else:
-            save_path = os.path.join(save_path, "metric.csv")
+            if metric_type == "raw":
+                save_path = os.path.join(save_path, "raw_metrics.csv")
+            else:
+                save_path = os.path.join(save_path, "metric.csv")
+
         start_time = time_format_transform(start_time)
         end_time = time_format_transform(end_time)
         return_pd = pd.DataFrame()
+
         for metric in metric_list:
             logger.debug(f"Querying metric {metric}")
             query = f"{metric}"
@@ -115,7 +145,56 @@ class MetricCollector:
                 continue
             timestamp_list = []
             value_list = []
-            if metric in NODE_METRICS:
+
+            # Handle raw metrics separately - just save the raw data without processing
+            if metric in RAW_METRICS and metric_type == "raw":
+                job_list = []
+                instance_list = []
+                device_list = []
+                container_list = []
+                namespace_list = []
+                pod_list = []
+
+                for data in data_raw:
+                    for d in data["values"]:
+                        timestamp_list.append(int(d[0]))
+                        value_list.append(round(float(d[1]), 3))
+
+                        # Extract common labels
+                        job = data["metric"].get("job", "unknown")
+                        instance = data["metric"].get("instance", "unknown")
+                        device = data["metric"].get("device", "unknown")
+                        container = data["metric"].get("container", "unknown")
+                        namespace = data["metric"].get("namespace", "unknown")
+                        pod = data["metric"].get("pod", "unknown")
+
+                        job_list.append(job)
+                        instance_list.append(instance)
+                        device_list.append(device)
+                        container_list.append(container)
+                        namespace_list.append(namespace)
+                        pod_list.append(pod)
+
+                dt = pd.DataFrame(
+                    {
+                        "timestamp": timestamp_list,
+                        "metric_name": [metric] * len(timestamp_list),
+                        "job": job_list,
+                        "instance": instance_list,
+                        "device": device_list,
+                        "container": container_list,
+                        "namespace": namespace_list,
+                        "pod": pod_list,
+                        "value": value_list,
+                    }
+                )
+
+                if return_pd.empty:
+                    return_pd = dt
+                else:
+                    return_pd = pd.concat([return_pd, dt], ignore_index=True)
+
+            elif metric in NODE_METRICS:
                 instance_list = []
                 disk_list = []
                 network_interface_list = []
@@ -220,19 +299,25 @@ class MetricCollector:
             else:
                 raise ValueError(f"Unknown metric category: {metric}")
 
-            if return_pd.empty:
-                return_pd = pivoted  # First metric
-            else:
-                logger.debug(pivoted.columns)
-                logger.debug(return_pd.columns)
-                return_pd = pd.merge(return_pd, pivoted, on="timestamp", how="outer")
+            # Apply pivot/merge logic for processed metrics that are not raw
+            if metric_type != "raw" and metric not in RAW_METRICS:
+                if return_pd.empty:
+                    return_pd = pivoted  # First metric
+                else:
+                    logger.debug(pivoted.columns)
+                    logger.debug(return_pd.columns)
+                    return_pd = pd.merge(
+                        return_pd, pivoted, on="timestamp", how="outer"
+                    )
+            # For raw metrics, we already have the data in return_pd directly
 
         if save_to_file:
-            if os.path.exists(save_path):
-                with open(save_path, "a", encoding="utf-8", newline="") as f:
-                    return_pd.to_csv(f, header=False, index=False)
-            else:
-                return_pd.to_csv(save_path, index=False)
+            # For raw metrics, always include header as the structure is different and typically saved to separate file
+            # For processed metrics, include header only if file doesn't exist yet (first write)
+            include_header = (
+                not os.path.exists(save_path) if metric_type != "raw" else True
+            )
+            return_pd.to_csv(save_path, index=False, header=include_header)
             logging.info(f"METRIC SAVE TO {save_path}")
         logging.info("QUERY DONE")
         return return_pd
