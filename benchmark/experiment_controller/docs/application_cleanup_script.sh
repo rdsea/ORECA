@@ -86,6 +86,8 @@ kubectl apply -f "$APPLICATION_DIR/edge/gateway.yaml"
 sleep 5
 kubectl apply -f "$APPLICATION_DIR/edge/coredns_custom.yaml"
 kubectl rollout restart -n kube-system deployment coredns
-kubectl wait --for=condition=Ready pod --all --timeout=300s --namespace kube-system
+sleep 5
+kubectl wait --for=condition=Ready pod --all --timeout=60s --namespace kube-system
 bash "$APPLICATION_DIR/edge/apply_gpu.sh"
-kubectl wait --for=condition=Ready pod --all --timeout=300s
+sleep 5
+kubectl wait --for=condition=Ready pod --all --timeout=60s
