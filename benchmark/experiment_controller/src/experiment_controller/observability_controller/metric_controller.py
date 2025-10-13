@@ -36,6 +36,7 @@ class MetricController:
                 "-n",
                 "observe",
                 "--wait",
+                "--reuse-values",
                 "--set",
                 f"prometheus.prometheusSpec.scrapeInterval={self.config.scrape_interval}",
                 "--set",
