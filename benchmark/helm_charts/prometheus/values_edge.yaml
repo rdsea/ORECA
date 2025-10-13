@@ -39,7 +39,7 @@ prometheus:
             names: ['default']
         relabel_configs:
           - source_labels: [__address__]
-            regex: (.+):\d+
+            regex: ([^:]+)(?::\d+)?
             replacement: $1
             target_label: __param_target
           - source_labels: [__meta_kubernetes_pod_name]
