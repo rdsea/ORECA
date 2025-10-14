@@ -19,10 +19,17 @@ loki:
     enable_api: true
   auth_enabled: false
 
+gateway:
+  service:
+    annotations:
+      io.cilium/global-service: "true"
+
 minio:
   enabled: true
   rootUser: root-user
   rootPassword: supersecretpassword
+  serviceAccount:
+    name: tempo-minio-sa
   resources:
     requests:
       cpu: 1000m
@@ -40,19 +47,16 @@ singleBinary:
   persistence:
     size: 10Gi
     storageClass: longhorn
-  resources:
-    limits:
-      cpu: 4
-      memory: 4Gi
-    requests:
-      cpu: 1
-      memory: 1Gi
-  extraEnv:
-    # Keep a little bit lower than memory limits
-    - name: GOMEMLIMIT
-      value: 3750MiB
 
 # Zero out replica counts of other deployment modes
+test:
+  enabled: false
+lokiCanary:
+  enabled: false
+
+chunksCache:
+  enabled: false
+
 backend:
   replicas: 0
 read:

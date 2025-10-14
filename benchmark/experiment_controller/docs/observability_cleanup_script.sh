@@ -63,7 +63,7 @@ helm_install_parallel() {
 # ------------------------------
 
 # Cloud
-uninstall_helm_releases cloud observe prometheus tempo my-opentelemetry-collector blackbox-exporter
+uninstall_helm_releases cloud observe prometheus tempo my-opentelemetry-collector blackbox-exporter loki
 delete_pvcs observe
 kubectl delete namespace observe --ignore-not-found
 kubectl delete namespace dashboard --ignore-not-found
@@ -73,6 +73,7 @@ uninstall_helm_releases edge observe prometheus my-opentelemetry-collector black
 delete_pvcs observe
 kubectl delete namespace observe --ignore-not-found
 kubectl delete -f "$HELM_PATH/tempo/tempo_distributor.yaml" --wait --ignore-not-found
+kubectl delete -f "$HELM_PATH/loki/gateway.yaml" --wait --ignore-not-found
 
 # ------------------------------
 # REDEPLOY
@@ -85,7 +86,8 @@ kubectl create namespace observe || true
 
 helm_install_parallel \
   "helm install prometheus prometheus-community/kube-prometheus-stack -n observe --values $HELM_PATH/prometheus/values_cloud.yaml --create-namespace --version 75.12.0" \
-  "helm install tempo -n observe grafana/tempo-distributed --values $HELM_PATH/tempo/values.yaml --create-namespace --version 1.48.0"
+  "helm install tempo -n observe grafana/tempo-distributed --values $HELM_PATH/tempo/values.yaml --create-namespace --version 1.48.0" \
+  "helm install loki grafana/loki -n observe -f $HELM_PATH/loki/values.yaml --version 6.42.0"
 
 # Wait only for critical pods
 wait_for_critical_pods observe \
@@ -106,3 +108,4 @@ helm_install_parallel \
   "helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter -n observe --values $HELM_PATH/prometheus/blackbox_exporter.yaml --version 11.3.1 --create-namespace"
 
 kubectl apply -f "$HELM_PATH/tempo/tempo_distributor.yaml"
+kubectl apply -f "$HELM_PATH/loki/gateway.yaml"

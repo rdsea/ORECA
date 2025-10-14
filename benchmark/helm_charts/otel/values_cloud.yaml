@@ -21,6 +21,8 @@ config:
       endpoint: http://tempo-distributor.observe:4317
       tls:
         insecure: true
+    otlphttp:
+      endpoint: http://loki-gateway.observe/otlp
 
   service:
     # extensions: [health_check, pprof, zpages]
@@ -29,6 +31,10 @@ config:
         receivers: [otlp]
         processors: [batch]
         exporters: [otlp]
+      logs:
+        receivers: [otlp]
+        processors: [batch]
+        exporters: [otlphttp]
 
 ports:
   metrics:
