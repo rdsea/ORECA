@@ -1,0 +1,69 @@
+experiment_name: {{ experiment_name }}
+number_of_run: {{ number_of_run }}
+time_between_run: {{ time_between_run }}
+
+clean_up:
+  activate: {{ clean_up.activate | lower }}
+  observability_cleanup_script: "{{ clean_up.observability_cleanup_script }}"
+  application_cleanup_script: "{{ clean_up.application_cleanup_script }}"
+
+fault_config:
+  name: {{ fault_config.name }}
+  duration: {{ fault_config.duration }}
+  fault_type: {{ fault_config.fault_type }}
+  target:
+    namespace: {{ fault_config.target.namespace }}
+    environment:
+    {% for env in fault_config.target.environment %}
+      - {{ env }}
+    {% endfor %}
+    label_selectors:
+    {% for key, value in fault_config.target.label_selectors.items() %}
+      {{ key }}: {{ value }}
+    {% endfor %}
+  fault_specific_config:
+    namespace: {{ fault_config.fault_specific_config.namespace }}
+    duration: {{ fault_config.fault_specific_config.duration }}
+    {# Dynamically render whatever fault-specific block exists (delay, stress_cpu, stress_memory, loss, etc.) #}
+    {% for fault_type, params in fault_config.fault_specific_config.items() if fault_type not in ["namespace", "duration"] %}
+    {{ fault_type }}:
+      {% for key, value in params.items() %}
+      {% if value is string and not value.startswith('"') %}
+      {{ key }}: "{{ value }}"
+      {% else %}
+      {{ key }}: {{ value }}
+      {% endif %}
+      {% endfor %}
+    {% endfor %}
+
+ground_truth: "{{ ground_truth }}"
+anomaly_injection_period: {{ anomaly_injection_period }}
+warm_up_interval: {{ warm_up_interval }}
+
+workload:
+  type: {{ workload.type }}
+  config:
+    image: {{ workload.config.image }}
+    args:
+      host: {{ workload.config.args.host }}
+      user: "{{ workload.config.args.user }}"
+      run-time: {{ workload.config.args["run-time"] }}
+      spawn-rate: "{{ workload.config.args["spawn-rate"] }}"
+  list_of_generator:
+  {% for generator in workload.list_of_generator %}
+    - {{ generator }}
+  {% endfor %}
+  ssh_username: {{ workload.ssh_username }}
+
+data_collector_config:
+  metric_url: {{ data_collector_config.metric_url }}
+  trace_url: {{ data_collector_config.trace_url }}
+
+observability_cadence_config:
+  metric_config:
+    environment:
+    {% for env in observability_cadence_config.metric_config.environment %}
+      - {{ env }}
+    {% endfor %}
+    scrape_interval: {{ observability_cadence_config.metric_config.scrape_interval }}
+    evaluation_interval: {{ observability_cadence_config.metric_config.evaluation_interval }}
