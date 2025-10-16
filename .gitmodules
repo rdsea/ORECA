@@ -11,3 +11,6 @@
 	path = applications/sesa/search_and_rescue/object_classification
 	url = git@github.com:rdsea/object_classification_v2.git
   branch = main
+[submodule "benchmark/experiment_controller/docs/train_ticket/train-ticket-source"]
+	path = benchmark/experiment_controller/docs/train_ticket/train-ticket-source
+	url = git@github.com:nguu0123/train-ticket.git

@@ -1,0 +1,8 @@
+- name: preprocessing
+  depends_on: [ensemble]
+- name: ensemble
+  depends_on: [inference-mobilenetv2, inference-efficientnetb0]
+- name: inference-mobilenetv2
+  depends_on: []
+- name: inference-efficientnetb0
+  depends_on: []

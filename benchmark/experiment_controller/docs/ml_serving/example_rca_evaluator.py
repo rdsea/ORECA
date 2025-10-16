@@ -15,11 +15,18 @@ current_path = pathlib.Path(__file__).parent
 
 # Specify which RCA methods to evaluate
 # Available methods can be found in the rca_methods package
-RCA_METHODS_TO_EVALUATE = [RCAMethodEnum.BARO]
+RCA_METHODS_TO_EVALUATE = [
+    # RCAMethodEnum.BARO,
+    # RCAMethodEnum.DUMMY,
+    RCAMethodEnum.CAUSALAI,
+    # RCAMethodEnum.CAUSALRCA,
+    RCAMethodEnum.CIRCA,
+    RCAMethodEnum.CLOUDRANGER,
+]
 
 # Create the RCA evaluator with the path to experiment data
 rca_evaluator = RCAEvaluator(
-    current_path / "example_experiment_result",
+    current_path / "experiment_1.local",
     RCA_METHODS_TO_EVALUATE,
 )
 

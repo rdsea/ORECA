@@ -32,9 +32,10 @@ repos:
     hooks:
       - id: ty
         name: ty check
-        entry: uvx ty check benchmark/experiment_controller/
+        entry: uvx ty check benchmark/experiment_controller/src
         language: system
         files: benchmark/experiment_controller/
+        exclude: benchmark/experiment_controller/docs/train_ticket/train-ticket-source
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.28.0
