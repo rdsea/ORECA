@@ -40,16 +40,16 @@ data = {
     "workload": {
         "type": "docker",
         "config": {
-            "image": "rdsea/object_detection_client:latest",
+            "image": "rdsea/train_ticket_loadgen:latest",
             "args": {
-                "host": "http://XXX.XXX.XXX.XXX:30467",
-                "user": "50",
-                "run-time": "1200s",
-                "spawn-rate": "0.1",
-                "f": "main.py",
+                "--host": "http://XXX.XXX.XXX.XXX:32677",
+                "--user": "30",
+                "--run-time": "1200s",
+                "--spawn-rate": "0.1",
+                "-f": "main.py",
             },
         },
-        "list_of_generator": ["edge-raspi3.cs.aalto.fi"],
+        "list_of_generator": ["edge-raspi3.cs.aalto.fi", "edge-raspi4.cs.aalto.fi"],
         "ssh_username": "aaltosea",
     },
     "data_collector_config": {
@@ -58,7 +58,7 @@ data = {
     },
     "observability_cadence_config": {
         "metric_config": {
-            "environment": ["edge", "cloud"],
+            "environment": ["cloud_big"],
             "scrape_interval": "1s",
             "evaluation_interval": "1s",
         }
@@ -131,7 +131,7 @@ FAULT_CONFIG = {
         "fault_type": "NetworkFault.DELAY",
         "target": {
             "namespace": "default",
-            "environment": ["cloud1"],
+            "environment": ["cloud_big"],
             # "label_selectors": {"app": "ensemble"},
         },
         "fault_specific_config": {
@@ -146,7 +146,7 @@ FAULT_CONFIG = {
         "fault_type": "ResourceHog.CPU",
         "target": {
             "namespace": "default",
-            "environment": ["cloud1"],
+            "environment": ["cloud_big"],
             # "label_selectors": {"app": "ensemble"},
         },
         "fault_specific_config": {
@@ -161,7 +161,7 @@ FAULT_CONFIG = {
         "fault_type": "ResourceHog.MEMORY",
         "target": {
             "namespace": "default",
-            "environment": ["cloud1"],
+            "environment": ["cloud_big"],
             # "label_selectors": {"app": "ensemble"},
         },
         "fault_specific_config": {
