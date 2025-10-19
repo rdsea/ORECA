@@ -13,7 +13,6 @@ dependencies = [
   "requests>=2.32.4",
   # "kubernetes>=33.1.0",
   "pandas>=2.3.0",
-  "prometheus-client>=0.22.1",
   "psutil>=6.0.0",
 ]
 readme = "README.md"
