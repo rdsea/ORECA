@@ -1,5 +1,7 @@
 #!/bin/bash
 # Clean up
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TRAIN_TICKET_SOURCE="$SCRIPT_DIR/../../../../../applications/train-ticket/helm_charts/"
 kubectl delete -f "$HELM_CHART_DIR/cilium/observability_route.yaml"
 kubectl delete -f "$HELM_CHART_DIR/cilium/gateway.yaml"
 
@@ -11,7 +13,6 @@ helm uninstall prometheus -n observe
 helm uninstall beyla -n observe
 
 kubectl delete pvc -n observe --all
-kubectl delete pv -n observe --all
 kubectl delete namespace observe --ignore-not-found
 # Redeploy
 helm install prometheus prometheus-community/kube-prometheus-stack -n observe \

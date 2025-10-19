@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TRAIN_TICKET_SOURCE="$SCRIPT_DIR/../train-ticket-source"
+TRAIN_TICKET_SOURCE="$SCRIPT_DIR/../../../../../applications/train-ticket/train-ticket"
 #
 # Check if the directory is empty
 if [ -z "$(ls -A "$TRAIN_TICKET_SOURCE")" ]; then
