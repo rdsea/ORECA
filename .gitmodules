@@ -11,3 +11,6 @@
 	path = applications/sesa/search_and_rescue/object_classification
 	url = git@github.com:rdsea/object_classification_v2.git
   branch = main
+[submodule "applications/train-ticket"]
+	path = applications/train-ticket
+	url = git@github.com:nguu0123/microservice_rca_demo.git
