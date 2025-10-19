@@ -8,6 +8,7 @@ helm uninstall otel-collector -n observe
 helm uninstall tempo -n observe
 helm uninstall blackbox-exporter -n observe
 helm uninstall prometheus -n observe
+helm uninstall beyla -n observe
 
 kubectl delete pvc -n observe --all
 kubectl delete pv -n observe --all
@@ -26,6 +27,9 @@ helm install tempo -n observe grafana/tempo-distributed \
 helm install otel-collector open-telemetry/opentelemetry-collector \
   -f "$HELM_CHART_DIR/otel/values.yaml" -n observe --version 0.129.0 \
   --set config.exporters.otlp.endpoint="http://tempo-distributor.observe:4317"
+
+helm install beyla -n observe --create-namespace grafana/beyla \
+  -f "$HELM_CHART_DIR/beyla/values.yaml"
 
 kubectl apply -f "$HELM_CHART_DIR/cilium/gateway.yaml"
 kubectl apply -f "$HELM_CHART_DIR/cilium/observability_route.yaml"
