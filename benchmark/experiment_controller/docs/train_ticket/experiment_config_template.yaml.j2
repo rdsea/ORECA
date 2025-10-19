@@ -45,10 +45,7 @@ workload:
   config:
     image: {{ workload.config.image }}
     args:
-      host: {{ workload.config.args.host }}
-      user: "{{ workload.config.args.user }}"
-      run-time: {{ workload.config.args["run-time"] }}
-      spawn-rate: "{{ workload.config.args["spawn-rate"] }}"
+{{ workload.config.args | format_yaml_args }}
   list_of_generator:
   {% for generator in workload.list_of_generator %}
     - {{ generator }}

@@ -3,11 +3,28 @@ import pathlib
 
 from jinja2 import Environment, FileSystemLoader
 
+
+def format_yaml_args(args_dict):
+    """Format a dictionary as properly indented YAML lines"""
+    lines = []
+    for key, value in args_dict.items():
+        # Properly quote strings
+        if isinstance(value, str) and not (
+            value.startswith('"') or value.startswith("'")
+        ):
+            formatted_value = f'"{value}"'
+        else:
+            formatted_value = str(value)
+        lines.append(f"      {key}: {formatted_value}")
+    return "\n".join(lines)
+
+
 env = Environment(
     loader=FileSystemLoader("."),
     trim_blocks=True,
     lstrip_blocks=True,
 )
+env.filters["format_yaml_args"] = format_yaml_args
 template = env.get_template("experiment_config_template.yaml.j2")
 
 data = {
@@ -42,11 +59,11 @@ data = {
         "config": {
             "image": "rdsea/train_ticket_loadgen:latest",
             "args": {
-                "--host": "http://XXX.XXX.XXX.XXX:32677",
-                "--user": "30",
-                "--run-time": "1200s",
-                "--spawn-rate": "0.1",
-                "-f": "main.py",
+                "host": "http://XXX.XXX.XXX.XXX:32677",
+                "user": "30",
+                "run-time": "1200s",
+                "spawn-rate": "0.1",
+                "locustfile": "main.py",
             },
         },
         "list_of_generator": ["edge-raspi3.cs.aalto.fi", "edge-raspi4.cs.aalto.fi"],
