@@ -21,7 +21,7 @@ ipam:
     # @schema
     # -- IPv4 CIDR list range to delegate to individual nodes for IPAM.
     #NOTE: Change this to match the cluster.id
-    clusterPoolIPv4PodCIDRList: ["XXX.XXX.XXX.XXX/8"]
+    clusterPoolIPv4PodCIDRList: ["XXX.XXX.XXX.XXX/22"]
     # -- IPv4 CIDR mask size to delegate to individual nodes for IPAM.
     clusterPoolIPv4MaskSize: 24
 

@@ -32,7 +32,7 @@ data = {
     "number_of_run": 1,
     "time_between_run": "60s",
     "clean_up": {
-        "activate": False,
+        "activate": True,
         "observability_cleanup_script": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/application_cleanup_script.sh",
         "application_cleanup_script": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/observability_cleanup_script.sh",
     },

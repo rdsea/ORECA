@@ -81,7 +81,7 @@ if __name__ == "__main__":
             )
             logger.info(f"Starting experiment: {experiment_config.experiment_name}")
             # Uncomment to run
-            # experiment.run()
+            experiment.run()
             logger.info(f"Finished experiment: {experiment_config.experiment_name}")
 
     current_path = pathlib.Path(__file__).parent
