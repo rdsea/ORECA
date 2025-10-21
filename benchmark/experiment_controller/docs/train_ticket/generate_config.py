@@ -1,31 +1,7 @@
 import os
 import pathlib
 
-from jinja2 import Environment, FileSystemLoader
-
-
-def format_yaml_args(args_dict):
-    """Format a dictionary as properly indented YAML lines"""
-    lines = []
-    for key, value in args_dict.items():
-        # Properly quote strings
-        if isinstance(value, str) and not (
-            value.startswith('"') or value.startswith("'")
-        ):
-            formatted_value = f'"{value}"'
-        else:
-            formatted_value = str(value)
-        lines.append(f"      {key}: {formatted_value}")
-    return "\n".join(lines)
-
-
-env = Environment(
-    loader=FileSystemLoader("."),
-    trim_blocks=True,
-    lstrip_blocks=True,
-)
-env.filters["format_yaml_args"] = format_yaml_args
-template = env.get_template("experiment_config_template.yaml.j2")
+from experiment_controller.config_generator import write_config_to_filepath
 
 data = {
     # "experiment_name": "network_delay_ensemble",
@@ -196,15 +172,12 @@ for service in SERVICE:
         fault_config["name"] = f"{fault}_{service}"
         fault_config["ground_truth"] = f"{service}_service:rtt"
         fault_config["target"]["label_selectors"] = {"app": service}
-        rendered_yaml = template.render(
-            {
-                **data,
-                "fault_config": fault_config,
-                "experiment_name": f"{fault}_{service}",
-                "ground_truth": f"{service}_{FAULT_ROOT_CAUSE[fault]}",
-            }
-        )
+        all_data = {
+            **data,
+            "fault_config": fault_config,
+            "experiment_name": f"{fault}_{service}",
+            "ground_truth": f"{service}_{FAULT_ROOT_CAUSE[fault]}",
+        }
         experiment_path = current_path / "config.local" / f"{service}-{fault}"
         os.makedirs(experiment_path, exist_ok=True)
-        with open(experiment_path / "config.yaml", "w") as f:
-            f.write(rendered_yaml)
+        write_config_to_filepath(all_data, experiment_path / "config.yaml")
