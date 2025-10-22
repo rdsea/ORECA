@@ -38,8 +38,8 @@ class ObservabilityCadenceConfig(BaseModel):
 
 
 class RootCauseConfig(BaseModel):
-    what: str | list[str] | None = None
-    where: str | list[str] | None = None
+    what: str | None = None
+    where: str | None = None
     when: str | None = None
 
 
