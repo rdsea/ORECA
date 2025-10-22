@@ -37,6 +37,12 @@ class ObservabilityCadenceConfig(BaseModel):
     log_config: LogControllerConfig | None = None
 
 
+class RootCauseConfig(BaseModel):
+    what: str | list[str] | None = None
+    where: str | list[str] | None = None
+    when: str | None = None
+
+
 class RCAExperimentConfig(BaseModel):
     """Configuration for an RCA experiment."""
 
@@ -46,7 +52,7 @@ class RCAExperimentConfig(BaseModel):
     warm_up_interval: str
     clean_up: CleanUpConfig
     fault_config: FaultConfig
-    ground_truth: str
+    root_cause: RootCauseConfig
     # When to inject the anomaly, for example, 5, 10 minutes after starting load generation
     anomaly_injection_period: str
     workload: WorkloadConfig

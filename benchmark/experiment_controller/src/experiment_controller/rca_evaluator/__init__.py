@@ -195,7 +195,7 @@ class RCAEvaluator:
         ):
             run_number = run_dir.name
             experiment_id = f"{experiment_config.experiment_name}_{run_number}"
-            self.ground_truth[experiment_id] = {experiment_config.ground_truth}
+            self.ground_truth[experiment_id] = {experiment_config.root_cause}
             # Store fault type for this experiment
             self.experiment_fault_types[experiment_id] = str(
                 experiment_config.fault_config.fault_type
