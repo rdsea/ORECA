@@ -65,7 +65,7 @@ class RCAEvaluator:
         self.dataset_path = dataset_path
         self.rca_methods = rca_methods
         self.predictions = {}
-        self.ground_truth = {}
+        self.root_cause = {}
         self.experiment_fault_types = {}  # Track fault type for each experiment
         self.verbose = verbose
 
@@ -92,7 +92,7 @@ class RCAEvaluator:
         - MRR (Mean Reciprocal Rank): Average of reciprocal ranks of first correct prediction
 
         Note:
-            For meaningful results, ensure that the `ground_truth` field in your
+            For meaningful results, ensure that the `root_cause` field in your
             experiment configuration files is set to actual root cause identifiers,
             not placeholder values.
         """
@@ -131,7 +131,7 @@ class RCAEvaluator:
             table = []
             for fault_type in fault_types:
                 filtered_predictions = {}
-                filtered_ground_truth = {}
+                filtered_root_cause = {}
 
                 for experiment_id, fault in self.experiment_fault_types.items():
                     if fault == fault_type:
@@ -142,12 +142,12 @@ class RCAEvaluator:
                             filtered_predictions[experiment_id] = self.predictions[
                                 rca_method.name
                             ][experiment_id]
-                            filtered_ground_truth[experiment_id] = self.ground_truth[
+                            filtered_root_cause[experiment_id] = self.root_cause[
                                 experiment_id
                             ]
 
                 if filtered_predictions:
-                    results = self.evaluate(filtered_predictions, filtered_ground_truth)
+                    results = self.evaluate(filtered_predictions, filtered_root_cause)
                     row = [
                         fault_type,
                         f"{results['precision_at_1']:.3f}",
@@ -195,7 +195,9 @@ class RCAEvaluator:
         ):
             run_number = run_dir.name
             experiment_id = f"{experiment_config.experiment_name}_{run_number}"
-            self.ground_truth[experiment_id] = {experiment_config.root_cause}
+            self.root_cause[experiment_id] = {
+                f"{experiment_config.root_cause.what}_{experiment_config.root_cause.where}"
+            }
             # Store fault type for this experiment
             self.experiment_fault_types[experiment_id] = str(
                 experiment_config.fault_config.fault_type
@@ -238,11 +240,11 @@ class RCAEvaluator:
             self.predictions[rca_method.name] = {}
         self.predictions[rca_method.name][experiment_id] = rootcause
 
-    def precision_at_k(self, predictions: dict, ground_truth: dict, k: int) -> float:
+    def precision_at_k(self, predictions: dict, root_cause: dict, k: int) -> float:
         """Calculate the Precision at K (Precision@k) metric.
         Args:
             predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
-            ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
+            root_cause (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
             k (int): The value of k.
         Returns:
             float: The Precision@k score.
@@ -252,18 +254,18 @@ class RCAEvaluator:
 
         for case_id in predictions:
             pred_list = predictions[case_id][:k]
-            gt_set = ground_truth.get(case_id, set())
+            gt_set = root_cause.get(case_id, set())
             match_count = sum(1 for pred in pred_list if pred in gt_set)
             precision = match_count / k if k > 0 else 0.0
             precision_sum += precision
 
         return precision_sum / total_cases if total_cases > 0 else 0.0
 
-    def recall_at_k(self, predictions: dict, ground_truth: dict, k: int) -> float:
+    def recall_at_k(self, predictions: dict, root_cause: dict, k: int) -> float:
         """Calculate the Recall at K (Recall@k) metric.
         Args:
             predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
-            ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
+            root_cause (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
             k (int): The value of k.
         Returns:
             float: The Recall@k score.
@@ -273,18 +275,18 @@ class RCAEvaluator:
 
         for case_id in predictions:
             pred_list = predictions[case_id][:k]
-            gt_set = ground_truth.get(case_id, set())
+            gt_set = root_cause.get(case_id, set())
             match_count = sum(1 for pred in pred_list if pred in gt_set)
             recall = match_count / len(gt_set) if gt_set else 0.0
             recall_sum += recall
 
         return recall_sum / total_cases if total_cases > 0 else 0.0
 
-    def accuracy_at_k(self, predictions: dict, ground_truth: dict, k: int) -> float:
+    def accuracy_at_k(self, predictions: dict, root_cause: dict, k: int) -> float:
         """Calculate the Accuracy at K (Accuracy@k) metric.
         Args:
             predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
-            ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
+            root_cause (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
             k (int): The value of k.
         Returns:
             float: The Accuracy@k score.
@@ -294,17 +296,17 @@ class RCAEvaluator:
 
         for case_id in predictions:
             pred_list = predictions[case_id][:k]
-            gt_set = ground_truth.get(case_id, set())
+            gt_set = root_cause.get(case_id, set())
             if any(pred in gt_set for pred in pred_list):
                 correct_predictions += 1
 
         return correct_predictions / total_cases if total_cases > 0 else 0.0
 
-    def mean_reciprocal_rank(self, predictions: dict, ground_truth: dict) -> float:
+    def mean_reciprocal_rank(self, predictions: dict, root_cause: dict) -> float:
         """Calculate the Mean Reciprocal Rank (MRR) metric.
         Args:
             predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
-            ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
+            root_cause (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
         Returns:
             float: The MRR score.
         """
@@ -313,31 +315,29 @@ class RCAEvaluator:
 
         for case_id in predictions:
             pred_list = predictions[case_id]
-            gt_set = ground_truth.get(case_id, set())
+            gt_set = root_cause.get(case_id, set())
             for i, pred in enumerate(pred_list):
                 if pred in gt_set:
                     mrr_sum += 1 / (i + 1)
                     break
         return mrr_sum / total_cases if total_cases > 0 else 0.0
 
-    def evaluate(self, predictions: dict, ground_truth: dict) -> dict:
+    def evaluate(self, predictions: dict, root_cause: dict) -> dict:
         """Evaluate the predictions against the ground truth.
         Args:
             predictions (dict): A dictionary of predictions, where the keys are experiment ID and the values are lists of predicted root causes.
-            ground_truth (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
+            root_cause (dict): A dictionary of ground truth, where the keys are experiment ID and the values are sets of actual root causes.
         Returns:
             dict: A dictionary of evaluation results, where the keys are the metric names and the values are the scores.
         """
         results = {}
         for k in self.k_values:
             results[f"precision_at_{k}"] = self.precision_at_k(
-                predictions, ground_truth, k
+                predictions, root_cause, k
             )
-            results[f"recall_at_{k}"] = self.recall_at_k(predictions, ground_truth, k)
-            results[f"accuracy_at_{k}"] = self.accuracy_at_k(
-                predictions, ground_truth, k
-            )
+            results[f"recall_at_{k}"] = self.recall_at_k(predictions, root_cause, k)
+            results[f"accuracy_at_{k}"] = self.accuracy_at_k(predictions, root_cause, k)
         results["mean_reciprocal_rank"] = self.mean_reciprocal_rank(
-            predictions, ground_truth
+            predictions, root_cause
         )
         return results

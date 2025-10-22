@@ -9,8 +9,8 @@ data = {
     "time_between_run": "60s",
     "clean_up": {
         "activate": True,
-        "observability_cleanup_script": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/application_cleanup_script.sh",
-        "application_cleanup_script": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/observability_cleanup_script.sh",
+        "observability_cleanup_script": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/ml_serving/scripts/application_cleanup_script.sh",
+        "application_cleanup_script": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/ml_serving/scripts/observability_cleanup_script.sh",
     },
     # "fault_config": {
     #     "name": "network-delay-ensemble",
@@ -33,13 +33,12 @@ data = {
     "workload": {
         "type": "docker",
         "config": {
-            "image": "rdsea/train_ticket_loadgen:latest",
+            "image": "rdsea/object_detection_client:latest",
             "args": {
-                "host": "http://XXX.XXX.XXX.XXX:32677",
-                "user": "30",
+                "host": "http://XXX.XXX.XXX.XXX",
+                "user": "5",
                 "run-time": "1200s",
                 "spawn-rate": "0.1",
-                "locustfile": "main.py",
             },
         },
         "list_of_generator": ["edge-raspi3.cs.aalto.fi", "edge-raspi4.cs.aalto.fi"],
@@ -51,7 +50,7 @@ data = {
     },
     "observability_cadence_config": {
         "metric_config": {
-            "environment": ["cloud_big"],
+            "environment": ["edge", "cloud"],
             "scrape_interval": "1s",
             "evaluation_interval": "1s",
         }
@@ -59,53 +58,10 @@ data = {
 }
 
 SERVICE = [
-    "ts-auth-service",
-    "ts-order-service",
-    "ts-route-service",
-    "ts-train-service",
-    "ts-travel-service",
-    # "ts-admin-basic-info-service",
-    # "ts-admin-order-service",
-    # "ts-admin-route-service",
-    # "ts-admin-travel-service",
-    # "ts-admin-user-service",
-    # "ts-assurance-service",
-    # "ts-avatar-service",
-    # "ts-basic-service",
-    # "ts-cancel-service",
-    # "ts-common",
-    # "ts-config-service",
-    # "ts-consign-price-service",
-    # "ts-consign-service",
-    # "ts-contacts-service",
-    # "ts-delivery-service",
-    # "ts-execute-service",
-    # "ts-food-delivery-service",
-    # "ts-food-service",
-    # "ts-gateway-service",
-    # "ts-inside-payment-service",
-    # "ts-news-service",
-    # "ts-notification-service",
-    # "ts-order-other-service",
-    # "ts-payment-service",
-    # "ts-preserve-other-service",
-    # "ts-preserve-service",
-    # "ts-price-service",
-    # "ts-rebook-service",
-    # "ts-route-plan-service",
-    # "ts-seat-service",
-    # "ts-security-service",
-    # "ts-station-food-service",
-    # "ts-station-service",
-    # "ts-ticket-office-service",
-    # "ts-train-food-service",
-    # "ts-travel2-service",
-    # "ts-travel-plan-service",
-    # "ts-ui-dashboard",
-    # "ts-user-service",
-    # "ts-verification-code-service",
-    # "ts-voucher-service",
-    # "ts-wait-order-service",
+    "ensemble",
+    "preprocessing",
+    "inference-mobilenetv2",
+    "inference-efficientnetb0",
 ]
 FAULT = [
     "network-delay",
@@ -117,14 +73,14 @@ FAULT_ROOT_CAUSE = {
     "resource-cpu": "service:cpu_usage",
     "resource-memory": "service:memory_usage",
 }
-FAULT_CONFIG = {
+FAULT_CONFIG: dict = {
     "network-delay": {
         # "name": "network-delay-ensemble",
         "duration": "300s",
         "fault_type": "NetworkFault.DELAY",
         "target": {
             "namespace": "default",
-            "environment": ["cloud_big"],
+            "environment": ["edge"],
             # "label_selectors": {"app": "ensemble"},
         },
         "fault_specific_config": {
@@ -139,7 +95,7 @@ FAULT_CONFIG = {
         "fault_type": "ResourceHog.CPU",
         "target": {
             "namespace": "default",
-            "environment": ["cloud_big"],
+            "environment": ["edge"],
             # "label_selectors": {"app": "ensemble"},
         },
         "fault_specific_config": {
@@ -154,7 +110,7 @@ FAULT_CONFIG = {
         "fault_type": "ResourceHog.MEMORY",
         "target": {
             "namespace": "default",
-            "environment": ["cloud_big"],
+            "environment": ["edge"],
             # "label_selectors": {"app": "ensemble"},
         },
         "fault_specific_config": {
@@ -164,6 +120,13 @@ FAULT_CONFIG = {
         },
     },
 }
+
+SERVICE_MEMORY_CONFIG = {
+    "ensemble": "150MB",
+    "preprocessing": "100MB",
+    "inference-mobilenetv2": "600MB",
+    "inference-efficientnetb0": "600MB",
+}
 current_path = pathlib.Path(__file__).parent
 for service in SERVICE:
     for fault in FAULT:
@@ -171,6 +134,10 @@ for service in SERVICE:
         fault_config = FAULT_CONFIG[fault]
         fault_config["name"] = f"{fault}_{service}"
         fault_config["target"]["label_selectors"] = {"app": service}
+        if fault == "resource-memory":
+            fault_config["fault_specific_config"]["stress_memory"]["size"] = (
+                SERVICE_MEMORY_CONFIG[service]
+            )
         all_data = {
             **data,
             "fault_config": fault_config,

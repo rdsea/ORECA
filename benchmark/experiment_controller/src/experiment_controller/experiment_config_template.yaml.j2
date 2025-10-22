@@ -36,7 +36,10 @@ fault_config:
       {% endfor %}
     {% endfor %}
 
-root_cause: "{{ ground_truth }}"
+root_cause: 
+  what: {{ root_cause.what }}
+  where: {{ root_cause.where }}
+  when: {{ root_cause.when }}
 anomaly_injection_period: {{ anomaly_injection_period }}
 warm_up_interval: {{ warm_up_interval }}
 
