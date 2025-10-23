@@ -46,7 +46,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack -n observe \
 helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
   -n observe --values "$HELM_CHART_DIR/prometheus/blackbox_exporter.yaml" --version 11.3.1
 
-kubectl wait --for=condition=Ready pod --all --timeout=300s --namespace observe
+kubectl wait --for=condition=Ready pod --all --timeout=180s --namespace observe
 
 helm install tempo -n observe grafana/tempo-distributed \
   --values "$HELM_CHART_DIR/tempo/values_distributed.yaml" --create-namespace
@@ -58,7 +58,7 @@ helm install otel-collector open-telemetry/opentelemetry-collector \
 helm install beyla -n observe --create-namespace grafana/beyla \
   -f "$HELM_CHART_DIR/beyla/values.yaml"
 
-kubectl wait --for=condition=Ready pod --all --timeout=300s --namespace observe
+kubectl wait --for=condition=Ready pod --all --timeout=180s --namespace observe
 
 kubectl apply -f "$HELM_CHART_DIR/cilium/gateway.yaml"
 sleep 5
