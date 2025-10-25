@@ -23,7 +23,7 @@ kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/confi
 kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
 
 # Cilium
-helm install cilium cilium/cilium --version 1.17.5 \
+helm install cilium cilium/cilium --version 1.18.3 \
   --namespace kube-system --values "$HELM_CHART_DIR/cilium/values_edge.yaml"
 kubectl wait --namespace kube-system --for=condition=Ready pod --all --timeout=300s
 
@@ -59,7 +59,7 @@ kubectl wait --namespace longhorn-system --for=condition=Ready pod --all --timeo
 
 # Blackbox exporter
 helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
-  -n observe --values "$HELM_PATH/prometheus/blackbox_exporter.yaml" --version 11.3.1
+  -n observe --values "$HELM_CHART_DIR/prometheus/blackbox_exporter.yaml" --version 11.3.1
 
 # Otel collector
 helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \

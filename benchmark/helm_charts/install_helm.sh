@@ -10,7 +10,7 @@ helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm
 helm repo update
 
 # Cilium
-helm install cilium cilium/cilium --version 1.17.5 \
+helm install cilium cilium/cilium --version 1.18.3 \
   --namespace kube-system --values values.yaml
 kubectl wait --namespace kube-system --for=condition=Available deploy --all --timeout=300s
 
