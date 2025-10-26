@@ -213,15 +213,15 @@ class RCAExperiment:
             raise ValueError(
                 "As clean up is activated, either observability or application script path need to be provided"
             )
-        if self.config.clean_up.observability_cleanup_script:
-            logger.info("Cleaning up observability")
-            self.script_runner.run_retry(
-                self.config.clean_up.observability_cleanup_script
-            )
         if self.config.clean_up.application_cleanup_script:
             logger.info("Cleaning up application")
             self.script_runner.run_retry(
                 self.config.clean_up.application_cleanup_script
+            )
+        if self.config.clean_up.observability_cleanup_script:
+            logger.info("Cleaning up observability")
+            self.script_runner.run_retry(
+                self.config.clean_up.observability_cleanup_script
             )
         logger.info("Clean up completed")
 
