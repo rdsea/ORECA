@@ -14,6 +14,13 @@ make reset-deploy Namespace=train-ticket
 kubectl delete ns train-ticket
 
 sleep 5
-kubectl create ns train-ticket
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: train-ticket
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+EOF
 make deploy Namespace=train-ticket
 kubectl wait --for=condition=Ready pod --all --timeout=300s --namespace train-ticket

@@ -39,6 +39,15 @@ kubectl delete namespace observe --ignore-not-found
 echo "Finished cleaning up."
 echo "Start redeploying"
 # Redeploy
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observe
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+EOF
+
 helm install prometheus prometheus-community/kube-prometheus-stack -n observe \
   --values "$HELM_CHART_DIR/prometheus/values_distributed.yaml" --version 75.12.0 \
   --create-namespace
