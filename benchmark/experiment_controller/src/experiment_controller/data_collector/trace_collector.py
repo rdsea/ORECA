@@ -19,8 +19,7 @@ class TraceCollector:
         Args:
             url (str): The URL of the Tempo server (without protocol, e.g. tempo:3200).
         """
-        self.url = url.rstrip("/")
-        self.api_url = f"http://{self.url}"
+        self.api_url = url
         self.search_url = f"{self.api_url}/api/search"
         self.trace_url = f"{self.api_url}/api/traces"
 
