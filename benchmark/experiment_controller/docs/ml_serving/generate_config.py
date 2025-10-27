@@ -50,9 +50,16 @@ data = {
     },
     "observability_cadence_config": {
         "metric_config": {
-            "environment": ["edge", "cloud"],
-            "scrape_interval": "1s",
-            "evaluation_interval": "1s",
+            "environment": {
+                "edge": {
+                    "scrape_interval": "1s",
+                    "evaluation_interval": "1s",
+                },
+                "cloud": {
+                    "scrape_interval": "1s",
+                    "evaluation_interval": "1s",
+                },
+            }
         }
     },
 }

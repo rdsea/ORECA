@@ -62,8 +62,18 @@ data_collector_config:
 observability_cadence_config:
   metric_config:
     environment:
-    {% for env in observability_cadence_config.metric_config.environment %}
-      - {{ env }}
+    {% for env_name, env_config in observability_cadence_config.metric_config.environment.items() %}
+      {{ env_name }}:
+        {% if env_config.scrape_interval is not none %}
+        scrape_interval: {{ env_config.scrape_interval }}
+        {% endif %}
+        {% if env_config.evaluation_interval is not none %}
+        evaluation_interval: {{ env_config.evaluation_interval }}
+        {% endif %}
+        {% if env_config.custom_values %}
+        custom_values:
+          {% for key, value in env_config.custom_values.items() %}
+          {{ key }}: {{ value }}
+          {% endfor %}
+        {% endif %}
     {% endfor %}
-    scrape_interval: {{ observability_cadence_config.metric_config.scrape_interval }}
-    evaluation_interval: {{ observability_cadence_config.metric_config.evaluation_interval }}

@@ -51,9 +51,12 @@ data = {
     },
     "observability_cadence_config": {
         "metric_config": {
-            "environment": ["cloud_big"],
-            "scrape_interval": "1s",
-            "evaluation_interval": "1s",
+            "environment": {
+                "cloud": {
+                    "scrape_interval": "1s",
+                    "evaluation_interval": "1s",
+                },
+            }
         }
     },
 }
