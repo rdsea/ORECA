@@ -95,6 +95,7 @@ class FaultConfig(BaseModel):
 
     name: str
     duration: str
+    fault_injection_period: str
     fault_type: AnomalyEnum
     target: TargetSelector
     fault_specific_config: BaseModel
@@ -142,6 +143,7 @@ class FaultConfig(BaseModel):
             # Copy common field like name, target to fault_specific_config so that it can be used in fault controller
             config_data["name"] = values["name"]
             config_data["target"] = values["target"]
+            config_data["duration"] = values["duration"]
             values["fault_specific_config"] = model_cls.model_validate(config_data)
 
         elif not isinstance(config_data, model_cls):

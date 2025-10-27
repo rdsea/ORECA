@@ -48,15 +48,18 @@ if __name__ == "__main__":
         # "inference-mobilenetv2",
     ]
     EXPERIMENT_CONFIG = [
-        "network_delay",
+        "network-delay",
         # "network_loss_preprocessing.yaml",
-        "resource_cpu",
-        "resource_memory",
+        "resource-cpu",
+        "resource-memory",
     ]
     for service in SERVICE:
         for experiment_name in EXPERIMENT_CONFIG:
             config_path = (
-                current_path / "config" / service / f"{experiment_name}_{service}.yaml"
+                current_path
+                / "config.local"
+                / f"{service}-{experiment_name}"
+                / "config.yaml"
             )
             with open(config_path) as f:
                 config_data = yaml.safe_load(f)

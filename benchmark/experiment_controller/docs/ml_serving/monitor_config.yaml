@@ -1,6 +1,0 @@
-# Local
-prometheus_url: http://localhost:10001/prometheus
-# K8s
-# prometheus_url: http://prometheus-kube-prometheus-prometheus.redpanda.svc.cluster.local:9090/prometheus
-namespace: observe
-kubernetes_path: "~/.kube/config"

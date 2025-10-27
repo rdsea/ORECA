@@ -54,7 +54,6 @@ class RCAExperimentConfig(BaseModel):
     fault_config: FaultConfig
     root_cause: RootCauseConfig
     # When to inject the anomaly, for example, 5, 10 minutes after starting load generation
-    anomaly_injection_period: str
     workload: WorkloadConfig
     elastic_config: ElasticConfig | None = None
     observability_cadence_config: ObservabilityCadenceConfig | None = None

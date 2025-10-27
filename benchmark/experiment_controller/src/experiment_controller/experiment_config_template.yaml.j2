@@ -10,6 +10,7 @@ clean_up:
 fault_config:
   name: {{ fault_config.name }}
   duration: {{ fault_config.duration }}
+  fault_injection_period: {{ fault_config.fault_injection_period }}
   fault_type: {{ fault_config.fault_type }}
   target:
     namespace: {{ fault_config.target.namespace }}
@@ -23,7 +24,6 @@ fault_config:
     {% endfor %}
   fault_specific_config:
     namespace: {{ fault_config.fault_specific_config.namespace }}
-    duration: {{ fault_config.fault_specific_config.duration }}
     {# Dynamically render whatever fault-specific block exists (delay, stress_cpu, stress_memory, loss, etc.) #}
     {% for fault_type, params in fault_config.fault_specific_config.items() if fault_type not in ["namespace", "duration"] %}
     {{ fault_type }}:
@@ -40,7 +40,6 @@ root_cause:
   what: {{ root_cause.what }}
   where: {{ root_cause.where }}
   when: {{ root_cause.when }}
-anomaly_injection_period: {{ anomaly_injection_period }}
 warm_up_interval: {{ warm_up_interval }}
 
 workload:
@@ -78,6 +77,7 @@ observability_cadence_config:
         {% endif %}
     {% endfor %}
 
+{% if elastic_config %}
 elastic_config:
   environment:
   {% for env_name, elastic_list in elastic_config.environment.items() %}
@@ -98,3 +98,4 @@ elastic_config:
         {% endif %}
     {% endfor %}
   {% endfor %}
+{% endif %}

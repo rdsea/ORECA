@@ -12,23 +12,6 @@ data = {
         "observability_cleanup_script": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/application_cleanup_script.sh",
         "application_cleanup_script": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/observability_cleanup_script.sh",
     },
-    # "fault_config": {
-    #     "name": "network-delay-ensemble",
-    #     "duration": "300s",
-    #     "fault_type": "NetworkFault.DELAY",
-    #     "target": {
-    #         "namespace": "default",
-    #         "environment": ["edge"],
-    #         "label_selectors": {"app": "ensemble"},
-    #     },
-    #     "fault_specific_config": {
-    #         "namespace": "default",
-    #         "duration": "300s",
-    #         "delay": {"latency": "50ms", "correlation": "0.5", "jitter": "20ms"},
-    #     },
-    # },
-    # "root_cause": {"what": "ensemble", "where": "service:rtt"},
-    "anomaly_injection_period": "900s",
     "warm_up_interval": "300s",
     "workload": {
         "type": "docker",
@@ -145,7 +128,6 @@ FAULT_CONFIG = {
         },
         "fault_specific_config": {
             "namespace": "default",
-            "duration": "300s",
             "delay": {"latency": "50ms", "correlation": "0.5", "jitter": "20ms"},
         },
     },
@@ -160,7 +142,6 @@ FAULT_CONFIG = {
         },
         "fault_specific_config": {
             "namespace": "default",
-            "duration": "300s",
             "stress_cpu": {"workers": 1, "load": 100},
         },
     },
@@ -175,7 +156,6 @@ FAULT_CONFIG = {
         },
         "fault_specific_config": {
             "namespace": "default",
-            "duration": "300s",
             "stress_memory": {"workers": 1, "size": "150MB"},
         },
     },
@@ -187,6 +167,7 @@ for service in SERVICE:
         fault_config = FAULT_CONFIG[fault]
         fault_config["name"] = f"{fault}_{service}"
         fault_config["target"]["label_selectors"] = {"app": service}
+        fault_config["fault_injection_period"] = "900s"
         all_data = {
             **data,
             "fault_config": fault_config,
