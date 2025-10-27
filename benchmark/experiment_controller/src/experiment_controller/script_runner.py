@@ -1,5 +1,12 @@
+import logging
 import subprocess
-import time
+
+from tenacity import (
+    before_sleep_log,
+    retry,
+    stop_after_attempt,
+    wait_exponential_jitter,
+)
 
 from experiment_controller.logger import logger
 
@@ -16,6 +23,7 @@ class ScriptRunner:
         Raises:
             RuntimeError: If the script fails to execute.
         """
+        logger.info(f"Starting script executio for script path {script_path}")
         try:
             process = subprocess.Popen(
                 ["bash", script_path],
@@ -46,33 +54,20 @@ class ScriptRunner:
             logger.error("Execution failed: %s", e)
             raise RuntimeError(f"Failed to execute script: {script_path}") from e
 
-    def run_retry(self, script_path: str, retries: int = 3, delay: int = 30):
-        """Runs a shell script with retries.
+    @retry(
+        wait=wait_exponential_jitter(exp_base=2, initial=5, max=30),
+        reraise=True,
+        stop=stop_after_attempt(3),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+    )
+    def run_retry(self, script_path: str):
+        """Runs a shell script with automatic retries using stamina.
 
         Args:
             script_path (str): Path to the script to execute.
-            retries (int): Number of total attempts.
-            delay (int): Delay in seconds between retries.
 
         Raises:
             RuntimeError: If all attempts fail.
         """
-        for attempt in range(1, retries + 1):
-            try:
-                self.run(script_path)
-                logger.info("Script executed successfully on attempt %d", attempt)
-                return
-            except RuntimeError:
-                if attempt < retries:
-                    logger.warning(
-                        "Attempt %d/%d failed. Retrying in %d seconds...",
-                        attempt,
-                        retries,
-                        delay,
-                    )
-                    time.sleep(delay)
-                else:
-                    logger.error(
-                        "All %d attempts failed for script: %s", retries, script_path
-                    )
-                    raise
+        self.run(script_path)
+        logger.info("Script executed successfully: %s", script_path)
