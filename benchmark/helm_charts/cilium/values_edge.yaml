@@ -5,6 +5,15 @@ cluster:
   id: 2
 kubeProxyReplacement: true
 
+l2announcements:
+  enabled: true
+  leaseDuration: 15s
+  leaseRenewDeadline: 5s
+  leaseRetryPeriod: 2s
+k8sClientRateLimit:
+  qps: 20
+  burst: 30
+
 ipam:
   # -- Configure IP Address Management mode.
   # ref: https://docs.cilium.io/en/stable/network/concepts/ipam/
