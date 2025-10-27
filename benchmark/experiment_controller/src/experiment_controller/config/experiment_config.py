@@ -6,7 +6,7 @@ from experiment_controller.config.anomaly_model import (
 )
 from experiment_controller.config.workload_config import WorkloadConfig
 from experiment_controller.elastic_controller.elastic_controller import (
-    ElasticControllerConfig,
+    ElasticConfig,
 )
 from experiment_controller.observability_controller.log_controller import (
     LogControllerConfig,
@@ -56,7 +56,7 @@ class RCAExperimentConfig(BaseModel):
     # When to inject the anomaly, for example, 5, 10 minutes after starting load generation
     anomaly_injection_period: str
     workload: WorkloadConfig
-    elastic_controller_config: ElasticControllerConfig | None = None
+    elastic_config: ElasticConfig | None = None
     observability_cadence_config: ObservabilityCadenceConfig | None = None
     data_collector_config: DataCollectorConfig
 

@@ -59,6 +59,19 @@ data = {
             }
         }
     },
+    "elastic_config": {
+        "environment": {
+            "cloud": [
+                {
+                    "name": "horizontal pod autoscaler",
+                    "type": "infrastructure",
+                    "active": True,
+                    "how_to_activate": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/hpa.yaml",
+                    "how_to_deactivate": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/hpa.yaml",
+                }
+            ]
+        },
+    },
 }
 
 SERVICE = [

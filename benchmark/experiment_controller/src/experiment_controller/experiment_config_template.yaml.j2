@@ -77,3 +77,24 @@ observability_cadence_config:
           {% endfor %}
         {% endif %}
     {% endfor %}
+
+elastic_config:
+  environment:
+  {% for env_name, elastic_list in elastic_config.environment.items() %}
+    {{ env_name }}:
+    {% for elastic in elastic_list %}
+      - name: {{ elastic.name }}
+        type: {{ elastic.type }}
+        active: {{ elastic.active | lower }}
+        {% if elastic.how_to_activate is string %}
+        how_to_activate: "{{ elastic.how_to_activate }}"
+        {% elif elastic.how_to_activate %}
+        how_to_activate: {{ elastic.how_to_activate }}
+        {% endif %}
+        {% if elastic.how_to_deactivate is string %}
+        how_to_deactivate: "{{ elastic.how_to_deactivate }}"
+        {% elif elastic.how_to_deactivate %}
+        how_to_deactivate: {{ elastic.how_to_deactivate }}
+        {% endif %}
+    {% endfor %}
+  {% endfor %}

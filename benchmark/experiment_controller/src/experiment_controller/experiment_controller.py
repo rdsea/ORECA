@@ -87,10 +87,8 @@ class RCAExperiment:
         ) as f:
             logger.debug(self.config.model_dump())
             yaml.dump(self.config.model_dump(exclude_none=True), f)
-        if self.config.elastic_controller_config:
-            self.elastic_controller = ElasticController(
-                self.config.elastic_controller_config
-            )
+        if self.config.elastic_config:
+            self.elastic_controller = ElasticController(self.config.elastic_config)
 
     def _create_workload_generator(self) -> WorkloadController:
         workload_config = self.config.workload
@@ -128,7 +126,7 @@ class RCAExperiment:
                     self.clean_up_after_experiment()
 
                 # Apply elastic  config
-                if self.config.elastic_controller_config:
+                if self.config.elastic_config:
                     self.elastic_controller.activate_all()
 
                 # Apply observability cadence config
@@ -195,7 +193,7 @@ class RCAExperiment:
         """
         logger.info("Cleaning up the anomaly")
         self.fault_controller.clean()
-        if self.config.elastic_controller_config:
+        if self.config.elastic_config:
             self.elastic_controller.deactivate_all()
         logger.info(
             f"🛠️  Anomaly finished: {self.config.fault_config.fault_type} "
