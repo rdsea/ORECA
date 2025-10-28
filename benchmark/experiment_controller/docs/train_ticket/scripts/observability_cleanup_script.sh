@@ -31,7 +31,7 @@ kubectl delete -f "$HELM_CHART_DIR/cilium/gateway.yaml"
 
 # Uninstall Helm releases
 
-uninstall_helm_releases cloud_big observe otel-collector tempo blackbox-exporter prometheus beyla
+uninstall_helm_releases cloud observe otel-collector tempo blackbox-exporter prometheus beyla
 
 kubectl delete pvc -n observe --all
 kubectl delete namespace observe --ignore-not-found
