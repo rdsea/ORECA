@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HELM_PATH=$SCRIPT_DIR/../../helm_charts
+APPLICATION_DIR="$SCRIPT_DIR/../../../../../applications/sesa/search_and_rescue/object_classification/deployment/"
 
 # ------------------------------
 # Helpers
@@ -67,6 +68,7 @@ uninstall_helm_releases cloud observe prometheus tempo my-opentelemetry-collecto
 delete_pvcs observe
 kubectl delete namespace observe --ignore-not-found
 kubectl delete namespace dashboard --ignore-not-found
+kubectl delete -f "$APPLICATION_DIR/cloud/cloud_gateway.yaml" --wait --ignore-not-found
 
 # Edge
 uninstall_helm_releases edge observe prometheus my-opentelemetry-collector blackbox-exporter
@@ -74,6 +76,7 @@ delete_pvcs observe
 kubectl delete namespace observe --ignore-not-found
 kubectl delete -f "$HELM_PATH/tempo/tempo_distributor.yaml" --wait --ignore-not-found
 kubectl delete -f "$HELM_PATH/loki/gateway.yaml" --wait --ignore-not-found
+kubectl delete -f "$APPLICATION_DIR/edge/observability_route.yaml" --wait --ignore-not-found
 
 # ------------------------------
 # REDEPLOY
@@ -84,6 +87,7 @@ kubectl config use-context cloud
 kubectl create namespace dashboard || true
 kubectl create namespace observe || true
 
+kubectl apply -f "$APPLICATION_DIR/cloud/cloud_gateway.yaml"
 helm_install_parallel \
   "helm install prometheus prometheus-community/kube-prometheus-stack -n observe --values $HELM_PATH/prometheus/values_cloud.yaml --create-namespace --version 75.12.0" \
   "helm install tempo -n observe grafana/tempo-distributed --values $HELM_PATH/tempo/values.yaml --create-namespace --version 1.48.0" \
@@ -109,3 +113,4 @@ helm_install_parallel \
 
 kubectl apply -f "$HELM_PATH/tempo/tempo_distributor.yaml"
 kubectl apply -f "$HELM_PATH/loki/gateway.yaml"
+kubectl apply -f "$APPLICATION_DIR/edge/observability_route.yaml"

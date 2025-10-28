@@ -38,7 +38,6 @@ done
 # Cloud part
 kubectl config use-context cloud
 
-kubectl apply -f "$APPLICATION_DIR/cloud/cloud_gateway.yaml"
 sleep 5
 kubectl apply -f "$APPLICATION_DIR/cloud/coredns_custom.yaml"
 kubectl rollout restart -n kube-system deployment coredns
