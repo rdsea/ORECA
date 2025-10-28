@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APPLICATION_DIR="$SCRIPT_DIR/../../../applications/sesa/search_and_rescue/object_classification/deployment/"
+APPLICATION_DIR="$SCRIPT_DIR/../../../../../applications/sesa/search_and_rescue/object_classification/deployment/"
 # Cleaning
 #
 # Cloud part
