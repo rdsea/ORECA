@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-HELM_PATH=$SCRIPT_DIR/../../helm_charts
+HELM_PATH="$SCRIPT_DIR/../../../../../applications/sesa/search_and_rescue/object_classification/deployment/helm_charts"
 APPLICATION_DIR="$SCRIPT_DIR/../../../../../applications/sesa/search_and_rescue/object_classification/deployment/"
 
 # ------------------------------
