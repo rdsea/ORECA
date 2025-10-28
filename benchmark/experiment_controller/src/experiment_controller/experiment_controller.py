@@ -117,7 +117,9 @@ class RCAExperiment:
         """
 
         for i in range(self.config.number_of_run):
-            inject_delay = parse_time_to_seconds(self.config.anomaly_injection_period)
+            inject_delay = parse_time_to_seconds(
+                self.config.fault_config.fault_injection_period
+            )
             save_path = self.output_dir / str(i + 1)
             os.makedirs(save_path, exist_ok=True)
 

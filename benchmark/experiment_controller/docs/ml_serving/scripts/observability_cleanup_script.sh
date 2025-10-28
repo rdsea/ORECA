@@ -85,22 +85,34 @@ kubectl delete -f "$APPLICATION_DIR/edge/observability_route.yaml" --wait --igno
 # ---- Cloud ----
 kubectl config use-context cloud
 kubectl create namespace dashboard || true
-kubectl create namespace observe || true
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observe
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+EOF
 
-kubectl apply -f "$APPLICATION_DIR/cloud/cloud_gateway.yaml"
 helm_install_parallel \
   "helm install prometheus prometheus-community/kube-prometheus-stack -n observe --values $HELM_PATH/prometheus/values_cloud.yaml --create-namespace --version 75.12.0" \
+  "helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector -f $HELM_PATH/otel/values_cloud.yaml -n observe --version 0.129.0" \
+  "helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter -n observe --values $HELM_PATH/prometheus/blackbox_exporter.yaml --version 11.3.1"
+
+wait_for_critical_pods observe \
+  "app.kubernetes.io/name=prometheus"
+
+helm_install_parallel \
   "helm install tempo -n observe grafana/tempo-distributed --values $HELM_PATH/tempo/values.yaml --create-namespace --version 1.48.0" \
   "helm install loki grafana/loki -n observe -f $HELM_PATH/loki/values.yaml --version 6.42.0"
 
-# Wait only for critical pods
 wait_for_critical_pods observe \
-  "app.kubernetes.io/name=prometheus" \
   "app.kubernetes.io/name=tempo-distributor"
 
+# Wait only for critical pods
+
 helm_install_parallel \
-  "helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector -f $HELM_PATH/otel/values_cloud.yaml -n observe --version 0.129.0" \
-  "helm install blackbox-exporter prometheus-community/prometheus-blackbox-exporter -n observe --values $HELM_PATH/prometheus/blackbox_exporter.yaml --version 11.3.1"
+  kubectl apply -f "$APPLICATION_DIR/cloud/cloud_gateway.yaml"
 
 # ---- Edge ----
 kubectl config use-context edge
