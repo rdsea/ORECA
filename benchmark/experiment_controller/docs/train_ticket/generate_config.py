@@ -163,9 +163,9 @@ FAULT_CONFIG = {
 current_path = pathlib.Path(__file__).parent
 for service in SERVICE:
     for fault in FAULT:
-        experiment_name = f"{fault}_{service}"
+        experiment_name = f"{fault}-{service}"
         fault_config = FAULT_CONFIG[fault]
-        fault_config["name"] = f"{fault}_{service}"
+        fault_config["name"] = f"{fault}-{service}"
         fault_config["target"]["label_selectors"] = {"app": service}
         fault_config["fault_injection_period"] = "900s"
         all_data = {
