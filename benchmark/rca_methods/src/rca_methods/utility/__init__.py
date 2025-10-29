@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import sys
 from pathlib import Path
@@ -149,7 +150,11 @@ def read_data(data_path: str | Path, strip: bool = True) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The preprocessed DataFrame.
     """
-    data = pd.read_csv(data_path)
+    try:
+        data = pd.read_csv(data_path)
+    except FileNotFoundError:
+        logging.error(f"Data file not found: {data_path}")
+        return pd.DataFrame()
     os.path.dirname(data_path)
 
     ############# PREPROCESSING ###############

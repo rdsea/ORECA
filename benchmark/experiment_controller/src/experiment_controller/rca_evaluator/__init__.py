@@ -208,6 +208,8 @@ class RCAEvaluator:
         self, data_dir: Path, experiment_config: RCAExperimentConfig, experiment_id: str
     ):
         data = self.load_data(data_dir / "metric.csv")
+        if data.empty:
+            return
         injection_time = data["timestamp"][0] + parse_time_to_seconds(
             experiment_config.fault_config.fault_injection_period
         )
@@ -222,6 +224,8 @@ class RCAEvaluator:
 
     def load_data(self, data_path: Path) -> pd.DataFrame:
         data = read_data(data_path)
+        if data.empty:
+            return pd.DataFrame()
         return self.preprocess_data(data)
 
     def preprocess_data(self, df: pd.DataFrame):

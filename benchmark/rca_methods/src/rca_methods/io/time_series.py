@@ -182,8 +182,7 @@ def preprocess(
     Returns:
         pd.DataFrame: The preprocessed DataFrame.
     """
-    len(data.columns)
-
+    data.drop(columns=["timestamp"], inplace=True)
     if dataset == "causalrca-sock-shop":
         data = drop_time(data)
     elif dataset is not None:
