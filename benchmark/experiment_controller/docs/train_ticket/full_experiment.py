@@ -1,7 +1,13 @@
 import os
 import pathlib
 
+import yaml
+from experiment_controller.config.experiment_config import (
+    RCAExperimentConfig,
+)
 from experiment_controller.config_generator import write_config_to_filepath
+from experiment_controller.experiment_controller import RCAExperiment
+from experiment_controller.logger import logger
 
 data = {
     # "experiment_name": "network_delay_ensemble",
@@ -160,21 +166,55 @@ FAULT_CONFIG = {
         },
     },
 }
-current_path = pathlib.Path(__file__).parent
-for service in SERVICE:
-    for fault in FAULT:
-        fault_config = FAULT_CONFIG[fault]
-        fault_config["name"] = f"{fault}-{service}"
-        fault_config["target"]["label_selectors"] = {"app": service}
-        all_data = {
-            **data,
-            "fault_config": fault_config,
-            "experiment_name": f"{fault}_{service}",
-            "root_cause": {
-                "what": service,
-                "where": FAULT_ROOT_CAUSE[fault],
-            },
-        }
-        experiment_path = current_path / "config.local" / f"{service}-{fault}"
-        os.makedirs(experiment_path, exist_ok=True)
-        write_config_to_filepath(all_data, experiment_path / "config.yaml")
+
+
+def generate_config(metric_cadence: str):
+    current_path = pathlib.Path(__file__).parent
+    for service in SERVICE:
+        for fault in FAULT:
+            fault_config = FAULT_CONFIG[fault]
+            fault_config["name"] = f"{fault}-{service}"
+            fault_config["target"]["label_selectors"] = {"app": service}
+            fault_config["fault_injection_period"] = "900s"
+            data["observability_cadence_config"]["metric_config"]["environment"][
+                "cloud"
+            ]["scrape_interval"] = metric_cadence
+            data["observability_cadence_config"]["metric_config"]["environment"][
+                "cloud"
+            ]["evaluation_interval"] = metric_cadence
+            all_data = {
+                **data,
+                "fault_config": fault_config,
+                "experiment_name": f"{fault}_{service}",
+                "root_cause": {
+                    "what": service,
+                    "where": FAULT_ROOT_CAUSE[fault],
+                },
+            }
+            experiment_path = current_path / "config.local" / f"{service}-{fault}"
+            os.makedirs(experiment_path, exist_ok=True)
+            write_config_to_filepath(all_data, experiment_path / "config.yaml")
+
+
+if __name__ == "__main__":
+    current_path = pathlib.Path(__file__).parent
+    metric_cadences_list = ["1s", "2s", "3s", "5s"]
+    for metric_cadence in metric_cadences_list:
+        generate_config(metric_cadence)
+        for service in SERVICE:
+            for fault in FAULT:
+                config_path = (
+                    current_path / "config.local" / f"{service}-{fault}" / "config.yaml"
+                )
+                with open(config_path) as f:
+                    config_data = yaml.safe_load(f)
+
+                experiment_config = RCAExperimentConfig.model_validate(config_data)
+                experiment = RCAExperiment(
+                    experiment_config,
+                    pathlib.Path(__file__).parent / f"scrape_{metric_cadence}",
+                )
+                logger.info(f"Starting experiment: {experiment_config.experiment_name}")
+                # Uncomment to run
+                experiment.run()
+                logger.info(f"Finished experiment: {experiment_config.experiment_name}")
