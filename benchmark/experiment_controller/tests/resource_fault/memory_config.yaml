@@ -1,8 +1,11 @@
 name: resource-memory-preprocessing
-namespace: default
 duration: 300s
+fault_type: ResourceFault.MEM
 target:
   namespace: default
+  environment:
+    - cloud
+    - edge
   label_selectors:
     app: preprocessing
 stress_memory:

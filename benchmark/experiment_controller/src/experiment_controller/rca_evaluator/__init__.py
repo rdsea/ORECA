@@ -209,7 +209,7 @@ class RCAEvaluator:
     ):
         data = self.load_data(data_dir / "metric.csv")
         injection_time = data["timestamp"][0] + parse_time_to_seconds(
-            experiment_config.anomaly_injection_period
+            experiment_config.fault_config.fault_injection_period
         )
 
         for rca_method in tqdm(

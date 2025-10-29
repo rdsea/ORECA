@@ -1,11 +1,14 @@
 name: network-delay-preprocessing
-namespace: default
-duration: 30s
+duration: 300s
+fault_type: NetworkFault.DELAY
 target:
   namespace: default
+  environment:
+    - cloud
+    - edge
   label_selectors:
     app: preprocessing
 delay:
-  latency: 100ms
+  latency: "100ms"
   correlation: "0.5"
-  jitter: 50ms
+  jitter: "50ms"

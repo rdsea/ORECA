@@ -1,8 +1,11 @@
 name: resource-io-preprocessing
-namespace: default
 duration: 300s
+fault_type: ResourceFault.CPU
 target:
   namespace: default
+  environment:
+    - cloud
+    - edge
   label_selectors:
     app: preprocessing
 io_chaos:
