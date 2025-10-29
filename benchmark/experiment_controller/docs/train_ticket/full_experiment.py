@@ -15,10 +15,10 @@ data = {
     "time_between_run": "60s",
     "clean_up": {
         "activate": True,
-        "observability_cleanup_script": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/application_cleanup_script.sh",
-        "application_cleanup_script": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/observability_cleanup_script.sh",
+        "observability_cleanup_script": "/home/aaltosea/Dung/RCA_Edge_Cloud/benchmark/experiment_controller/docs/ml_serving/scripts/observability_cleanup_script.sh",
+        "application_cleanup_script": "/home/aaltosea/Dung/RCA_Edge_Cloud/benchmark/experiment_controller/docs/ml_serving/scripts/application_cleanup_script.sh",
     },
-    "warm_up_interval": "300s",
+    "warm_up_interval": "30s",
     "workload": {
         "type": "docker",
         "config": {
@@ -26,7 +26,7 @@ data = {
             "args": {
                 "host": "http://XXX.XXX.XXX.XXX:32677",
                 "user": "30",
-                "run-time": "1200s",
+                "run-time": "120s",
                 "spawn-rate": "0.1",
                 "locustfile": "main.py",
             },
@@ -36,7 +36,7 @@ data = {
     },
     "data_collector_config": {
         "metric_url": "http://XXX.XXX.XXX.XXX/prometheus",
-        "trace_url": "http://XXX.XXX.XXX.XXX/tempo",
+        "trace_url": "http://XXX.XXX.XXX.XXX:3200",
     },
     "observability_cadence_config": {
         "metric_config": {
@@ -48,19 +48,19 @@ data = {
             }
         }
     },
-    "elastic_config": {
-        "environment": {
-            "cloud": [
-                {
-                    "name": "horizontal pod autoscaler",
-                    "type": "infrastructure",
-                    "active": True,
-                    "how_to_activate": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/hpa.yaml",
-                    "how_to_deactivate": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/hpa.yaml",
-                }
-            ]
-        },
-    },
+    # "elastic_config": {
+    #     "environment": {
+    #         "cloud": [
+    #             {
+    #                 "name": "horizontal pod autoscaler",
+    #                 "type": "infrastructure",
+    #                 "active": True,
+    #                 "how_to_activate": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/hpa.yaml",
+    #                 "how_to_deactivate": "/u/49/anhdun1/unix/git/RCA_Edge_Cloud/benchmark/experiment_controller/docs/train_ticket/scripts/hpa.yaml",
+    #             }
+    #         ]
+    #     },
+    # },
 }
 
 SERVICE = [
@@ -125,11 +125,11 @@ FAULT_ROOT_CAUSE = {
 FAULT_CONFIG = {
     "network-delay": {
         # "name": "network-delay-ensemble",
-        "duration": "300s",
+        "duration": "30s",
         "fault_type": "NetworkFault.DELAY",
         "target": {
             "namespace": "default",
-            "environment": ["cloud_big"],
+            "environment": ["cloud"],
             # "label_selectors": {"app": "ensemble"},
         },
         "fault_specific_config": {
@@ -139,11 +139,11 @@ FAULT_CONFIG = {
     },
     "resource-cpu": {
         # "name": "resource-cpu-ensemble",
-        "duration": "300s",
+        "duration": "30s",
         "fault_type": "ResourceHog.CPU",
         "target": {
             "namespace": "default",
-            "environment": ["cloud_big"],
+            "environment": ["cloud"],
             # "label_selectors": {"app": "ensemble"},
         },
         "fault_specific_config": {
@@ -153,11 +153,11 @@ FAULT_CONFIG = {
     },
     "resource-memory": {
         # "name": "resource-memory-ensemble",
-        "duration": "300s",
+        "duration": "30s",
         "fault_type": "ResourceHog.MEMORY",
         "target": {
             "namespace": "default",
-            "environment": ["cloud_big"],
+            "environment": ["cloud"],
             # "label_selectors": {"app": "ensemble"},
         },
         "fault_specific_config": {
