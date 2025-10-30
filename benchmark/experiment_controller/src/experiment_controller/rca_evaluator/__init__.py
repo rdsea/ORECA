@@ -1,5 +1,6 @@
 import logging
 import os
+from enum import Enum
 from pathlib import Path
 
 import pandas as pd
@@ -12,6 +13,11 @@ from tqdm import tqdm
 from experiment_controller.config.experiment_config import RCAExperimentConfig
 from experiment_controller.experiment_controller import parse_time_to_seconds
 from experiment_controller.logger import logger
+
+
+class EvaluationMode(Enum):
+    COARSE = "coarse-grained"
+    FINE = "fine-grained"
 
 
 class RCAEvaluator:
@@ -105,14 +111,15 @@ class RCAEvaluator:
             self.process_experiment(dir)
 
         # Generate and print results table
-        self.print_results_table()
+        self.print_results_table(EvaluationMode.COARSE)
+        self.print_results_table(EvaluationMode.FINE)
 
-    def print_results_table(self):
+    def print_results_table(self, mode: EvaluationMode):
         """Generate and print a table of results organized by fault type using tabulate."""
         fault_types = list(set(self.experiment_fault_types.values()))
 
         for rca_method in self.rca_methods:
-            print(f"\n# RCA Evaluation Results for {rca_method.name}")
+            print(f"\n# RCA Evaluation Results for {rca_method.name} at {mode}")
 
             headers = [
                 "Fault Type",
@@ -139,12 +146,29 @@ class RCAEvaluator:
                             rca_method.name in self.predictions
                             and experiment_id in self.predictions[rca_method.name]
                         ):
-                            filtered_predictions[experiment_id] = self.predictions[
-                                rca_method.name
-                            ][experiment_id]
-                            filtered_root_cause[experiment_id] = self.root_cause[
-                                experiment_id
-                            ]
+                            if mode == EvaluationMode.FINE:
+                                predictions = self.predictions[rca_method.name][
+                                    experiment_id
+                                ]
+                                if isinstance(predictions[0], tuple):
+                                    filtered_predictions[experiment_id] = [
+                                        x[0] for x in predictions
+                                    ]
+                                else:
+                                    filtered_predictions[experiment_id] = predictions
+                                filtered_root_cause[experiment_id] = self.root_cause[
+                                    experiment_id
+                                ]
+                            else:
+                                filtered_predictions[experiment_id] = [
+                                    self.simplify_label(x[0])
+                                    for x in self.predictions[rca_method.name][
+                                        experiment_id
+                                    ]
+                                ]
+                                filtered_root_cause[experiment_id] = (
+                                    self.simplify_label(self.root_cause[experiment_id])
+                                )
 
                 if filtered_predictions:
                     results = self.evaluate(filtered_predictions, filtered_root_cause)
@@ -195,9 +219,10 @@ class RCAEvaluator:
         ):
             run_number = run_dir.name
             experiment_id = f"{experiment_config.experiment_name}_{run_number}"
-            self.root_cause[experiment_id] = {
+            self.root_cause[experiment_id] = (
                 f"{experiment_config.root_cause.what}_{experiment_config.root_cause.where}"
-            }
+            )
+
             # Store fault type for this experiment
             self.experiment_fault_types[experiment_id] = str(
                 experiment_config.fault_config.fault_type
@@ -210,8 +235,12 @@ class RCAEvaluator:
         data = self.load_data(data_dir / "metric.csv")
         if data.empty:
             return
-        injection_time = data["timestamp"][0] + parse_time_to_seconds(
-            experiment_config.fault_config.fault_injection_period
+        injection_time = (
+            data["timestamp"][0]
+            + parse_time_to_seconds(
+                experiment_config.fault_config.fault_injection_period
+            )
+            - parse_time_to_seconds(experiment_config.warm_up_interval)
         )
 
         for rca_method in tqdm(
@@ -240,6 +269,7 @@ class RCAEvaluator:
     ):
         rca = RCAFactory.create(rca_method)
         rootcause = rca.run(data, injection_time, top_k=5)
+        logger.debug(f"{rca_method} find root cause: {rootcause}")
         if rca_method.name not in self.predictions:
             self.predictions[rca_method.name] = {}
         self.predictions[rca_method.name][experiment_id] = rootcause
@@ -345,3 +375,10 @@ class RCAEvaluator:
             predictions, root_cause
         )
         return results
+
+    def simplify_label(self, label: str):
+        """
+        Simplify the label by removing the "what" and "where" parts.
+        The metric is formatted as what_where
+        """
+        return label.split("_")[0]

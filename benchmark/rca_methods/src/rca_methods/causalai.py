@@ -65,11 +65,7 @@ class CausalAI(BaseRCA):
             time_metric_name="timestamp",
             prior_knowledge=None,
         )
-        print("running")
-
         root_causes, _ = model.run(
             pvalue_thres=0.001, max_condition_set_size=4, return_graph=True
         )
-        # Add a score of 1.0 to each root cause
-        result = [(cause, 1.0) for cause in root_causes]
-        return result[:top_k]
+        return list(root_causes)[:top_k]

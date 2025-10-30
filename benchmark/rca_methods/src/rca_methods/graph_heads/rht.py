@@ -317,7 +317,7 @@ def rht(
 
     # == prepare the graph
     nodes = [
-        Node(name.split(":")[0], name.split(":")[1])
+        Node(name.split("_")[0], name.split("_")[1])
         for name in node_names
         if name != "timestamp"
     ]
@@ -381,7 +381,7 @@ def rht(
     )
 
     scores = scorer.score(
-        graph=mem_graph, data=data, current=inject_time + 300, scores=scores
+        graph=mem_graph, data=data, current=inject_time, scores=scores
     )
     scores = sorted(scores.items(), key=lambda item: item[1].key, reverse=True)
     output = []

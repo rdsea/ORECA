@@ -40,6 +40,5 @@ class Circa(BaseRCA):
 
         adj = pc_default(pc_input)
         ranks = rht(adj, injection_time, dataset)
-        print(f"Ranks: {ranks}")
         ranks = sorted(ranks, key=lambda x: x[1], reverse=True)
         return ranks[:top_k]

@@ -310,7 +310,7 @@ class CausalRCA(BaseRCA):  # NOTE
             injection_time,
         )
 
-        return root_cause["ranks"]
+        return root_cause["ranks"][:top_k]
 
     def causalrca(self, data, inject_time=None, dataset=None, with_bg=False, **kwargs):
         if isinstance(data, dict):  # multimodal
