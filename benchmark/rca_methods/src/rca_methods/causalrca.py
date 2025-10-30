@@ -304,10 +304,13 @@ class CausalRCA(BaseRCA):  # NOTE
     def _run(
         self, dataset: pd.DataFrame, injection_time: int | None, top_k=5, **kwargs
     ) -> list[tuple[str, float]]:
-        return self.causalrca(
+        dataset.drop(columns=["timestamp"], inplace=True)
+        root_cause = self.causalrca(
             dataset,
             injection_time,
         )
+
+        return root_cause["ranks"]
 
     def causalrca(self, data, inject_time=None, dataset=None, with_bg=False, **kwargs):
         if isinstance(data, dict):  # multimodal
