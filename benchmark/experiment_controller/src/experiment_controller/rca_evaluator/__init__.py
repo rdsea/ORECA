@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
@@ -115,12 +116,12 @@ class RCAEvaluator:
         self.print_results_table(EvaluationMode.FINE)
 
     def print_results_table(self, mode: EvaluationMode):
-        """Generate and print a table of results organized by fault type using tabulate."""
         fault_types = list(set(self.experiment_fault_types.values()))
+        fault_types.sort()
+        result_file = self.dataset_path / "evaluation_results.txt"
 
         for rca_method in self.rca_methods:
-            print(f"\n# RCA Evaluation Results for {rca_method.name} at {mode}")
-
+            header_text = f"\n# RCA Evaluation Results for {rca_method.name} at {mode} at {datetime.now()} \n"
             headers = [
                 "Fault Type",
                 "Precision@1",
@@ -134,12 +135,10 @@ class RCAEvaluator:
                 "Accuracy@5",
                 "MRR",
             ]
-
             table = []
             for fault_type in fault_types:
                 filtered_predictions = {}
                 filtered_root_cause = {}
-
                 for experiment_id, fault in self.experiment_fault_types.items():
                     if fault == fault_type:
                         if (
@@ -190,7 +189,12 @@ class RCAEvaluator:
 
                 table.append(row)
 
-            print(tabulate(table, headers=headers, tablefmt="github"))
+            tabulated = tabulate(table, headers=headers, tablefmt="github")
+            print(header_text + tabulated)
+
+            with open(result_file, "a") as f:
+                f.write(header_text)
+                f.write(tabulated + "\n")
 
     def process_experiment(self, experiment_dir: Path):
         """Process a single experiment directory.
