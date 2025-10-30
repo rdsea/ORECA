@@ -106,6 +106,7 @@ class FaultConfig(BaseModel):
         return {
             "name": self.name,
             "duration": self.duration,
+            "fault_injection_period": self.fault_injection_period,
             "fault_type": f"{type(self.fault_type).__name__}.{self.fault_type.name}",
             "target": self.target.model_dump(),
             "fault_specific_config": self.fault_specific_config.model_dump(),
