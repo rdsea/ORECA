@@ -6,7 +6,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: efficientnetb0
+    name: inference-efficientnetb0
   minReplicas: 2
   maxReplicas: 5
   metrics:
@@ -45,7 +45,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: mobilenetv2
+    name: inference-mobilenetv2
   minReplicas: 2
   maxReplicas: 5
   metrics:
