@@ -103,43 +103,47 @@ class ElasticController:
 
     def activate_all(self):
         failed_elastic_config: list[ElasticCategory] = []
-        for elastic_config in self.config.elastic_used:
-            if elastic_config.how_to_activate and elastic_config.active:
-                try:
-                    if isinstance(elastic_config.how_to_activate, Callable):
-                        elastic_config.how_to_activate()
-                    else:
-                        self.script_runner.run_retry(
-                            str(elastic_config.how_to_activate)
-                        )
-                except Exception:
-                    logger.exception(f"{elastic_config.name} error")
-                    failed_elastic_config.append(elastic_config)
-                logger.info(f"Activate {elastic_config.name} config")
-        if not failed_elastic_config:
-            logger.info("All elastic config activate successfully")
-        else:
-            for elastic_config in failed_elastic_config:
-                logger.info(f"{elastic_config.name} config activate failed")
-            raise RuntimeError("Failed to activate elastic config")
+        for environment in self.config.environment:
+            # TODO: apply per environment
+            for elastic_config in self.config.environment[environment]:
+                if elastic_config.how_to_activate and elastic_config.active:
+                    try:
+                        if isinstance(elastic_config.how_to_activate, Callable):
+                            elastic_config.how_to_activate()
+                        else:
+                            self.script_runner.run_retry(
+                                str(elastic_config.how_to_activate)
+                            )
+                    except Exception:
+                        logger.exception(f"{elastic_config.name} error")
+                        failed_elastic_config.append(elastic_config)
+                    logger.info(f"Activate {elastic_config.name} config")
+            if not failed_elastic_config:
+                logger.info("All elastic config activate successfully")
+            else:
+                for elastic_config in failed_elastic_config:
+                    logger.info(f"{elastic_config.name} config activate failed")
+                raise RuntimeError("Failed to activate elastic config")
 
     def deactivate_all(self):
         failed_elastic_config: list[ElasticCategory] = []
-        for elastic_config in self.config.elastic_used:
-            if elastic_config.how_to_deactivate and elastic_config.active:
-                try:
-                    if isinstance(elastic_config.how_to_deactivate, Callable):
-                        elastic_config.how_to_deactivate()
-                    else:
-                        self.script_runner.run_retry(
-                            str(elastic_config.how_to_deactivate)
-                        )
-                except Exception:
-                    logger.exception(f"{elastic_config.name} deactivate error")
-                    failed_elastic_config.append(elastic_config)
-                logger.info(f"Deactivate {elastic_config.name} config")
-        if not failed_elastic_config:
-            logger.info("All elastic config deactivate successfully")
-        else:
-            for elastic_config in failed_elastic_config:
-                logger.info(f"{elastic_config.name} config deactivate failed")
+        for environment in self.config.environment:
+            # TODO: apply per environment
+            for elastic_config in self.config.environment[environment]:
+                if elastic_config.how_to_deactivate and elastic_config.active:
+                    try:
+                        if isinstance(elastic_config.how_to_deactivate, Callable):
+                            elastic_config.how_to_deactivate()
+                        else:
+                            self.script_runner.run_retry(
+                                str(elastic_config.how_to_deactivate)
+                            )
+                    except Exception:
+                        logger.exception(f"{elastic_config.name} deactivate error")
+                        failed_elastic_config.append(elastic_config)
+                    logger.info(f"Deactivate {elastic_config.name} config")
+            if not failed_elastic_config:
+                logger.info("All elastic config deactivate successfully")
+            else:
+                for elastic_config in failed_elastic_config:
+                    logger.info(f"{elastic_config.name} config deactivate failed")
