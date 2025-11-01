@@ -111,8 +111,7 @@ wait_for_critical_pods observe \
 
 # Wait only for critical pods
 
-helm_install_parallel \
-  kubectl apply -f "$APPLICATION_DIR/cloud/cloud_gateway.yaml"
+kubectl apply -f "$APPLICATION_DIR/cloud/cloud_gateway.yaml"
 
 # ---- Edge ----
 kubectl config use-context edge
