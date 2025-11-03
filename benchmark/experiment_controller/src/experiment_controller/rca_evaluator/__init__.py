@@ -118,11 +118,14 @@ class RCAEvaluator:
     def print_results_table(self, mode: EvaluationMode):
         fault_types = list(set(self.experiment_fault_types.values()))
         fault_types.sort()
-        result_file = self.dataset_path / "evaluation_results.txt"
+        result_txt = self.dataset_path / "evaluation_results.txt"
+        result_csv = self.dataset_path / f"evaluation_results_{mode.value}.csv"
 
+        all_rows = []
         for rca_method in self.rca_methods:
-            header_text = f"\n# RCA Evaluation Results for {rca_method.name} at {mode} at {datetime.now()} \n"
+            header_text = f"\n# RCA Evaluation Results for {rca_method.name} at {mode} at {datetime.now()}\n"
             headers = [
+                "RCA Method",
                 "Fault Type",
                 "Precision@1",
                 "Recall@1",
@@ -146,15 +149,10 @@ class RCAEvaluator:
                             and experiment_id in self.predictions[rca_method.name]
                         ):
                             if mode == EvaluationMode.FINE:
-                                predictions = self.predictions[rca_method.name][
-                                    experiment_id
+                                preds = self.predictions[rca_method.name][experiment_id]
+                                filtered_predictions[experiment_id] = [
+                                    x[0] if isinstance(x, tuple) else x for x in preds
                                 ]
-                                if isinstance(predictions[0], tuple):
-                                    filtered_predictions[experiment_id] = [
-                                        x[0] for x in predictions
-                                    ]
-                                else:
-                                    filtered_predictions[experiment_id] = predictions
                                 filtered_root_cause[experiment_id] = self.root_cause[
                                     experiment_id
                                 ]
@@ -170,31 +168,35 @@ class RCAEvaluator:
                                 )
 
                 if filtered_predictions:
-                    results = self.evaluate(filtered_predictions, filtered_root_cause)
+                    res = self.evaluate(filtered_predictions, filtered_root_cause)
                     row = [
+                        rca_method.name,
                         fault_type,
-                        f"{results['precision_at_1']:.3f}",
-                        f"{results['recall_at_1']:.3f}",
-                        f"{results['accuracy_at_1']:.3f}",
-                        f"{results['precision_at_3']:.3f}",
-                        f"{results['recall_at_3']:.3f}",
-                        f"{results['accuracy_at_3']:.3f}",
-                        f"{results['precision_at_5']:.3f}",
-                        f"{results['recall_at_5']:.3f}",
-                        f"{results['accuracy_at_5']:.3f}",
-                        f"{results['mean_reciprocal_rank']:.3f}",
+                        f"{res['precision_at_1']:.3f}",
+                        f"{res['recall_at_1']:.3f}",
+                        f"{res['accuracy_at_1']:.3f}",
+                        f"{res['precision_at_3']:.3f}",
+                        f"{res['recall_at_3']:.3f}",
+                        f"{res['accuracy_at_3']:.3f}",
+                        f"{res['precision_at_5']:.3f}",
+                        f"{res['recall_at_5']:.3f}",
+                        f"{res['accuracy_at_5']:.3f}",
+                        f"{res['mean_reciprocal_rank']:.3f}",
                     ]
                 else:
-                    row = [fault_type] + ["-"] * (len(headers) - 1)
+                    row = [rca_method.name, fault_type] + ["-"] * (len(headers) - 2)
 
                 table.append(row)
+                all_rows.append(row)
 
             tabulated = tabulate(table, headers=headers, tablefmt="github")
             print(header_text + tabulated)
 
-            with open(result_file, "a") as f:
+            with open(result_txt, "a") as f:
                 f.write(header_text)
                 f.write(tabulated + "\n")
+
+        pd.DataFrame(all_rows, columns=headers).to_csv(result_csv, index=False)
 
     def process_experiment(self, experiment_dir: Path):
         """Process a single experiment directory.
