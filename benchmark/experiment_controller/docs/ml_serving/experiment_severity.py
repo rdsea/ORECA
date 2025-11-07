@@ -112,34 +112,52 @@ FAULT_CONFIG: dict = {
 }
 
 
-def generate_config(hpa_config: str):
+def generate_config_cpu(cpu_load: int):
     current_path = pathlib.Path(__file__).parent
     for service in SERVICE:
-        for fault in FAULT:
-            fault_config = FAULT_CONFIG[fault]
-            fault_config["name"] = f"{fault}-{service}"
-            fault_config["target"]["label_selectors"] = {"app": service}
-            fault_config["fault_injection_period"] = "900s"
-            data["elastic_config"]["environment"]["cloud"][0]["how_to_activate"] = (
-                f"/home/aaltosea/Dung/RCA_Edge_Cloud/benchmark/experiment_controller/docs/ml_serving/scripts/hpa_{hpa_config}_activate.sh"
-            )
+        fault = "resource-cpu"
+        fault_config = FAULT_CONFIG[fault]
+        fault_config["name"] = f"{fault}-{service}"
+        fault_config["target"]["label_selectors"] = {"app": service}
+        fault_config["fault_injection_period"] = "900s"
+        fault_config["fault_specific_config"]["stress_cpu"]["load"] = cpu_load
 
-            data["elastic_config"]["environment"]["cloud"][0]["how_to_deactivate"] = (
-                f"/home/aaltosea/Dung/RCA_Edge_Cloud/benchmark/experiment_controller/docs/ml_serving/scripts/hpa_{hpa_config}_activate.sh"
-            )
+        all_data = {
+            **data,
+            "fault_config": fault_config,
+            "experiment_name": f"{fault}_{service}",
+            "root_cause": {
+                "what": service,
+                "where": FAULT_ROOT_CAUSE[fault],
+            },
+        }
+        experiment_path = current_path / "config.local" / f"{service}-{fault}"
+        os.makedirs(experiment_path, exist_ok=True)
+        write_config_to_filepath(all_data, experiment_path / "config.yaml")
 
-            all_data = {
-                **data,
-                "fault_config": fault_config,
-                "experiment_name": f"{fault}_{service}",
-                "root_cause": {
-                    "what": service,
-                    "where": FAULT_ROOT_CAUSE[fault],
-                },
-            }
-            experiment_path = current_path / "config.local" / f"{service}-{fault}"
-            os.makedirs(experiment_path, exist_ok=True)
-            write_config_to_filepath(all_data, experiment_path / "config.yaml")
+
+def generate_config_delay(delay_time: str):
+    current_path = pathlib.Path(__file__).parent
+    for service in SERVICE:
+        fault = "network-delay"
+        fault_config = FAULT_CONFIG[fault]
+        fault_config["name"] = f"{fault}-{service}"
+        fault_config["target"]["label_selectors"] = {"app": service}
+        fault_config["fault_injection_period"] = "900s"
+        fault_config["fault_specific_config"]["delay"]["latency"] = delay_time
+
+        all_data = {
+            **data,
+            "fault_config": fault_config,
+            "experiment_name": f"{fault}_{service}",
+            "root_cause": {
+                "what": service,
+                "where": FAULT_ROOT_CAUSE[fault],
+            },
+        }
+        experiment_path = current_path / "config.local" / f"{service}-{fault}"
+        os.makedirs(experiment_path, exist_ok=True)
+        write_config_to_filepath(all_data, experiment_path / "config.yaml")
 
 
 if __name__ == "__main__":
@@ -151,24 +169,48 @@ if __name__ == "__main__":
     ]
     CPU_SEVERITY = [10, 20, 30, 50, 100]
     DELAY_SEVERITY = ["10ms", "20ms", "30ms", "50ms", "100ms"]
-    for hpa_config in hpa_config_list:
-        generate_config(hpa_config)
+    for delay_time in CPU_SEVERITY:
+        generate_config_cpu(delay_time)
         for service in SERVICE:
-            for fault in FAULT:
-                config_path = (
-                    current_path / "config.local" / f"{service}-{fault}" / "config.yaml"
-                )
-                with open(config_path) as f:
-                    config_data = yaml.safe_load(f)
+            fault = "resource-cpu"
+            config_path = (
+                current_path / "config.local" / f"{service}-{fault}" / "config.yaml"
+            )
+            with open(config_path) as f:
+                config_data = yaml.safe_load(f)
 
-                experiment_config = RCAExperimentConfig.model_validate(config_data)
-                experiment = RCAExperiment(
-                    experiment_config,
-                    pathlib.Path(__file__).parent
-                    / "elastic_effect"
-                    / f"hpa_{hpa_config}",
-                )
-                logger.info(f"Starting experiment: {experiment_config.experiment_name}")
-                # Uncomment to run
-                experiment.run()
-                logger.info(f"Finished experiment: {experiment_config.experiment_name}")
+            experiment_config = RCAExperimentConfig.model_validate(config_data)
+            experiment = RCAExperiment(
+                experiment_config,
+                pathlib.Path(__file__).parent
+                / "severity_experiment.local"
+                / "resource-cpu"
+                / f"cpu_load_{delay_time}",
+            )
+            logger.info(f"Starting experiment: {experiment_config.experiment_name}")
+            # Uncomment to run
+            # experiment.run()
+            logger.info(f"Finished experiment: {experiment_config.experiment_name}")
+
+    for delay_time in DELAY_SEVERITY:
+        generate_config_delay(delay_time)
+        for service in SERVICE:
+            fault = "network-delay"
+            config_path = (
+                current_path / "config.local" / f"{service}-{fault}" / "config.yaml"
+            )
+            with open(config_path) as f:
+                config_data = yaml.safe_load(f)
+
+            experiment_config = RCAExperimentConfig.model_validate(config_data)
+            experiment = RCAExperiment(
+                experiment_config,
+                pathlib.Path(__file__).parent
+                / "severity_experiment.local"
+                / "network-delay"
+                / f"delay_time_{delay_time}",
+            )
+            logger.info(f"Starting experiment: {experiment_config.experiment_name}")
+            # Uncomment to run
+            # experiment.run()
+            logger.info(f"Finished experiment: {experiment_config.experiment_name}")
