@@ -28,6 +28,12 @@ class ElasticCategory(BaseModel):
             "name": self.name,
             "type": self.type.value,
             "active": self.active,
+            "how_to_activate": str(self.how_to_activate)
+            if isinstance(self.how_to_activate, Path)
+            else None,
+            "how_to_deactivate": str(self.how_to_deactivate)
+            if isinstance(self.how_to_deactivate, Path)
+            else None,
         }
 
 

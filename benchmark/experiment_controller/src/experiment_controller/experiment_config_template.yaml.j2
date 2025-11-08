@@ -58,10 +58,11 @@ data_collector_config:
   metric_url: {{ data_collector_config.metric_url }}
   trace_url: {{ data_collector_config.trace_url }}
 
+{% if observability_cadence_config is defined and observability_cadence_config.metric_config is defined and observability_cadence_config.metric_config.environment is defined %}
 observability_cadence_config:
   metric_config:
     environment:
-    {% for env_name, env_config in observability_cadence_config.metric_config.environment.items() %}
+      {% for env_name, env_config in observability_cadence_config.metric_config.environment.items() %}
       {{ env_name }}:
         {% if env_config.scrape_interval is not none %}
         scrape_interval: {{ env_config.scrape_interval }}
@@ -75,7 +76,8 @@ observability_cadence_config:
           {{ key }}: {{ value }}
           {% endfor %}
         {% endif %}
-    {% endfor %}
+      {% endfor %}
+{% endif %}
 
 {% if elastic_config %}
 elastic_config:

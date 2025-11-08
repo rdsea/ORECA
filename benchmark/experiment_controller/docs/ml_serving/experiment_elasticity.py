@@ -53,7 +53,7 @@ data = {
     },
     "elastic_config": {
         "environment": {
-            "cloud": [
+            "edge": [
                 {
                     "name": "horizontal pod autoscaler",
                     "type": "infrastructure",
@@ -143,11 +143,11 @@ def generate_config(hpa_config: str):
             fault_config["name"] = f"{fault}-{service}"
             fault_config["target"]["label_selectors"] = {"app": service}
             fault_config["fault_injection_period"] = "900s"
-            data["elastic_config"]["environment"]["cloud"][0]["how_to_activate"] = (
+            data["elastic_config"]["environment"]["edge"][0]["how_to_activate"] = (
                 f"/home/aaltosea/Dung/RCA_Edge_Cloud/benchmark/experiment_controller/docs/ml_serving/scripts/hpa_{hpa_config}_activate.sh"
             )
 
-            data["elastic_config"]["environment"]["cloud"][0]["how_to_deactivate"] = (
+            data["elastic_config"]["environment"]["edge"][0]["how_to_deactivate"] = (
                 f"/home/aaltosea/Dung/RCA_Edge_Cloud/benchmark/experiment_controller/docs/ml_serving/scripts/hpa_{hpa_config}_activate.sh"
             )
 
@@ -191,5 +191,5 @@ if __name__ == "__main__":
                 )
                 logger.info(f"Starting experiment: {experiment_config.experiment_name}")
                 # Uncomment to run
-                experiment.run()
+                # experiment.run()
                 logger.info(f"Finished experiment: {experiment_config.experiment_name}")
