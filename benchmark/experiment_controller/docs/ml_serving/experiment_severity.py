@@ -162,15 +162,10 @@ def generate_config_delay(delay_time: str):
 
 if __name__ == "__main__":
     current_path = pathlib.Path(__file__).parent
-    # metric_cadences_list = ["1s", "3s", "5s"]
-    hpa_config_list = [
-        "50",
-        #     "70", "50_mem"
-    ]
     CPU_SEVERITY = [10, 20, 30, 50, 100]
     DELAY_SEVERITY = ["10ms", "20ms", "30ms", "50ms", "100ms"]
-    for delay_time in CPU_SEVERITY:
-        generate_config_cpu(delay_time)
+    for cpu_load in CPU_SEVERITY:
+        generate_config_cpu(cpu_load)
         for service in SERVICE:
             fault = "resource-cpu"
             config_path = (
@@ -185,7 +180,7 @@ if __name__ == "__main__":
                 pathlib.Path(__file__).parent
                 / "severity_experiment.local"
                 / "resource-cpu"
-                / f"cpu_load_{delay_time}",
+                / f"cpu_load_{cpu_load}",
             )
             logger.info(f"Starting experiment: {experiment_config.experiment_name}")
             # Uncomment to run
