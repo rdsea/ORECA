@@ -167,11 +167,7 @@ def generate_config(hpa_config: str):
 
 if __name__ == "__main__":
     current_path = pathlib.Path(__file__).parent
-    # metric_cadences_list = ["1s", "3s", "5s"]
-    hpa_config_list = [
-        "50",
-        #     "70", "50_mem"
-    ]
+    hpa_config_list = ["50", "70", "50_mem"]
     for hpa_config in hpa_config_list:
         generate_config(hpa_config)
         for service in SERVICE:
