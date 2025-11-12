@@ -1,6 +1,6 @@
 import pandas as pd
 
-KPI_COLUMN = ["latency", "request_rate_per_second"]
+KPI_COLUMN = ["latency", "request_rate_per_second", "error_rate"]
 
 
 def drop_constant(df: pd.DataFrame) -> pd.DataFrame:

@@ -12,7 +12,7 @@ from torch.autograd import Variable
 from torch.optim import lr_scheduler
 
 from rca_methods.base_rca import BaseRCA
-from rca_methods.io.time_series import drop_constant, preprocess
+from rca_methods.io.time_series import drop_constant, drop_kpi, preprocess
 
 warnings.filterwarnings("ignore")
 
@@ -304,6 +304,7 @@ class CausalRCA(BaseRCA):  # NOTE
     def _run(
         self, dataset: pd.DataFrame, injection_time: int | None, top_k=5, **kwargs
     ) -> list[tuple[str, float]]:
+        dataset = drop_kpi(dataset)
         dropped_dataset = dataset.drop(columns=["timestamp"])
         root_cause = self.causalrca(
             dropped_dataset,
