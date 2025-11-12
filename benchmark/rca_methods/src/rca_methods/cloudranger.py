@@ -34,6 +34,7 @@ class CloudRanger(BaseRCA):
             list[tuple[str, float]]: A list of tuples containing root causes and their scores.
         """
         sli = kwargs.get("sli", None)
+        dataset.drop(columns=["timestamp"], inplace=True)
 
         dataset = drop_kpi(dataset)
         data = preprocess(

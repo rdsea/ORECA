@@ -19,6 +19,7 @@ class Baro(BaseRCA):
         dataset.fillna(0, inplace=True)
         # NOTE: DROP KPI HERE
         dataset = drop_kpi(dataset)
+        dataset.drop(columns=["timestamp"], inplace=True)
         if "anomalies" not in kwargs:
             normal_df = dataset[dataset["timestamp"] < injection_time]
             anomal_df = dataset[dataset["timestamp"] >= injection_time]
