@@ -41,7 +41,6 @@ class CausalAI(BaseRCA):
         """
         dataset = drop_kpi(dataset)
         data = drop_constant_column(dataset)
-        data.drop(columns=["timestamp"], inplace=True)
         # if "timestamp" not in data.columns:
         #     data["time"] = np.arange(len(data))
 

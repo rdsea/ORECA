@@ -304,9 +304,9 @@ class CausalRCA(BaseRCA):  # NOTE
     def _run(
         self, dataset: pd.DataFrame, injection_time: int | None, top_k=5, **kwargs
     ) -> list[tuple[str, float]]:
-        dataset.drop(columns=["timestamp"], inplace=True)
+        dropped_dataset = dataset.drop(columns=["timestamp"])
         root_cause = self.causalrca(
-            dataset,
+            dropped_dataset,
             injection_time,
         )
 
