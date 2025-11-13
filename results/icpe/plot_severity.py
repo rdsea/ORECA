@@ -36,7 +36,7 @@ cpu_fine = {
     "CIRCA": [0, 0, 0, 0, 0],
     "CloudRanger": [0.361, 0.486, 0.403, 0.644, 0.438],
 }
-fig, axes = plt.subplots(2, 2, figsize=(7.5, 4), sharex=False, sharey=True)
+fig, axes = plt.subplots(2, 2, figsize=(7.5, 4.5), sharex=False, sharey=True)
 metrics = ["CPU", "DELAY"]
 data = {
     "CPU": (cpu_coarse, cpu_fine, sev_cpu_vals, sev_cpu_lbls),
@@ -59,7 +59,7 @@ for i, metric in enumerate(metrics):
     axes[1, i].set_xticklabels(sev_lbls)
 
 axes[1, 0].set_xlabel("CPU severity (%)")
-axes[1, 1].set_xlabel("Delay everity (ms)")
+axes[1, 1].set_xlabel("Delay severity (ms)")
 axes[0, 0].set_ylabel("MRR")
 axes[1, 0].set_ylabel("MRR")
 # axes[0, 1].legend(loc="best")
