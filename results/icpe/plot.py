@@ -63,12 +63,12 @@ plt.rcParams.update(
     }
 )
 
-fig, axes = plt.subplots(2, 3, figsize=(6.5, 4.5), sharex=True, sharey=True)
+fig, axes = plt.subplots(2, 3, figsize=(6.5, 5), sharex=True, sharey=True)
 metrics = ["CPU", "MEM", "DELAY"]
 
 for i, metric in enumerate(metrics):
     for method, vals in coarse[metric].items():
-        axes[0, i].plot(msi, vals, marker="o", label=method)
+        axes[0, i].plot(msi, vals, marker=".", label=method)
     axes[0, i].set_title(f"Coarse - {metric}")
     # axes[0, i].set_xlabel("Metric scraping interval (s)")
     # axes[0, i].set_ylabel("MRR")
@@ -79,7 +79,7 @@ for i, metric in enumerate(metrics):
 
 for i, metric in enumerate(metrics):
     for method, vals in fine[metric].items():
-        axes[1, i].plot(msi, vals, marker="o", label=method)
+        axes[1, i].plot(msi, vals, marker=".", label=method)
     axes[1, i].set_title(f"Fine - {metric}")
     # axes[1, i].set_xlabel("Metric scraping interval (s)")
     # axes[1, i].set_ylabel("MRR")
