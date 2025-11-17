@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 
 elastic_vals = ["CPU 50%", "CPU 70%", "CPU 50%\n+ Memory"]
 
+line_styles = ["-", "--", "-.", ":", (0, (3, 1, 1, 1)), (0, (5, 1))]
+
 coarse = {
     "CPU": {
         "BARO": [1.0, 0.958, 0.917],
@@ -67,18 +69,23 @@ fig, axes = plt.subplots(2, 3, figsize=(7, 5), sharex=True, sharey=True)
 metrics = ["CPU", "MEM", "DELAY"]
 
 for i, metric in enumerate(metrics):
-    for method, vals in coarse[metric].items():
-        axes[0, i].plot(elastic_vals, vals, marker="o", label=method)
+    for idx, (method, vals) in enumerate(coarse[metric].items()):
+        axes[0, i].plot(
+            elastic_vals, vals, marker="o", linestyle=line_styles[idx], label=method
+        )
     axes[0, i].set_title(f"Coarse - {metric}")
     axes[0, i].set_xticks(elastic_vals)
 
-    for method, vals in fine[metric].items():
-        axes[1, i].plot(elastic_vals, vals, marker="o", label=method)
+    for idx, (method, vals) in enumerate(fine[metric].items()):
+        axes[1, i].plot(
+            elastic_vals, vals, marker="o", linestyle=line_styles[idx], label=method
+        )
     axes[1, i].set_title(f"Fine - {metric}")
     axes[1, i].set_xticks(elastic_vals)
 
 axes[1, 1].set_xlabel("Elasticity")
 axes[1, 0].set_ylabel("MRR")
 axes[0, 0].set_ylabel("MRR")
+axes[1, 1].legend(loc="center")
 plt.tight_layout()
 plt.savefig("elasticity_effect_mrr.pdf")

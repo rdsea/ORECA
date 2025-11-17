@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 
+line_styles = ["-", "--", "-.", ":", (0, (3, 1, 1, 1)), (0, (5, 1))]
 msi = [1, 3, 5, 15, 30]
 
 coarse = {
@@ -50,45 +51,28 @@ fine = {
     },
 }
 
-plt.rcParams.update(
-    {
-        "font.size": 10,
-        "axes.labelsize": 14,
-        "axes.titlesize": 14,
-        "xtick.labelsize": 9,
-        "ytick.labelsize": 9,
-        "legend.fontsize": 8,
-        "lines.linewidth": 1.5,
-        "lines.markersize": 5,
-    }
-)
-
-fig, axes = plt.subplots(2, 3, figsize=(6.5, 5), sharex=True, sharey=True)
+fig, axes = plt.subplots(2, 3, figsize=(7, 5), sharex=True, sharey=True)
 metrics = ["CPU", "MEM", "DELAY"]
 
 for i, metric in enumerate(metrics):
-    for method, vals in coarse[metric].items():
-        axes[0, i].plot(msi, vals, marker=".", label=method)
+    for idx, (method, vals) in enumerate(coarse[metric].items()):
+        axes[0, i].plot(msi, vals, marker=".", linestyle=line_styles[idx], label=method)
     axes[0, i].set_title(f"Coarse - {metric}")
-    # axes[0, i].set_xlabel("Metric scraping interval (s)")
-    # axes[0, i].set_ylabel("MRR")
-
-    axes[0, i].set_xticks([1, 3, 5, 15, 30])
-    axes[1, i].set_xticks([1, 3, 5, 15, 30])
-    # axes[0, i].legend()
 
 for i, metric in enumerate(metrics):
-    for method, vals in fine[metric].items():
-        axes[1, i].plot(msi, vals, marker=".", label=method)
+    for idx, (method, vals) in enumerate(fine[metric].items()):
+        axes[1, i].plot(msi, vals, marker=".", linestyle=line_styles[idx], label=method)
     axes[1, i].set_title(f"Fine - {metric}")
-    # axes[1, i].set_xlabel("Metric scraping interval (s)")
-    # axes[1, i].set_ylabel("MRR")
 
+for i in range(3):
     axes[0, i].set_xticks([1, 3, 5, 15, 30])
     axes[1, i].set_xticks([1, 3, 5, 15, 30])
 
 axes[1, 1].set_xlabel("Metric scraping interval (s)")
 axes[1, 0].set_ylabel("MRR")
 axes[0, 0].set_ylabel("MRR")
+
+axes[1, 1].legend(loc="center right", fontsize=8)
+
 plt.tight_layout()
 plt.savefig("cadence_mrr_effect_line.pdf")

@@ -21,7 +21,6 @@ delay_fine = {
     "CloudRanger": [0.069, 0.093, 0.269, 0.243, 0.346],
 }
 
-# CPU rows are blank in LaTeX, so fill with None
 cpu_coarse = {
     "BARO": [0.958, 0.958, 0.958, 0.958, 0.875],
     "CausalAI": [0.861, 0.764, 0.819, 0.917, 0.819],
@@ -36,7 +35,10 @@ cpu_fine = {
     "CIRCA": [0, 0, 0, 0, 0],
     "CloudRanger": [0.361, 0.486, 0.403, 0.644, 0.438],
 }
-fig, axes = plt.subplots(2, 2, figsize=(7.5, 4.5), sharex=False, sharey=True)
+
+line_styles = ["-", "--", "-.", ":", (0, (3, 1, 1, 1)), (0, (5, 1))]
+
+fig, axes = plt.subplots(2, 2, figsize=(7, 5), sharex=False, sharey=True)
 metrics = ["CPU", "DELAY"]
 data = {
     "CPU": (cpu_coarse, cpu_fine, sev_cpu_vals, sev_cpu_lbls),
@@ -46,14 +48,14 @@ data = {
 for i, metric in enumerate(metrics):
     coarse, fine, sev_vals, sev_lbls = data[metric]
 
-    for m, v in coarse.items():
-        axes[0, i].plot(sev_vals, v, marker=".", label=m)
+    for idx, (m, v) in enumerate(coarse.items()):
+        axes[0, i].plot(sev_vals, v, marker=".", linestyle=line_styles[idx], label=m)
     axes[0, i].set_title(f"Coarse - {metric}")
     axes[0, i].set_xticks(sev_vals)
     axes[0, i].set_xticklabels(sev_lbls)
 
-    for m, v in fine.items():
-        axes[1, i].plot(sev_vals, v, marker=".", label=m)
+    for idx, (m, v) in enumerate(fine.items()):
+        axes[1, i].plot(sev_vals, v, marker=".", linestyle=line_styles[idx], label=m)
     axes[1, i].set_title(f"Fine - {metric}")
     axes[1, i].set_xticks(sev_vals)
     axes[1, i].set_xticklabels(sev_lbls)
@@ -62,7 +64,8 @@ axes[1, 0].set_xlabel("CPU severity (%)")
 axes[1, 1].set_xlabel("Delay severity (ms)")
 axes[0, 0].set_ylabel("MRR")
 axes[1, 0].set_ylabel("MRR")
-# axes[0, 1].legend(loc="best")
+
+axes[0, 1].legend(loc="center", fontsize=8)
 
 plt.tight_layout()
 plt.savefig("severity_effect_mrr.pdf")
