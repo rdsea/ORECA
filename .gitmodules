@@ -1,16 +1,3 @@
 [submodule "writing"]
 	path = writing
 	url = https://git@git.overleaf.com/6729ff8b88ca7fd6f6db5ccc
-[submodule "applications/online-boutique"]
-	path = applications/online-boutique
-	url = git@github.com:nguu0123/online-boutique.git
-[submodule "applications/sesa/drone/uav_sim"]
-	path = applications/sesa/search_and_rescue/drone/uav_sim
-	url = git@github.com:nguu0123/PX4-ROS2-Gazebo-YOLOv8.git
-[submodule "applications/sesa/search_and_rescue/object_classification"]
-	path = applications/sesa/search_and_rescue/object_classification
-	url = git@github.com:rdsea/object_classification_v2.git
-  branch = main
-[submodule "applications/train-ticket"]
-	path = applications/train-ticket
-	url = git@github.com:nguu0123/microservice_rca_demo.git
