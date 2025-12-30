@@ -1,3 +1,6 @@
 [submodule "writing"]
 	path = writing
 	url = https://git@git.overleaf.com/6729ff8b88ca7fd6f6db5ccc
+[submodule "applications/object_classification"]
+	path = applications/object_classification
+	url = git@github.com:rdsea/object_classification_v2.git
