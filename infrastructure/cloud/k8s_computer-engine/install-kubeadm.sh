@@ -50,6 +50,6 @@ SystemdCgroup = true
 EOF
 
 sudo systemctl restart containerd
-kubeadm join REDACTED_IP:6443 --token c65ii1.8o3tx1fr65shl3pj --discovery-token-ca-cert-hash sha256:2b823d173adc961220afee4075925ba5b019002db35213f98aea87035dea7101 --kubernetes-version=v1.30.10
+kubeadm join <CONTROLLER_IP>:6443 --token <TOKEN> --discovery-token-ca-cert-hash <CERT_HASH> --kubernetes-version=v1.30.10
 
-curl -sfL https://get.k3s.io | K3S_URL=https://REDACTED_IP:6443 K3S_TOKEN=K103ee3a74481c78fb2ff428953509022b3f26eb7c123342d5f5abfe90a82592c36::server:232672d66eea77692c852e8a2894b02b sh -s - --docker
+curl -sfL https://get.k3s.io | K3S_URL=https://<CONTROLLER_IP>:6443 K3S_TOKEN=<K3S_TOKEN> sh -s - --docker

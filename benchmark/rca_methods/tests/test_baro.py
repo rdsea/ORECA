@@ -34,10 +34,10 @@ def test_own_baro_top_root_causes(own_sample_data, create_baro):
     result = create_baro.run(own_sample_data, top_k=10, injection_time=injection_time)
     # previous = [
     #     "efficientnetb0-7c8ddf759c-nbwsz_pod:memory_usage",
-    #     "XXX.XXX.XXX.XXX_node:network_transmit_lxc14a3877ba9b4",
-    #     "XXX.XXX.XXX.XXX_node:disk_read_sda",
-    #     "XXX.XXX.XXX.XXX_node:network_receive_lxc14a3877ba9b4",
-    #     "XXX.XXX.XXX.XXX_node:disk_read_dm-0",
+    #     "<NODE_IP>_node:network_transmit_lxc14a3877ba9b4",
+    #     "<NODE_IP>_node:disk_read_sda",
+    #     "<NODE_IP>_node:network_receive_lxc14a3877ba9b4",
+    #     "<NODE_IP>_node:disk_read_dm-0",
     # ]
     logging.info(f"Own result {result}")
 

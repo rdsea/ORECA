@@ -24,7 +24,7 @@ data = {
         "config": {
             "image": "rdsea/object_detection_client:latest",
             "args": {
-                "host": "http://XXX.XXX.XXX.XXX",
+                "host": "http://<APPLICATION_HOST_IP>",
                 "user": "10",
                 "run-time": "1200s",
                 "spawn-rate": "1",
@@ -34,8 +34,8 @@ data = {
         "ssh_username": "aaltosea",
     },
     "data_collector_config": {
-        "metric_url": "http://XXX.XXX.XXX.XXX/prometheus",
-        "trace_url": "http://XXX.XXX.XXX.XXX:3200",
+        "metric_url": "http://<METRICS_COLLECTOR_IP>/prometheus",
+        "trace_url": "http://<TRACES_COLLECTOR_IP>:3200",
     },
     "observability_cadence_config": {
         "metric_config": {

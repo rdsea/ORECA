@@ -24,7 +24,7 @@ data = {
         "config": {
             "image": "rdsea/train_ticket_loadgen:latest",
             "args": {
-                "host": "http://XXX.XXX.XXX.XXX:32677",
+                "host": "http://<TRAIN_TICKET_HOST_IP>:32677",
                 "user": "30",
                 "run-time": "120s",
                 "spawn-rate": "0.1",
@@ -35,8 +35,8 @@ data = {
         "ssh_username": "aaltosea",
     },
     "data_collector_config": {
-        "metric_url": "http://XXX.XXX.XXX.XXX/prometheus",
-        "trace_url": "http://XXX.XXX.XXX.XXX:3200",
+        "metric_url": "http://<METRICS_COLLECTOR_IP>/prometheus",
+        "trace_url": "http://<TRACES_COLLECTOR_IP>:3200",
     },
     "observability_cadence_config": {
         "metric_config": {

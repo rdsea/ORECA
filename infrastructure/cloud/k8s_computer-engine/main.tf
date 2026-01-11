@@ -22,7 +22,7 @@ resource "google_compute_network" "k8s-network" {
 resource "google_compute_subnetwork" "k8s-nodes" {
   name          = "k8s-nodes"
   network       = google_compute_network.k8s-network.id
-  ip_cidr_range = "XXX.XXX.XXX.XXX/24"
+  ip_cidr_range = "<CLOUD_SUBNET_CIDR>"
 }
 
 resource "google_compute_firewall" "allow-tcp-udp-icmp-ipip-k8s-internal" {
@@ -45,7 +45,7 @@ resource "google_compute_firewall" "allow-tcp-udp-icmp-ipip-k8s-internal" {
     protocol = "icmp"
   }
 
-  source_ranges = ["XXX.XXX.XXX.XXX/24"]
+  source_ranges = ["<INTERNAL_NETWORK_CIDR>"]
 }
 
 resource "google_compute_firewall" "allow-tcp-icmp-k8s-external" {
@@ -86,7 +86,7 @@ resource "google_compute_instance" "k8s-controller" {
 
   network_interface {
     subnetwork = google_compute_subnetwork.k8s-nodes.id
-    network_ip = "XXX.XXX.XXX.XXX"
+    network_ip = "<CONTROLLER_INTERNAL_IP>"
     access_config {}
   }
   can_ip_forward = true
@@ -122,7 +122,7 @@ resource "google_compute_instance" "k8s-workers" {
 
   network_interface {
     subnetwork = google_compute_subnetwork.k8s-nodes.id
-    network_ip = "XXX.XXX.XXX.XXX${count.index}"
+    network_ip = "<WORKER_INTERNAL_IP_PREFIX>${count.index}"
     access_config {}
   }
 
@@ -144,7 +144,7 @@ resource "null_resource" "k8s-controller-script" {
   provisioner "remote-exec" {
     inline = [
       "sleep 15",
-      "sudo kubeadm init --pod-network-cidr=XXX.XXX.XXX.XXX/16 --cri-socket unix:///var/run/containerd/containerd.sock --kubernetes-version=v1.30.10 >/tmp/kubeinit.log 2>&1",
+      "sudo kubeadm init --pod-network-cidr=<POD_NETWORK_CIDR> --cri-socket unix:///var/run/containerd/containerd.sock --kubernetes-version=v1.30.10 >/tmp/kubeinit.log 2>&1",
       "sudo kubeadm token create --print-join-command >/home/${var.ssh_username}/kubeadm_join.sh",
       "chmod +r /home/${var.ssh_username}/kubeadm_join.sh",
       "mkdir -p /home/${var.ssh_username}/.kube",
