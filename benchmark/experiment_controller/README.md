@@ -1,28 +1,31 @@
-# Experiment Controller
+# ORECA Experiment Controller
 
-This directory contains the experiment controller component of the RCA benchmarking framework. It is used to:
+The ORECA Experiment Controller is the core component responsible for managing experimental workflows, fault injection, and evaluation of Root Cause Analysis (RCA) methods in distributed systems.
 
-1. Introduce various types of faults into the system to test the resilience and performance of applications
-2. Collect telemetry data during fault injection
-3. Evaluate the effectiveness of RCA (Root Cause Analysis) methods using the collected data
+## Supported Fault Types
 
-## Features
+The experiment controller supports multiple fault categories:
 
-The experiment controller supports multiple fault types:
-- Network faults: DELAY, LOSS
-- Resource faults: CPU, MEMORY
+- **Network faults**: DELAY, LOSS
+- **Resource faults**: CPU, MEMORY
 
-## RCA Evaluation
+## Evaluation Metrics
 
-The RCA evaluator can compare different RCA methods against collected telemetry data. Results are now displayed in a table format organized by fault type:
+The framework evaluates RCA methods using standardized metrics:
 
-| Fault Type | Precision@1 | Recall@1 | Accuracy@1 | Precision@3 | Recall@3 | Accuracy@3 | Precision@5 | Recall@5 | Accuracy@5 | MRR |
-|------------|-------------|----------|------------|-------------|----------|------------|-------------|----------|------------|-----|
-| NetworkFault.DELAY | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
+| Metric      | Description                                            |
+| ----------- | ------------------------------------------------------ |
+| Precision@k | Fraction of retrieved causes that are relevant (top-k) |
+| Recall@k    | Fraction of relevant causes that are retrieved (top-k) |
+| Accuracy@k  | Fraction of correct predictions among top-k candidates |
+| MRR         | Mean Reciprocal Rank of the first correct prediction   |
 
 ## Usage
 
+### Basic RCA Evaluation
+
 To run an RCA evaluation:
+
 ```python
 from experiment_controller.rca_evaluator import RCAEvaluator
 from rca_methods.rca_factory import RCAMethodEnum
@@ -40,4 +43,33 @@ rca_evaluator = RCAEvaluator(
 rca_evaluator.create_report()
 ```
 
-Note: For meaningful results, ensure that the `ground_truth` field in your experiment configuration files is set to actual root cause identifiers, not placeholder values.
+### Experiment Configuration
+
+Configure experiments using JSON/YAML configuration files that specify:
+
+- Target applications and services
+- Fault injection parameters
+- Evaluation criteria and ground truth
+- Infrastructure connection details
+
+## Experiment Scripts
+
+Predefined experiment scripts are available in the `docs/ml_serving/` directory:
+
+- `experiment_cadence.py`: Evaluates RCA performance under different fault cadences
+- `experiment_elasticity.py`: Tests system elasticity under various conditions
+- `experiment_severity.py`: Assesses RCA effectiveness with varying fault severity
+- `example_rca_evaluator.py`: Demonstrates how to run custom evaluations
+
+## Directory Structure
+
+```
+experiment_controller/
+├── docs/
+│   ├── ml_serving/          # ML serving experiment scripts
+│   └── train_ticket/        # Train ticket system experiments
+├── src/                     # Source code
+├── tests/                   # Unit and integration tests
+└── README.md                # This file
+```
+
